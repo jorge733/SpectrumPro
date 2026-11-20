@@ -3,48 +3,134 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#635CC7">
+<meta name="description" content="Plataforma interna de SpectrumPro: asistencia, cumpleaños y fichas del alumnado.">
+<meta name="application-name" content="SpectrumPro">
+<meta name="apple-mobile-web-app-title" content="SpectrumPro">
+<meta name="format-detection" content="telephone=no">
 <title>SpectrumPro Alumnado</title>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icono-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Lexend+Zetta:wght@600&family=Montserrat:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<div class="app">
-  <aside class="lateral">
+<body class="resolviendo">
+<a class="saltar" href="#vista">Saltar al contenido</a>
+
+<!-- Pantalla de carga -->
+<div id="arranque" class="arranque" role="status" aria-live="polite">
+  <div class="arranque-card">
+    <img src="assets/logo.svg" alt="" width="64" height="62">
+    <p id="arranque-texto">Preparando la plataforma…</p>
+    <span class="arranque-barra"><span></span></span>
+  </div>
+</div>
+
+<!-- Acceso -->
+<section id="acceso" class="acceso" hidden aria-labelledby="acceso-titulo">
+  <div class="acceso-card">
+    <div class="acceso-marca">
+      <span class="espectro" aria-hidden="true"></span>
+      <img src="assets/logo.svg" alt="" width="88" height="86">
+      <p class="acceso-nombre">SpectrumPro</p>
+      <p class="acceso-lema">Transformando la perspectiva del mundo</p>
+      <p class="acceso-desc">Plataforma interna del equipo: asistencia a talleres, cumpleaños y fichas del alumnado.</p>
+    </div>
+    <div class="acceso-form">
+      <!-- Iniciar sesión -->
+      <form id="form-entrar" novalidate>
+        <h1 id="acceso-titulo">Iniciar sesión</h1>
+        <p class="muted">Usa la cuenta que te envió dirección por correo.</p>
+        <label class="campo">Correo electrónico<input id="entrar-email" type="email" autocomplete="username" required></label>
+        <label class="campo">Contraseña
+          <span class="clave"><input id="entrar-clave" type="password" autocomplete="current-password" required>
+          <button type="button" class="ver-clave" data-ver-clave="entrar-clave" aria-label="Mostrar contraseña">Mostrar</button></span>
+        </label>
+        <p id="entrar-error" class="aviso-error" role="alert" hidden></p>
+        <p id="entrar-info" class="aviso-ok" role="status" hidden></p>
+        <button type="submit" class="btn btn-grande">Entrar</button>
+        <button type="button" class="enlace-texto" data-accion="olvide">¿Olvidaste tu contraseña?</button>
+      </form>
+
+      <!-- Recuperar -->
+      <form id="form-recuperar" novalidate hidden>
+        <h1>Recuperar contraseña</h1>
+        <p class="muted">Te enviaremos un enlace para crear una contraseña nueva.</p>
+        <label class="campo">Correo electrónico<input id="recuperar-email" type="email" autocomplete="username" required></label>
+        <p id="recuperar-info" class="aviso-ok" role="status" hidden></p>
+        <button type="submit" class="btn btn-grande">Enviar enlace</button>
+        <button type="button" class="enlace-texto" data-accion="volver-entrar">Volver a iniciar sesión</button>
+      </form>
+
+      <!-- Crear contraseña (invitación o recuperación) -->
+      <form id="form-clave" novalidate hidden>
+        <h1>Crea tu contraseña</h1>
+        <p class="muted">Mínimo 10 caracteres. La usarás para entrar desde cualquier dispositivo.</p>
+        <label class="campo">Contraseña nueva<input id="clave-1" type="password" autocomplete="new-password" minlength="10" required></label>
+        <label class="campo">Repite la contraseña<input id="clave-2" type="password" autocomplete="new-password" minlength="10" required></label>
+        <p id="clave-error" class="aviso-error" role="alert" hidden></p>
+        <button type="submit" class="btn btn-grande">Guardar y entrar</button>
+      </form>
+
+      <!-- Modo demostración (sin Supabase configurado) -->
+      <div id="acceso-demo" hidden>
+        <h1>Modo demostración</h1>
+        <p class="muted">Supabase aún no está configurado. Elige un rol para recorrer la plataforma con datos ficticios guardados en este navegador.</p>
+        <div class="roles-demo">
+          <button type="button" class="rol-demo" data-demo-rol="admin"><b>Dirección</b><span>Ve y edita todo, gestiona cuentas y talleres.</span></button>
+          <button type="button" class="rol-demo" data-demo-rol="terapeuta"><b>Terapeuta</b><span>Ve todo el alumnado y sus datos de salud.</span></button>
+          <button type="button" class="rol-demo" data-demo-rol="tallerista"><b>Tallerista</b><span>Pasa lista solo en sus talleres.</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Aplicación -->
+<div class="app" id="app" hidden>
+  <aside class="lateral" aria-label="Menú principal">
     <span class="espectro" aria-hidden="true"></span>
-    <a class="marca" href="#panel" aria-label="SpectrumPro, ir al panel">
-      <img src="assets/logo.svg" alt="" width="40" height="39">
-      <span class="marca-texto"><span class="marca-nombre">SpectrumPro</span><span class="marca-sub">Gestión de alumnado</span></span>
-    </a>
+    <div class="lateral-cab">
+      <a class="marca" href="#panel" aria-label="SpectrumPro, ir al panel">
+        <img src="assets/logo.svg" alt="" width="40" height="39">
+        <span class="marca-texto"><span class="marca-nombre">SpectrumPro</span><span class="marca-sub">Gestión de alumnado</span></span>
+      </a>
+      <button type="button" id="plegar" class="icono-btn plegar" aria-expanded="true" aria-label="Plegar menú" title="Plegar menú">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg>
+      </button>
+    </div>
     <nav class="nav" aria-label="Secciones">
-      <a href="#panel" data-vista="panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Panel</span></a>
-      <a href="#asistencia" data-vista="asistencia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg><span>Asistencia</span></a>
-      <a href="#cumpleanos" data-vista="cumpleanos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 0 0 2-2c0-.4-.1-.7-.3-1L12 0l-1.7 3c-.2.3-.3.6-.3 1a2 2 0 0 0 2 2m6 3h-5V7h-2v2H6a3 3 0 0 0-3 3v1.5c0 1.1.9 2 2 2 .5 0 1-.2 1.4-.6L8.5 13l2.1 2.1c.7.7 2 .7 2.8 0l2.1-2.1 2.1 2.1c.4.4.9.6 1.4.6 1.1 0 2-.9 2-2V12a3 3 0 0 0-3-3m1 8c-.9 0-1.8-.3-2.5-.9l-1.1-1-1 1a3.6 3.6 0 0 1-4.9 0l-1-1-1.1 1A3.7 3.7 0 0 1 5 17v4c0 .6.4 1 1 1h12c.6 0 1-.4 1-1v-4z"/></svg><span>Cumpleaños</span></a>
-      <a href="#alumnos" data-vista="alumnos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6m0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13m8 0h-1c1.2.8 2 2 2 3.5V19h6v-2.5c0-2.3-4.7-3.5-7-3.5"/></svg><span>Fichas</span></a>
-      <a href="#talleres" data-vista="talleres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V4z"/></svg><span>Talleres</span></a>
+      <a href="#panel" data-vista="panel" title="Panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Panel</span></a>
+      <a href="#asistencia" data-vista="asistencia" title="Asistencia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg><span>Asistencia</span></a>
+      <a href="#cumpleanos" data-vista="cumpleanos" title="Cumpleaños"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 0 0 2-2c0-.4-.1-.7-.3-1L12 0l-1.7 3c-.2.3-.3.6-.3 1a2 2 0 0 0 2 2m6 3h-5V7h-2v2H6a3 3 0 0 0-3 3v1.5c0 1.1.9 2 2 2 .5 0 1-.2 1.4-.6L8.5 13l2.1 2.1c.7.7 2 .7 2.8 0l2.1-2.1 2.1 2.1c.4.4.9.6 1.4.6 1.1 0 2-.9 2-2V12a3 3 0 0 0-3-3m1 8c-.9 0-1.8-.3-2.5-.9l-1.1-1-1 1a3.6 3.6 0 0 1-4.9 0l-1-1-1.1 1A3.7 3.7 0 0 1 5 17v4c0 .6.4 1 1 1h12c.6 0 1-.4 1-1v-4z"/></svg><span>Cumpleaños</span></a>
+      <a href="#alumnos" data-vista="alumnos" title="Fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6m0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13m8 0h-1c1.2.8 2 2 2 3.5V19h6v-2.5c0-2.3-4.7-3.5-7-3.5"/></svg><span>Fichas</span></a>
+      <a href="#talleres" data-vista="talleres" title="Talleres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V4z"/></svg><span>Talleres</span></a>
+      <a href="#administracion" data-vista="administracion" data-solo="admin" title="Administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7" transform="translate(-1 0)"/></svg><span>Administración</span></a>
     </nav>
-    <details class="datos">
-      <summary class="datos-titulo">Datos y copias de seguridad</summary>
-      <button type="button" class="enlace" data-accion="exportar-csv">Exportar fichas (CSV)</button>
-      <button type="button" class="enlace" data-accion="exportar-json">Descargar copia de seguridad</button>
-      <label class="enlace" for="importar">Restaurar copia de seguridad</label>
-      <input type="file" id="importar" accept="application/json,.json" hidden>
-      <button type="button" class="enlace" data-accion="restablecer">Cargar datos de ejemplo</button>
-      <button type="button" class="enlace peligro" data-accion="vaciar">Empezar en blanco</button>
-    </details>
+    <div class="usuario">
+      <span class="avatar" id="usuario-avatar" aria-hidden="true"></span>
+      <div class="usuario-txt"><b id="usuario-nombre"></b><small id="usuario-rol"></small></div>
+      <button type="button" class="icono-btn" data-accion="salir" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17v-3H3v-4h7V7l5 5zm2-15h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7v-2h7V4h-7z"/></svg>
+      </button>
+    </div>
   </aside>
 
-  <main class="principal">
+  <main class="principal" id="principal">
     <div id="aviso-demo" class="aviso" hidden>
-      <span>Estás viendo <b>datos de ejemplo</b> (personas ficticias). Los cambios se guardan solo en este navegador.</span>
-      <button type="button" class="btn btn-sec btn-peq" data-accion="vaciar">Empezar en blanco</button>
+      <span>Modo demostración: datos ficticios guardados solo en este navegador. Conecta Supabase para usar datos reales.</span>
+      <button type="button" class="btn btn-sec btn-peq" data-accion="salir">Cambiar de rol</button>
     </div>
-    <div id="vista"></div>
+    <div id="vista" tabindex="-1"></div>
   </main>
 </div>
 
+<div id="sin-conexion" class="sin-conexion" role="status" hidden>Sin conexión. Los cambios no se guardarán hasta que vuelva internet.</div>
+
+<!-- Diálogos -->
 <dialog id="dlg-ficha" class="dialogo dialogo-ancho" aria-labelledby="ficha-titulo"></dialog>
 
 <dialog id="dlg-form" class="dialogo dialogo-ancho" aria-labelledby="form-titulo">
@@ -70,21 +156,19 @@
         <div class="campos">
           <label>Programa *
             <select id="f-programa" name="programa" required>
-              <option value="FormaPro">FormaPro</option>
-              <option value="Terapia Ocupacional">Terapia Ocupacional</option>
-              <option value="Arte Terapia">Arte Terapia</option>
-              <option value="Talleres">Talleres</option>
-              <option value="SpectrumOnline">SpectrumOnline</option>
+              <option>FormaPro</option><option>Terapia Ocupacional</option><option>Arte Terapia</option><option>Talleres</option><option>SpectrumOnline</option>
+            </select>
+          </label>
+          <label>Estado
+            <select id="f-estado" name="estado">
+              <option value="activo">Activo</option><option value="pausa">En pausa</option><option value="egresado">Egresado</option><option value="retirado">Retirado</option>
             </select>
           </label>
           <label>Fecha de ingreso<input id="f-fechaIngreso" name="fechaIngreso" type="date"></label>
           <label>Entrevista de ingreso<input id="f-entrevista" name="entrevista" type="date"></label>
-          <label>Beca / arancel diferenciado
+          <label class="ancho">Beca / arancel diferenciado
             <select id="f-beca" name="beca">
-              <option value="">Sin beca</option>
-              <option value="Beca parcial">Beca parcial</option>
-              <option value="Beca completa">Beca completa</option>
-              <option value="Arancel diferenciado">Arancel diferenciado</option>
+              <option value="">Sin beca</option><option>Beca parcial</option><option>Beca completa</option><option>Arancel diferenciado</option>
             </select>
           </label>
         </div>
@@ -104,16 +188,21 @@
         </div>
       </fieldset>
       <fieldset>
-        <legend>Perfil y apoyos</legend>
+        <legend>Perfil y apoyos <small class="muted">· visible para talleristas del joven</small></legend>
         <div class="campos">
           <label class="ancho">Intereses y talentos<input id="f-intereses" name="intereses" autocomplete="off" placeholder="Animación, dibujo, música…"></label>
           <label class="ancho">Apoyos y ajustes que le sirven<textarea id="f-apoyos" name="apoyos" rows="2" placeholder="Anticipar cambios, pausas sensoriales, audífonos…"></textarea></label>
-          <label>Alergias<input id="f-alergias" name="alergias" autocomplete="off"></label>
-          <label>Medicación<input id="f-medicacion" name="medicacion" autocomplete="off"></label>
-          <label class="ancho">Observaciones<textarea id="f-observaciones" name="observaciones" rows="2"></textarea></label>
+          <label class="ancho">Alergias<input id="f-alergias" name="alergias" autocomplete="off"></label>
         </div>
       </fieldset>
-      <p id="form-error" class="error" role="alert" hidden></p>
+      <fieldset id="f-privado">
+        <legend>Datos privados <small class="muted">· solo dirección y terapeutas</small></legend>
+        <div class="campos">
+          <label class="ancho">Medicación<input id="f-medicacion" name="medicacion" autocomplete="off"></label>
+          <label class="ancho">Observaciones<textarea id="f-observaciones" name="observaciones" rows="3"></textarea></label>
+        </div>
+      </fieldset>
+      <p id="form-error" class="aviso-error" role="alert" hidden></p>
     </div>
     <footer class="dlg-pie">
       <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
@@ -122,16 +211,80 @@
   </form>
 </dialog>
 
-<dialog id="dlg-confirmar" class="dialogo dialogo-peq" aria-labelledby="conf-texto">
-  <div class="dlg-cuerpo"><p id="conf-texto"></p></div>
+<dialog id="dlg-taller" class="dialogo" aria-labelledby="taller-titulo">
+  <form id="form-taller" novalidate>
+    <header class="dlg-cab">
+      <h2 id="taller-titulo">Nuevo taller</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <div class="campos">
+        <label class="ancho">Nombre *<input id="t-nombre" name="nombre" required autocomplete="off"></label>
+        <label>Área<input id="t-area" name="area" list="t-areas" autocomplete="off"></label>
+        <label>Color<input id="t-color" name="color" type="color" value="#635CC7"></label>
+        <label>Hora de inicio<input id="t-horaInicio" name="horaInicio" type="time"></label>
+        <label>Hora de término<input id="t-horaFin" name="horaFin" type="time"></label>
+        <label class="ancho">A cargo (texto visible)<input id="t-encargado" name="encargado" autocomplete="off"></label>
+      </div>
+      <datalist id="t-areas"><option>Centro de Formación</option><option>Arte y Apoyo</option><option>Terapia Ocupacional</option><option>SpectrumOnline</option></datalist>
+      <div><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
+      <div><p class="campo-titulo">Cuentas que pueden pasar lista</p><div id="t-equipo" class="checks"></div></div>
+      <label class="check-suelto"><input type="checkbox" id="t-activo" name="activo" checked> Taller activo</label>
+      <p id="taller-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" id="t-eliminar" hidden>Eliminar taller</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar taller</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-usuario" class="dialogo" aria-labelledby="usuario-titulo">
+  <form id="form-usuario" novalidate>
+    <header class="dlg-cab">
+      <h2 id="usuario-titulo">Invitar persona</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <div class="campos">
+        <label class="ancho">Nombre *<input id="u-nombre" name="nombre" required autocomplete="off"></label>
+        <label class="ancho">Correo electrónico *<input id="u-email" name="email" type="email" required autocomplete="off"></label>
+        <label class="ancho">Rol *
+          <select id="u-rol" name="rol">
+            <option value="tallerista">Tallerista: pasa lista en sus talleres</option>
+            <option value="terapeuta">Terapeuta: ve todo el alumnado y sus datos de salud</option>
+            <option value="admin">Dirección: acceso total y gestión de cuentas</option>
+          </select>
+        </label>
+      </div>
+      <div id="u-talleres-box"><p class="campo-titulo">Talleres a su cargo</p><div id="u-talleres" class="checks"></div></div>
+      <label class="check-suelto" id="u-activo-box"><input type="checkbox" id="u-activo" name="activo" checked> Cuenta activa</label>
+      <p class="nota-suave" id="u-nota">Recibirá un correo para crear su contraseña.</p>
+      <p id="usuario-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" id="u-eliminar" hidden>Eliminar cuenta</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn" id="u-guardar">Enviar invitación</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-confirmar" class="dialogo dialogo-peq" aria-labelledby="conf-titulo">
+  <div class="dlg-cuerpo"><h2 id="conf-titulo"></h2><p id="conf-texto"></p></div>
   <footer class="dlg-pie">
     <button type="button" class="btn btn-sec" id="conf-no">Cancelar</button>
     <button type="button" class="btn btn-peligro" id="conf-si">Confirmar</button>
   </footer>
 </dialog>
 
-<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="cargando" class="cargando" hidden><span class="giro" aria-hidden="true"></span><span class="sr">Cargando…</span></div>
 
-<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
