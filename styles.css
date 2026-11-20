@@ -487,4 +487,86 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
   .pase .seg button { flex: 1; }
   .rejilla { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* ---------- animaciones ---------- */
+:root { --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-spring: cubic-bezier(.34, 1.56, .64, 1); }
+
+/* microinteracciones */
+.btn, .icono-btn, .ver-clave, .copiar, .cerrar, .enlace-texto, .pestanas button, .seg button {
+  transition: transform .15s var(--ease-out), background-color .15s, border-color .15s, color .15s, filter .15s, box-shadow .2s;
+}
+.btn:not(:disabled):active, .icono-btn:active, .ver-clave:active, .copiar:active, .pestanas button:active, .seg button:active { transform: scale(.96); }
+.btn:not(:disabled):hover { box-shadow: 0 4px 14px rgb(99 92 199 / .25); }
+.btn-sec:not(:disabled):hover { box-shadow: var(--shadow); }
+.nav a { transition: background-color .2s, color .2s, transform .2s var(--ease-out); }
+.nav a svg { transition: transform .25s var(--ease-spring); }
+.nav a:hover svg { transform: scale(1.12); }
+.nav a[aria-current="page"] svg { animation: rebote .45s var(--ease-spring); }
+@keyframes rebote { 0% { transform: scale(.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.fila-click { transition: background-color .15s; }
+.cerrar:hover { transform: rotate(90deg); }
+
+/* tarjetas que se elevan al pasar el ratón */
+.ficha-card, .taller, .rol-demo, .kpi, .mes {
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out), border-color .2s, background-color .2s;
+}
+@media (hover: hover) {
+  .ficha-card:hover, .taller:hover, .rol-demo:hover, .kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgb(30 27 52 / .12); }
+}
+
+/* entrada de cada sección: los bloques aparecen escalonados */
+#vista.entrando > * { animation: subir .5s var(--ease-out) both; }
+#vista.entrando > :nth-child(2) { animation-delay: .06s; }
+#vista.entrando > :nth-child(3) { animation-delay: .12s; }
+#vista.entrando > :nth-child(4) { animation-delay: .18s; }
+#vista.entrando > :nth-child(n+5) { animation-delay: .24s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > * { animation: subir .5s var(--ease-out) both; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(2) { animation-delay: .1s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(3) { animation-delay: .15s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(4) { animation-delay: .2s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(5) { animation-delay: .25s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(6) { animation-delay: .3s; }
+#vista.entrando :is(.kpis, .fichas, .talleres, .meses, .rejilla) > :nth-child(n+7) { animation-delay: .35s; }
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } }
+
+/* barras y gráfico crecen al entrar */
+#vista.entrando .barra > span { animation: crecer-x .9s var(--ease-out) .25s both; transform-origin: left; }
+#vista.entrando .grafico .col i { animation: crecer-y .8s var(--ease-out) both; transform-origin: bottom; }
+#vista.entrando .grafico .col:nth-child(2) i { animation-delay: .25s; }
+#vista.entrando .grafico .col:nth-child(3) i { animation-delay: .3s; }
+#vista.entrando .grafico .col:nth-child(4) i { animation-delay: .35s; }
+#vista.entrando .grafico .col:nth-child(5) i { animation-delay: .4s; }
+#vista.entrando .grafico .col:nth-child(n+6) i { animation-delay: .45s; }
+#vista.entrando .grafico .col:first-child i { animation-delay: .2s; }
+@keyframes crecer-x { from { transform: scaleX(0); } }
+@keyframes crecer-y { from { transform: scaleY(0); } }
+
+/* diálogos: aparecen con un ligero zoom y el fondo se funde */
+.dialogo[open] { animation: dlg-abrir .3s var(--ease-out); }
+.dialogo[open]::backdrop { animation: fundir .3s ease-out; }
+.dialogo.cerrando { animation: dlg-cerrar .18s ease-in forwards; }
+.dialogo.cerrando::backdrop { animation: fundir .18s ease-in reverse forwards; }
+@keyframes dlg-abrir { from { opacity: 0; transform: translateY(16px) scale(.96); } }
+@keyframes dlg-cerrar { to { opacity: 0; transform: translateY(10px) scale(.97); } }
+@keyframes fundir { from { opacity: 0; } }
+
+/* avisos flotantes */
+.toast { animation: toast-entrar .4s var(--ease-spring); }
+.toast.saliendo { animation: toast-salir .25s ease-in forwards; }
+@keyframes toast-entrar { from { opacity: 0; transform: translateY(16px) scale(.95); } }
+@keyframes toast-salir { to { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+/* pantalla de acceso y arranque */
+.acceso:not([hidden]) .acceso-card { animation: subir .6s var(--ease-out) both; }
+.acceso:not([hidden]) .acceso-marca img { animation: logo-entrar .7s var(--ease-spring) .15s both; }
+.acceso:not([hidden]) .acceso-form > * { animation: subir .5s var(--ease-out) .2s both; }
+@keyframes logo-entrar { from { opacity: 0; transform: scale(.6) rotate(-8deg); } }
+.arranque-card { animation: fundir .4s ease-out both; }
+.arranque-card img { animation: latir 1.6s ease-in-out infinite; }
+@keyframes latir { 50% { transform: scale(1.06); } }
+#app:not([hidden]) .lateral { animation: fundir .4s ease-out; }
+
+/* avisos de error en formularios */
+.aviso-error:not([hidden]), .error:not([hidden]) { animation: sacudir .4s ease-in-out; }
+@keyframes sacudir { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after, ::backdrop { transition: none !important; animation: none !important; } }

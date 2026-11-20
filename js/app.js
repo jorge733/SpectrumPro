@@ -118,7 +118,50 @@ function toast(msg, tipo = 'ok') {
   el.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
   el.textContent = msg;
   box.append(el);
-  setTimeout(() => el.remove(), tipo === 'error' ? 6000 : 3200);
+  setTimeout(() => {
+    if (sinMovimiento()) { el.remove(); return; }
+    el.classList.add('saliendo');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }, tipo === 'error' ? 6000 : 3200);
+}
+
+/* ---------- animaciones ---------- */
+const sinMovimiento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Los diálogos se cierran con una animación corta antes del cierre real.
+$$('dialog.dialogo').forEach(dlg => {
+  const cerrar = dlg.close.bind(dlg), abrir = dlg.showModal.bind(dlg);
+  let espera = null;
+  dlg.close = v => {
+    if (!dlg.open || espera) return;
+    if (sinMovimiento()) { cerrar(v); return; }
+    dlg.classList.add('cerrando');
+    espera = setTimeout(() => { espera = null; dlg.classList.remove('cerrando'); cerrar(v); }, 180);
+  };
+  dlg.showModal = () => {
+    if (espera) { clearTimeout(espera); espera = null; dlg.classList.remove('cerrando'); }
+    if (!dlg.open) abrir();
+  };
+  dlg.addEventListener('close', () => { if (espera) { clearTimeout(espera); espera = null; } dlg.classList.remove('cerrando'); });
+});
+
+// Los números de las tarjetas KPI cuentan desde cero al entrar en el panel.
+function contarKpis(raiz) {
+  if (sinMovimiento()) return;
+  $$('.kpi-valor', raiz).forEach(el => {
+    const nodo = el.firstChild;
+    if (!nodo || nodo.nodeType !== Node.TEXT_NODE) return;
+    const fin = Number(nodo.textContent);
+    if (!Number.isFinite(fin) || fin <= 0) return;
+    const t0 = performance.now(), dur = 800;
+    const paso = ahora => {
+      const p = Math.min(1, (ahora - t0) / dur);
+      nodo.textContent = Math.round(fin * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(paso);
+    };
+    nodo.textContent = '0';
+    requestAnimationFrame(paso);
+  });
 }
 function confirmar(titulo, texto, etiqueta = 'Confirmar') {
   const dlg = $('#dlg-confirmar');
@@ -794,7 +837,7 @@ async function abrirFicha(id) {
       ${puede.eliminarFichas() ? `<button type="button" class="btn btn-sec" data-eliminar="${a.id}">Eliminar ficha</button>` : ''}
       <button type="button" class="btn" data-editar="${a.id}">Editar ficha</button>
     </div>` : ''}`;
-  if (!dlg.open) dlg.showModal();
+  dlg.showModal();
   dlg.scrollTop = 0;
 
   if (puede.verTodo()) {
@@ -1017,11 +1060,23 @@ function vistaActual() {
   if (v === 'administracion' && !puede.admin()) return 'panel';
   return v;
 }
+let vistaPintada = null;
 function render() {
   if (!S.perfil) return;
   const v = vistaActual();
   $$('.nav a').forEach(a => a.dataset.vista === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
-  VISTAS[v]($('#vista'));
+  const caja = $('#vista');
+  VISTAS[v](caja);
+  // Solo se anima al cambiar de sección: render() también corre en cada clic (p. ej. al pasar lista).
+  if (v !== vistaPintada) {
+    vistaPintada = v;
+    caja.classList.remove('entrando');
+    void caja.offsetWidth;
+    caja.classList.add('entrando');
+    clearTimeout(render.t);
+    render.t = setTimeout(() => caja.classList.remove('entrando'), 1400);
+    contarKpis(caja);
+  }
 }
 window.addEventListener('hashchange', () => {
   if (/access_token|type=/.test(location.hash)) return;

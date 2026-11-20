@@ -2,7 +2,7 @@
 // - Páginas: primero red (siempre la versión nueva); sin conexión, la última copia guardada.
 // - Archivos propios (css, js, imágenes): copia guardada al instante y actualización en segundo plano.
 // - Supabase y CDNs: pasan directo, nunca se guardan (son datos privados o con su propia caché).
-const VERSION = 'spectrumpro-v1';
+const VERSION = 'spectrumpro-v2';
 const BASE = ['./', './index.html', './styles.css', './config.js', './js/datos.js', './js/app.js', './manifest.webmanifest', './assets/logo.svg', './assets/icono-192.png'];
 
 self.addEventListener('install', e => {
