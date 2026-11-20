@@ -80,16 +80,16 @@ O desde el panel: **Edge Functions → Deploy a new function → Via Editor**, c
 
 ### 5. Conectar la página
 
-En `config.js` pega la **Project URL** y la clave **anon public** (Project Settings → API):
+En `config.js` pega la **Project URL** y la **Publishable key** (Project Settings → API Keys):
 
 ```js
 window.SPECTRUMPRO_CONFIG = {
   supabaseUrl: 'https://xxxx.supabase.co',
-  supabaseAnonKey: 'eyJ...',
+  supabaseAnonKey: 'sb_publishable_...',
 };
 ```
 
-La clave *anon* es pública por diseño: la seguridad la dan las políticas RLS. **Nunca** pongas la `service_role` key en este archivo.
+La publishable key es pública por diseño: la seguridad la dan las políticas RLS. **Nunca** pongas una *secret key* ni la `service_role` key en este archivo.
 
 ### 6. Publicar la plataforma
 
