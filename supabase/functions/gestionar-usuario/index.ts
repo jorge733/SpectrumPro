@@ -20,7 +20,14 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido." }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const servicio = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  // Clave de servicio: sistema nuevo (SUPABASE_SECRET_KEYS) o el anterior (SUPABASE_SERVICE_ROLE_KEY).
+  let claveServicio = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  try {
+    const nuevas = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    claveServicio = nuevas.default ?? Object.values(nuevas)[0] ?? claveServicio;
+  } catch { /* se usa la anterior */ }
+  if (!claveServicio) return json({ error: "La función no tiene acceso a la clave de servicio." }, 500);
+  const servicio = createClient(url, String(claveServicio), { auth: { persistSession: false } });
 
   // 1. ¿Quién llama? Se valida el token de la sesión y su rol en la base de datos.
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
