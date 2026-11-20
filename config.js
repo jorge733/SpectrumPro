@@ -4,6 +4,6 @@
 // Nunca pongas aquí una secret key ni la service_role key.
 // Si se dejan vacías, la plataforma funciona en modo demostración con datos ficticios.
 window.SPECTRUMPRO_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://wgmbtmakxipuvejfffmt.supabase.co',
+  supabaseAnonKey: 'sb_publishable_4qHkAj3sKzgU24ps44AQPg_RnWE4_41',
 };
