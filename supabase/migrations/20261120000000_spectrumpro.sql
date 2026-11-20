@@ -342,6 +342,19 @@ create policy asistencia_borrar on public.asistencia for delete to authenticated
 create policy auditoria_ver on public.auditoria for select to authenticated
   using (public.es_admin());
 
+-- Acceso a las tablas por la API: solo para sesiones iniciadas (las filas las filtra RLS).
+-- Se declara aquí para no depender de la opción "Grant API access to new tables automatically".
+revoke all on public.perfiles, public.talleres, public.taller_equipo, public.alumnos, public.alumnos_privado,
+  public.inscripciones, public.asistencia, public.auditoria from anon;
+grant usage on schema public to authenticated;
+grant select, update on public.perfiles to authenticated;
+grant select, insert, update, delete on public.talleres, public.taller_equipo, public.alumnos, public.alumnos_privado,
+  public.inscripciones, public.asistencia to authenticated;
+grant select on public.auditoria to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+grant all on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
+
 -- Permisos de las funciones: nada para anónimos.
 revoke execute on all functions in schema public from public, anon;
 grant execute on function public.cumpleanos(), public.rol_actual(), public.es_admin(), public.ve_todo(),
