@@ -8,4 +8,5 @@ insert into public.talleres (nombre, area, dias, hora_inicio, hora_fin, encargad
   ('Títeres y TV',                               'Centro de Formación', '{5}',   '15:00', '17:00', 'Equipo de Títeres y TV',            '#E0B800', 5),
   ('Videojuegos',                                'Centro de Formación', '{3}',   '17:00', '18:30', 'Encargado de Videojuegos',          '#00BC70', 6),
   ('Habilidades para la vida diaria con Cocina', 'Terapia Ocupacional', '{1}',   '11:00', '12:30', 'Terapeuta ocupacional',             '#2A9D8F', 7),
-  ('Cuentos con Vellón',                         'Terapia Ocupacional', '{5}',   '11:00', '12:30', 'Terapeuta ocupacional',             '#9B6AD6', 8);
+  ('Cuentos con Vellón',                         'Terapia Ocupacional', '{5}',   '11:00', '12:30', 'Terapeuta ocupacional',             '#9B6AD6', 8)
+on conflict do nothing;

@@ -56,6 +56,7 @@
     if (/row-level security|permission denied|violates row-level/i.test(m)) return new Error('No tienes permiso para hacer este cambio.');
     if (/Failed to fetch|NetworkError|network/i.test(m)) return new Error('No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.');
     if (/Password should be|weak password/i.test(m)) return new Error('La contraseña es muy débil. Usa al menos 10 caracteres.');
+    if (/talleres_nombre_unico/i.test(m)) return new Error('Ya existe un taller con ese nombre.');
     if (/duplicate key/i.test(m)) return new Error('Ese registro ya existe.');
     return new Error(m || 'Ocurrió un error inesperado.');
   }
