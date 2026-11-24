@@ -149,7 +149,7 @@
           <label>Apellidos *<input id="f-apellidos" name="apellidos" required autocomplete="off"></label>
           <label>Nombre con el que prefiere que le llamen<input id="f-apodo" name="apodo" autocomplete="off"></label>
           <label>Pronombres<input id="f-pronombres" name="pronombres" autocomplete="off" placeholder="él, ella, elle…"></label>
-          <label>Fecha de nacimiento *<input id="f-fechaNac" name="fechaNac" type="date" required></label>
+          <label>Fecha de nacimiento *<input id="f-fechaNac" name="fechaNac" type="date" required><span id="f-edad" class="edad-viva" aria-live="polite"></span></label>
           <label>RUT<input id="f-rut" name="rut" autocomplete="off" placeholder="12.345.678-9"></label>
         </div>
       </fieldset>
@@ -185,7 +185,8 @@
           <label>Parentesco<input id="f-tutorRelacion" name="tutorRelacion" autocomplete="off" placeholder="Madre, padre, tutor legal…"></label>
           <label>Teléfono<input id="f-tutorTelefono" name="tutorTelefono" type="tel" autocomplete="off" placeholder="+56 9 …"></label>
           <label>Correo electrónico<input id="f-tutorEmail" name="tutorEmail" type="email" autocomplete="off"></label>
-          <label class="ancho">Contacto de emergencia<input id="f-emergencia" name="emergencia" autocomplete="off" placeholder="Nombre y teléfono"></label>
+          <label class="ancho">Contacto de emergencia 1<input id="f-emergencia" name="emergencia" autocomplete="off" placeholder="Nombre, parentesco y teléfono"></label>
+          <label class="ancho">Contacto de emergencia 2<input id="f-emergencia2" name="emergencia2" autocomplete="off" placeholder="Nombre, parentesco y teléfono"></label>
           <label class="ancho">Comuna y dirección<input id="f-direccion" name="direccion" autocomplete="off"></label>
         </div>
       </fieldset>

@@ -332,6 +332,8 @@ legend { font-family: var(--f-display); font-weight: 600; padding: 0; margin-bot
 .checks label { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: .88rem; }
 .checks label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .checks input { accent-color: var(--accent); }
+.edad-viva { display: block; min-height: 1.2em; margin-top: 4px; font-size: .82rem; font-weight: 600; color: var(--accent); }
+.edad-viva.error { color: var(--bad); }
 .nota-campo { margin-top: 8px; font-size: .82rem; color: var(--warn); }
 .error { color: var(--bad); font-weight: 500; }
 

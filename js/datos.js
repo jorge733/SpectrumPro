@@ -19,7 +19,7 @@
     nombre: 'nombre', apellidos: 'apellidos', apodo: 'apodo', pronombres: 'pronombres', fechaNac: 'fecha_nac', rut: 'rut',
     programa: 'programa', beca: 'beca', estado: 'estado', fechaIngreso: 'fecha_ingreso', entrevista: 'entrevista',
     tutorNombre: 'tutor_nombre', tutorRelacion: 'tutor_relacion', tutorTelefono: 'tutor_telefono', tutorEmail: 'tutor_email',
-    emergencia: 'emergencia', direccion: 'direccion', intereses: 'intereses', apoyos: 'apoyos', alergias: 'alergias',
+    emergencia: 'emergencia', emergencia2: 'emergencia2', direccion: 'direccion', intereses: 'intereses', apoyos: 'apoyos', alergias: 'alergias',
   };
   const FECHAS_OPCIONALES = new Set(['fecha_ingreso', 'entrevista']);
   const alumnoAFila = a => {
@@ -190,7 +190,7 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v3';
+  const CLAVE_DEMO = 'spectrumpro:demo:v4';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -264,6 +264,7 @@
         tutorNombre: `${resp} ${ap1}`, tutorRelacion: parentesco[i % parentesco.length], tutorTelefono: tel(),
         tutorEmail: `${resp.toLowerCase()}.${ap1.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')}@ejemplo.cl`,
         emergencia: `${responsables[(i + 3) % responsables.length]} ${ap1} · ${tel()}`,
+        emergencia2: i % 2 === 0 ? `${responsables[(i + 5) % responsables.length]} ${apellidos.split(' ')[1] || ap1} · ${tel()}` : '',
         direccion: comunas[i % comunas.length], intereses: intereses[i % intereses.length], apoyos: apoyos[i % apoyos.length],
         alergias: i % 5 === 0 ? 'Frutos secos' : (i % 7 === 3 ? 'Lactosa' : ''),
       };

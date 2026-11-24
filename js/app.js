@@ -820,7 +820,8 @@ async function abrirFicha(id) {
             ${fila('Responsable', a.tutorNombre ? `${esc(a.tutorNombre)}${a.tutorRelacion ? ' · ' + esc(a.tutorRelacion) : ''}` : '')}
             ${fila('Teléfono', copiable(a.tutorTelefono))}
             ${fila('Correo', copiable(a.tutorEmail))}
-            ${fila('Emergencia', esc(a.emergencia))}
+            ${fila(a.emergencia2 ? 'Emergencia 1' : 'Emergencia', esc(a.emergencia))}
+            ${fila('Emergencia 2', esc(a.emergencia2))}
           </dl>
         </section>
         <section>
@@ -873,7 +874,7 @@ async function abrirFicha(id) {
 
 /* ---------- formulario de ficha ---------- */
 let editando = null;
-const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'direccion', 'intereses', 'apoyos', 'alergias'];
+const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'emergencia2', 'direccion', 'intereses', 'apoyos', 'alergias'];
 async function abrirFormulario(id = null) {
   editando = id;
   const a = id ? alumno(id) : null;
@@ -886,6 +887,8 @@ async function abrirFormulario(id = null) {
   if (!a) { $('#f-programa').value = 'FormaPro'; $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
   $('#f-privado').hidden = !puede.verTodo();
+  $('#f-fechaNac').max = iso(hoy());
+  mostrarEdad();
   avisoTO();
   if ($('#dlg-ficha').open) $('#dlg-ficha').close();
   $('#dlg-form').showModal();
@@ -895,6 +898,17 @@ async function abrirFormulario(id = null) {
     catch (e) { toast(`No se cargaron los datos privados. ${e.message}`, 'error'); }
   }
 }
+// Edad al momento, mientras se escribe la fecha de nacimiento.
+function mostrarEdad() {
+  const v = $('#f-fechaNac').value, out = $('#f-edad');
+  out.classList.remove('error');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < '1900-01-02') { out.textContent = ''; return; }
+  if (v > iso(hoy())) { out.textContent = 'La fecha no puede ser futura'; out.classList.add('error'); return; }
+  const n = edad(v);
+  out.textContent = n === 1 ? '1 año' : `${n} años`;
+}
+$('#f-fechaNac').addEventListener('input', mostrarEdad);
+$('#f-fechaNac').addEventListener('change', mostrarEdad);
 function avisoTO() {
   $('#f-aviso-to').hidden = !($('#f-programa').value === 'Terapia Ocupacional' && $$('#f-talleres input:checked').length < 3);
 }
@@ -1083,7 +1097,7 @@ $('#form-mi-cumple').addEventListener('submit', async ev => {
 
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia 1', 'emergencia'], ['Emergencia 2', 'emergencia2'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');

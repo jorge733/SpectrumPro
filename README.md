@@ -35,7 +35,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
 2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
-   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` y `20261124010000_mi_fecha_nac.sql`, que añaden los cumpleaños de los profesores). En un proyecto ya creado basta con ejecutar los que falten.
+   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql` y `20261124020000_emergencia2.sql`). En un proyecto ya creado basta con ejecutar los que falten.
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
