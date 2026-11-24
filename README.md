@@ -36,7 +36,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
 2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
-   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` `20261124030000_talleres_sitio_web.sql` (talleres de spectrumpro.cl) y `20261124040000_rol_equipo.sql` (rol Equipo)). En un proyecto ya creado basta con ejecutar los que falten.
+   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` `20261124030000_talleres_sitio_web.sql` (talleres de spectrumpro.cl), `20261124040000_rol_equipo.sql` (rol Equipo) y `20261124060000_tienda.sql` (tienda)). En un proyecto ya creado basta con ejecutar los que falten.
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
@@ -108,11 +108,18 @@ Para activarla:
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
 
-## Tienda (propuesta)
+## Tienda
 
-`tienda/index.html` es una propuesta de rediseño de la tienda de productos de SpectrumPro (hoy en Google Sites, `spectrumprostore`). Es una página estática y pública: portada, catálogo de los 8 productos con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto. Las fotos están en `tienda/img/`.
+`tienda/index.html` es la tienda pública de productos (`/tienda/`): portada, catálogo con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto.
 
-Lo marcado en amarillo son datos que faltan (precios, forma de pago y entrega, Instagram). Cuando estén completos, se quita el aviso de «Propuesta de rediseño» del principio. Los productos se editan en la lista `P` del script al final de la página.
+Los productos y el contacto se editan en la plataforma, sección **Tienda** (solo dirección): nombre, foto, tipo, precio, tallas o colores, descripción, orden, «Agotado» y «Mostrar en la tienda»; además el WhatsApp, Instagram, forma de pago y entrega. Los cambios se ven al instante en la tienda.
+
+Para activarla:
+
+1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124060000_tienda.sql`. Crea las tablas `tienda_productos` y `tienda_ajustes`, el bucket público de fotos `tienda` y carga los 8 productos actuales.
+2. Listo: la tienda lee de Supabase. Mientras no se ejecute la migración, muestra la lista de respaldo que trae la página (sin precios).
+
+El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo puede hacer solo dirección, y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
 
 ## Estructura
 
@@ -120,7 +127,7 @@ Lo marcado en amarillo son datos que faltan (precios, forma de pago y entrega, I
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
-| `tienda/` | Propuesta de tienda de productos (página pública) |
+| `tienda/` | Tienda pública de productos; se edita en la sección Tienda |
 | `assets/og/` | Imágenes de 1200×630 para la vista previa al compartir cada página (Open Graph) |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
