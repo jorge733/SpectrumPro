@@ -95,11 +95,23 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings → Pages* elige la rama y la carpeta raíz. Para un dominio propio como `alumnado.spectrumpro.cl`, agrega el registro DNS que indica GitHub.
 
+## Encuesta de la Muestra Audiovisual
+
+`encuesta.html` es una página pública, con la gráfica del afiche, para quienes asistirán a la Muestra Audiovisual (viernes 11 de diciembre, 11:00, Centro Cultural La Moneda). No pide iniciar sesión. Pregunta nombre, correo, teléfono (opcional), cuántas personas acompañan, la relación con SpectrumPro, cómo se enteraron, qué necesitan para estar cómodos (silla de ruedas, espacio de calma, protectores auditivos, subtítulos, Lengua de Señas Chilena…) y qué esperan de la muestra.
+
+Para activarla:
+
+1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124000000_encuesta_muestra.sql`. Crea la tabla `encuesta_evento`.
+2. Publica el sitio y comparte el enlace `…/encuesta.html` (o un código QR que apunte a él).
+
+El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
+
 ## Estructura
 
 | Archivo | Contenido |
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
+| `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
@@ -120,6 +132,7 @@ alumnos_privado (alumno_id, medicacion, observaciones)   → solo dirección y t
 inscripciones   (alumno_id, taller_id, desde)
 asistencia      (taller_id, alumno_id, fecha, estado P|R|A|J, nota, registrado_por)
 auditoria       (creado, actor, actor_nombre, accion, tabla, registro, detalle)  → la escriben triggers
+encuesta_evento (evento, nombre, email, acompanantes, relacion, accesibilidad[]…) → el público solo inserta
 ```
 
 El porcentaje de asistencia cuenta Presente y Retraso como asistencia. Las ausencias justificadas se muestran aparte.

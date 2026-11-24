@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7364B">
+<meta name="description" content="Encuesta para quienes asistirán a la Muestra Audiovisual de SpectrumPro, viernes 11 de diciembre a las 11:00 en el Centro Cultural La Moneda.">
+<meta property="og:title" content="Muestra Audiovisual SpectrumPro · Encuesta de asistencia">
+<meta property="og:description" content="Viernes 11/DIC · 11:00 hrs · Centro Cultural La Moneda">
+<meta property="og:image" content="assets/muestra-ilustracion.jpg">
+<meta name="format-detection" content="telephone=no">
+<title>Muestra Audiovisual SpectrumPro</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600&display=swap">
+<style>
+/* Afiche de la muestra: fondo rojo, títulos blancos en Lexend, la ilustración como portada
+   y el formulario en una tarjeta blanca para que todo el texto se lea con buen contraste. */
+:root {
+  --rojo: #f7364b;          /* el rojo exacto del afiche */
+  --rojo-hondo: #c81d33;    /* texto rojo sobre blanco (contraste AA) */
+  --rojo-suave: #fde4e7;
+  --blanco: #ffffff;
+  --tinta: #2a0b12;
+  --tinta-suave: #6b4a51;
+  --linea: #f0cdd2;
+  --ok: #0a7f4f;
+  --f-display: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --f-texto: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--rojo); color: var(--blanco);
+  font: 16px/1.55 var(--f-texto);
+}
+img { max-width: 100%; height: auto; display: block; }
+.envoltura {
+  max-width: 860px; margin: 0 auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 40px) calc(env(safe-area-inset-bottom, 0px) + 40px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 32px;
+}
+
+/* Cabecera como en el afiche */
+.cabecera { display: grid; gap: 14px; }
+.cabecera h1 {
+  margin: 0; font: 700 clamp(2rem, 7.6vw, 3.9rem)/1 var(--f-display);
+  text-transform: uppercase; letter-spacing: .01em; text-wrap: balance;
+}
+.fecha { display: flex; align-items: center; gap: 16px; }
+.fecha::before { content: ""; flex: 1; height: 10px; background: var(--blanco); }
+.fecha p { margin: 0; font: 600 clamp(1.05rem, 3.6vw, 1.75rem)/1.1 var(--f-display); white-space: nowrap; }
+.portada { margin: 8px auto 0; width: 100%; max-width: 680px; }
+.lugar { text-align: center; display: grid; gap: 6px; }
+.lugar strong { font: 700 clamp(1.35rem, 4.6vw, 2.1rem)/1.15 var(--f-display); }
+.lugar span { font: 600 .9rem/1.4 var(--f-display); }
+
+/* Tarjeta del formulario */
+.tarjeta {
+  background: var(--blanco); color: var(--tinta); border-radius: 22px;
+  padding: clamp(22px, 5vw, 40px);
+  box-shadow: 0 10px 0 rgb(42 11 18 / .18);
+}
+.tarjeta h2 { margin: 0 0 6px; font: 700 clamp(1.5rem, 4.4vw, 2rem)/1.15 var(--f-display); color: var(--rojo-hondo); text-wrap: balance; }
+.intro { margin: 0 0 4px; max-width: 60ch; }
+.nota { margin: 0; color: var(--tinta-suave); font-size: .9rem; }
+form { display: grid; gap: 26px; margin-top: 26px; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 10px; }
+legend, .etiqueta { font: 600 1.05rem/1.3 var(--f-display); padding: 0; margin-bottom: 10px; }
+.campo { display: grid; gap: 8px; }
+.campo > span { font: 600 1.05rem/1.3 var(--f-display); }
+.opc { color: var(--tinta-suave); font: 500 .85rem var(--f-texto); }
+.ayuda { margin: -4px 0 4px; color: var(--tinta-suave); font-size: .9rem; }
+.dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+
+input[type=text], input[type=email], input[type=tel], textarea {
+  width: 100%; font: inherit; color: var(--tinta); background: #fff;
+  border: 2px solid var(--linea); border-radius: 12px; padding: 12px 14px;
+}
+textarea { min-height: 96px; resize: vertical; }
+input:focus-visible, textarea:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; border-color: var(--tinta); }
+input[aria-invalid=true] { border-color: var(--rojo-hondo); background: var(--rojo-suave); }
+
+/* Opciones como fichas de claqueta */
+.fichas { display: flex; flex-wrap: wrap; gap: 10px; }
+.ficha { position: relative; }
+.ficha input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.ficha span {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  padding: 9px 16px; border: 2px solid var(--tinta); border-radius: 999px;
+  font: 500 .95rem/1.25 var(--f-display); background: #fff; cursor: pointer;
+  transition: background .15s, color .15s, transform .15s;
+}
+.ficha span::before {
+  content: ""; width: 14px; height: 14px; border: 2px solid currentColor; flex: none;
+  border-radius: 50%;
+}
+.ficha input[type=checkbox] + span::before { border-radius: 4px; }
+.ficha input:checked + span { background: var(--rojo-hondo); border-color: var(--rojo-hondo); color: #fff; font-weight: 600; }
+.ficha input:checked + span::before { background: #fff; box-shadow: inset 0 0 0 2px var(--rojo-hondo); }
+.ficha input:focus-visible + span { outline: 3px solid var(--tinta); outline-offset: 3px; }
+.ficha:hover span { transform: translateY(-1px); }
+
+/* Contador de acompañantes */
+.contador { display: inline-flex; align-items: center; gap: 0; border: 2px solid var(--tinta); border-radius: 999px; width: max-content; }
+.contador button { width: 48px; height: 48px; border: 0; background: none; font: 700 1.4rem var(--f-display); color: var(--tinta); cursor: pointer; border-radius: 999px; }
+.contador button:hover { background: var(--rojo-suave); }
+.contador button:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+.contador output { min-width: 3ch; text-align: center; font: 700 1.3rem var(--f-display); font-variant-numeric: tabular-nums; }
+
+.casilla { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.casilla input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--rojo-hondo); flex: none; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.error { margin: 0; color: var(--rojo-hondo); font-weight: 600; }
+.enviar {
+  justify-self: start; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--rojo-hondo); color: #fff; padding: 16px 34px;
+  font: 700 1.15rem var(--f-display); letter-spacing: .02em; text-transform: uppercase;
+  box-shadow: 0 5px 0 #8f1022; transition: transform .1s, box-shadow .1s;
+}
+.enviar:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #8f1022; }
+.enviar:active { transform: translateY(4px); box-shadow: 0 1px 0 #8f1022; }
+.enviar:focus-visible { outline: 3px solid var(--tinta); outline-offset: 4px; }
+.enviar[disabled] { opacity: .65; cursor: progress; }
+
+/* Gracias */
+.gracias { text-align: center; display: grid; gap: 14px; justify-items: center; padding-block: 12px; }
+.gracias h2 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+.claqueta { width: 96px; height: 96px; }
+.recordatorio { background: var(--rojo-suave); border-radius: 14px; padding: 14px 18px; font: 500 1rem/1.5 var(--f-display); }
+
+.pie { display: grid; gap: 14px; justify-items: center; text-align: center; font-size: .85rem; }
+.pie img { width: 100%; max-width: 520px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="envoltura">
+
+  <header class="cabecera">
+    <h1>Muestra Audiovisual</h1>
+    <div class="fecha"><p>Viernes 11/DIC/11:00 Hrs</p></div>
+    <img class="portada" src="assets/muestra-ilustracion.jpg" width="1060" height="830"
+         alt="Ilustración de SpectrumPro: un niño con una claqueta junto a un equipo de rodaje con cámara, focos, megáfono y micrófono. Texto: La primera productora audiovisual neurodivergente de Chile.">
+    <div class="lugar">
+      <strong>Centro Cultural La Moneda</strong>
+      <span>Metro La Moneda · Pl. de la Ciudadanía 26, Santiago</span>
+    </div>
+  </header>
+
+  <main class="tarjeta" id="tarjeta">
+    <section id="paso-form" aria-labelledby="titulo-form">
+      <h2 id="titulo-form">Cuéntanos que vienes</h2>
+      <p class="intro">Queremos preparar la muestra para que todas las personas la disfruten. Responder toma unos 2 minutos.</p>
+      <p class="nota">Los campos sin la marca «opcional» son obligatorios.</p>
+
+      <form id="encuesta" novalidate>
+        <div class="dos">
+          <label class="campo">
+            <span>Nombre y apellido</span>
+            <input id="nombre" name="nombre" type="text" autocomplete="name" maxlength="120" required>
+          </label>
+          <label class="campo">
+            <span>Correo electrónico</span>
+            <input id="email" name="email" type="email" autocomplete="email" maxlength="160" required>
+          </label>
+        </div>
+        <label class="campo">
+          <span>Teléfono <span class="opc">(opcional)</span></span>
+          <input id="telefono" name="telefono" type="tel" autocomplete="tel" maxlength="30" placeholder="+56 9 1234 5678">
+        </label>
+
+        <div class="campo">
+          <span class="etiqueta" id="et-acomp">¿Cuántas personas vienen contigo?</span>
+          <p class="ayuda">Sin contarte a ti.</p>
+          <div class="contador" role="group" aria-labelledby="et-acomp">
+            <button type="button" id="menos" aria-label="Una persona menos">−</button>
+            <output id="acompanantes" aria-live="polite">0</output>
+            <button type="button" id="mas" aria-label="Una persona más">+</button>
+          </div>
+        </div>
+
+        <fieldset id="grupo-relacion">
+          <legend>¿Cuál es tu relación con SpectrumPro?</legend>
+          <div class="fichas">
+            <label class="ficha"><input type="radio" name="relacion" value="Joven de SpectrumPro" required><span>Soy joven de SpectrumPro</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Familia"><span>Familia de un joven</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Equipo"><span>Equipo SpectrumPro</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Educación o salud"><span>Profesional de educación o salud</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Institución o empresa"><span>Institución o empresa</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Prensa"><span>Prensa</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Público general"><span>Público general</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>¿Cómo te enteraste de la muestra? <span class="opc">(opcional)</span></legend>
+          <div class="fichas">
+            <label class="ficha"><input type="radio" name="medio" value="Instagram u otras redes"><span>Instagram u otras redes</span></label>
+            <label class="ficha"><input type="radio" name="medio" value="WhatsApp"><span>WhatsApp</span></label>
+            <label class="ficha"><input type="radio" name="medio" value="Correo"><span>Correo</span></label>
+            <label class="ficha"><input type="radio" name="medio" value="Centro Cultural La Moneda"><span>Centro Cultural La Moneda</span></label>
+            <label class="ficha"><input type="radio" name="medio" value="Colegio o institución"><span>Colegio o institución</span></label>
+            <label class="ficha"><input type="radio" name="medio" value="Me lo contó alguien"><span>Me lo contó alguien</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>¿Necesitas algo para estar cómodo o cómoda? <span class="opc">(opcional)</span></legend>
+          <p class="ayuda">Marca todo lo que te sirva, para ti o para quienes vienen contigo.</p>
+          <div class="fichas">
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Acceso en silla de ruedas"><span>Acceso en silla de ruedas</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Espacio de calma"><span>Un espacio de calma para descansar</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Asiento cerca de la salida"><span>Asiento cerca de la salida</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Protectores auditivos"><span>Protectores auditivos</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Luz y sonido suaves"><span>Luz y sonido más suaves</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Subtítulos"><span>Subtítulos</span></label>
+            <label class="ficha"><input type="checkbox" name="accesibilidad" value="Lengua de Señas Chilena"><span>Lengua de Señas Chilena</span></label>
+          </div>
+          <label class="campo">
+            <span class="opc">¿Algo más que debamos saber?</span>
+            <textarea id="accesibilidad_detalle" name="accesibilidad_detalle" maxlength="1000"></textarea>
+          </label>
+        </fieldset>
+
+        <label class="campo">
+          <span>¿Qué te gustaría ver o conocer en la muestra? <span class="opc">(opcional)</span></span>
+          <textarea id="expectativas" name="expectativas" maxlength="1000"></textarea>
+        </label>
+
+        <div class="trampa" aria-hidden="true">
+          <label>No completes este campo <input id="sitio" name="sitio" type="text" tabindex="-1" autocomplete="off"></label>
+        </div>
+
+        <fieldset>
+          <legend class="sr">Permisos</legend>
+          <label class="casilla"><input id="novedades" name="novedades" type="checkbox">
+            <span>Quiero recibir noticias de SpectrumPro y de sus próximos estrenos.</span></label>
+          <label class="casilla"><input id="consentimiento" name="consentimiento" type="checkbox" required>
+            <span>Acepto que SpectrumPro guarde estas respuestas para organizar la muestra.</span></label>
+        </fieldset>
+
+        <p id="error" class="error" role="alert" hidden></p>
+        <button type="submit" class="enviar" id="enviar">Enviar respuesta</button>
+      </form>
+    </section>
+
+    <section id="paso-gracias" class="gracias" hidden tabindex="-1" aria-labelledby="titulo-gracias">
+      <svg class="claqueta" viewBox="0 0 96 96" aria-hidden="true">
+        <rect x="10" y="38" width="76" height="46" rx="5" fill="#fff" stroke="#2a0b12" stroke-width="4"/>
+        <path d="M10 38 L82 22 L86 34" fill="#fff" stroke="#2a0b12" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M22 35 l8 -12 M40 31 l8 -12 M58 27 l8 -12" stroke="#f7364b" stroke-width="6"/>
+        <path d="M32 62 l10 10 l22 -22" fill="none" stroke="#f7364b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2 id="titulo-gracias">¡Gracias, nos vemos en la muestra!</h2>
+      <p id="gracias-texto" class="intro">Recibimos tu respuesta.</p>
+      <p class="recordatorio">Viernes 11 de diciembre · 11:00 hrs<br>Centro Cultural La Moneda, Plaza de la Ciudadanía 26</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <img src="assets/muestra-auspiciadores.jpg" width="520" height="75" alt="Organizan y apoyan: SpectrumPro, Centro Cultural La Moneda, Colún, RLA Event Technologies y Ciudadano Restaurant.">
+    <p>SpectrumPro · La primera productora audiovisual neurodivergente de Chile</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const EVENTO = 'muestra-audiovisual-2026';
+  const cfg = window.SPECTRUMPRO_CONFIG || {};
+  const conectado = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
+  const sb = conectado
+    ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    : null;
+
+  const $ = id => document.getElementById(id);
+  const form = $('encuesta'), error = $('error'), boton = $('enviar');
+
+  // Contador de acompañantes
+  let acomp = 0;
+  const pintarAcomp = () => { $('acompanantes').textContent = acomp; };
+  $('menos').addEventListener('click', () => { acomp = Math.max(0, acomp - 1); pintarAcomp(); });
+  $('mas').addEventListener('click', () => { acomp = Math.min(10, acomp + 1); pintarAcomp(); });
+
+  const limpio = v => { v = (v || '').trim(); return v ? v : null; };
+  const mostrarError = (msg, foco) => {
+    error.textContent = msg; error.hidden = false;
+    if (foco) { foco.setAttribute('aria-invalid', 'true'); foco.focus(); }
+  };
+  form.addEventListener('input', e => { e.target.removeAttribute('aria-invalid'); error.hidden = true; });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    error.hidden = true;
+
+    if ($('sitio').value) { terminar(''); return; }   // bot: se descarta sin avisar
+
+    const nombre = limpio($('nombre').value);
+    const email = limpio($('email').value);
+    const relacion = form.querySelector('input[name=relacion]:checked');
+    if (!nombre || nombre.length < 2) return mostrarError('Escribe tu nombre y apellido.', $('nombre'));
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return mostrarError('Revisa tu correo: debe tener la forma nombre@dominio.cl.', $('email'));
+    if (!relacion) return mostrarError('Elige tu relación con SpectrumPro.', form.querySelector('input[name=relacion]'));
+    if (!$('consentimiento').checked) return mostrarError('Para enviar, marca la casilla que permite guardar tus respuestas.', $('consentimiento'));
+
+    const medio = form.querySelector('input[name=medio]:checked');
+    const fila = {
+      evento: EVENTO,
+      nombre,
+      email: email.toLowerCase(),
+      telefono: limpio($('telefono').value),
+      acompanantes: acomp,
+      relacion: relacion.value,
+      medio: medio ? medio.value : null,
+      accesibilidad: [...form.querySelectorAll('input[name=accesibilidad]:checked')].map(i => i.value),
+      accesibilidad_detalle: limpio($('accesibilidad_detalle').value),
+      expectativas: limpio($('expectativas').value),
+      novedades: $('novedades').checked,
+      consentimiento: true,
+    };
+
+    if (!sb) {
+      console.info('Modo demostración: la respuesta no se guardó.', fila);
+      terminar(nombre, true);
+      return;
+    }
+
+    boton.disabled = true; boton.textContent = 'Enviando…';
+    try {
+      const { error: err } = await sb.from('encuesta_evento').insert(fila);
+      if (err) throw err;
+      terminar(nombre);
+    } catch (err) {
+      console.error(err);
+      boton.disabled = false; boton.textContent = 'Enviar respuesta';
+      mostrarError(navigator.onLine === false
+        ? 'No hay conexión a internet. Revisa tu conexión y vuelve a enviar.'
+        : 'No pudimos guardar tu respuesta. Vuelve a intentarlo en un momento; si sigue fallando, escríbenos por Instagram.');
+    }
+  });
+
+  function terminar(nombre, demo) {
+    const primer = (nombre || '').split(/\s+/)[0];
+    $('titulo-gracias').textContent = primer ? `¡Gracias, ${primer}! Nos vemos en la muestra` : '¡Gracias, nos vemos en la muestra!';
+    $('gracias-texto').textContent = demo
+      ? 'Esta es una prueba: la página no está conectada a la base de datos, así que la respuesta no se guardó.'
+      : (acomp ? `Te esperamos junto a ${acomp === 1 ? '1 persona más' : acomp + ' personas más'}.` : 'Recibimos tu respuesta.');
+    $('paso-form').hidden = true;
+    const g = $('paso-gracias'); g.hidden = false; g.focus();
+    $('tarjeta').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+})();
+</script>
+</body>
+</html>
