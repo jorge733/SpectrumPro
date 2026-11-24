@@ -107,6 +107,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .plegar svg { transition: transform .2s; }
 
 .usuario { margin-top: auto; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding: 14px 4px 0; min-width: 0; }
+.usuario-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 4px; margin: -4px; border-radius: 10px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.usuario-btn:hover { background: var(--surface-2); }
+.mi-cumple { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mi-cumple .txt { flex: 1; min-width: 200px; }
 .usuario-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .usuario-txt b { font-family: var(--f-display); font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usuario-txt small { color: var(--muted); font-size: .78rem; }
@@ -123,6 +127,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   body.menu-plegado .usuario-txt { display: none; }
   body.menu-plegado .nav a { justify-content: center; padding: 12px 0; }
   body.menu-plegado .usuario { flex-direction: column; padding-inline: 0; }
+  body.menu-plegado .usuario-btn { flex: 0 0 auto; }
   body.menu-plegado .plegar svg { transform: rotate(180deg); }
 }
 
@@ -264,6 +269,9 @@ table.matriz { border-collapse: separate; border-spacing: 3px; font-size: .82rem
   border: 1px solid var(--line);
 }
 .hoy-cumple b { font-family: var(--f-display); font-size: 1.15rem; }
+.subtitulo-lista { margin: 14px 0 4px; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.subtitulo-lista:first-of-type { margin-top: 4px; }
+.pestanas button small { margin-left: 4px; font-size: .75em; opacity: .7; }
 .dias { min-width: 58px; text-align: center; font-family: var(--f-display); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .dias small { display: block; font-family: var(--f-texto); font-weight: 500; font-size: .7rem; color: var(--muted); }
 .meses { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
@@ -324,6 +332,8 @@ legend { font-family: var(--f-display); font-weight: 600; padding: 0; margin-bot
 .checks label { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: .88rem; }
 .checks label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .checks input { accent-color: var(--accent); }
+.edad-viva { display: block; min-height: 1.2em; margin-top: 4px; font-size: .82rem; font-weight: 600; color: var(--accent); }
+.edad-viva.error { color: var(--bad); }
 .nota-campo { margin-top: 8px; font-size: .82rem; color: var(--warn); }
 .error { color: var(--bad); font-weight: 500; }
 
@@ -400,6 +410,8 @@ body.resolviendo .app, body.resolviendo .acceso { display: none !important; }
 .acceso-nombre { font-family: var(--f-marca); font-size: 1.35rem; letter-spacing: -.03em; margin-top: 8px; }
 .acceso-lema { font-family: var(--f-display); font-size: 1.1rem; font-weight: 500; opacity: .95; }
 .acceso-desc { font-size: .9rem; opacity: .8; max-width: 34ch; }
+.acceso-contacto { font-style: normal; font-size: .82rem; opacity: .85; display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+.acceso-contacto a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .acceso-form { padding: 44px 40px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .acceso-form form, #acceso-demo { display: flex; flex-direction: column; gap: 14px; }
 .acceso-form h1 { font-size: 1.5rem; }
@@ -436,6 +448,7 @@ body.resolviendo .app, body.resolviendo .acceso { display: none !important; }
 .chip-rol-admin { background: var(--accent-soft); color: var(--accent); }
 .chip-rol-terapeuta { background: var(--info-soft); color: var(--info); }
 .chip-rol-tallerista { background: var(--ok-soft); color: var(--ok); }
+.chip-rol-equipo { background: var(--warn-soft); color: var(--warn); }
 .mes li.clic { cursor: pointer; }
 .mes li:not(.clic):hover { color: inherit; }
 .ficha-cuerpo section.privado { background: var(--surface-2); border-radius: 12px; padding: 14px 16px; }

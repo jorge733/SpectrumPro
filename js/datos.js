@@ -19,7 +19,7 @@
     nombre: 'nombre', apellidos: 'apellidos', apodo: 'apodo', pronombres: 'pronombres', fechaNac: 'fecha_nac', rut: 'rut',
     programa: 'programa', beca: 'beca', estado: 'estado', fechaIngreso: 'fecha_ingreso', entrevista: 'entrevista',
     tutorNombre: 'tutor_nombre', tutorRelacion: 'tutor_relacion', tutorTelefono: 'tutor_telefono', tutorEmail: 'tutor_email',
-    emergencia: 'emergencia', direccion: 'direccion', intereses: 'intereses', apoyos: 'apoyos', alergias: 'alergias',
+    emergencia: 'emergencia', emergencia2: 'emergencia2', direccion: 'direccion', intereses: 'intereses', apoyos: 'apoyos', alergias: 'alergias',
   };
   const FECHAS_OPCIONALES = new Set(['fecha_ingreso', 'entrevista']);
   const alumnoAFila = a => {
@@ -99,8 +99,10 @@
       async cambiarClave(clave) { ok(await sb.auth.updateUser({ password: clave })); },
       async perfil() {
         const u = ok(await sb.auth.getUser()).user;
-        return ok(await sb.from('perfiles').select('*').eq('id', u.id).maybeSingle());
+        const p = ok(await sb.from('perfiles').select('*').eq('id', u.id).maybeSingle());
+        return p && { ...p, fechaNac: p.fecha_nac || '' };
       },
+      async guardarMiFechaNac(fecha) { ok(await sb.rpc('guardar_mi_fecha_nac', { p_fecha: fecha || null })); },
       async talleres() {
         const [t, e] = await Promise.all([
           todo(() => sb.from('talleres').select('*').order('orden').order('nombre')),
@@ -146,24 +148,35 @@
       async cumpleanos() {
         return ok(await sb.rpc('cumpleanos')).map(f => ({ id: f.id, nombre: f.nombre, apodo: f.apodo, apellidos: f.apellidos, fechaNac: f.fecha_nac }));
       },
+      async cumpleanosEquipo() {
+        return ok(await sb.rpc('cumpleanos_equipo')).map(f => ({ id: f.id, nombre: f.nombre, apellidos: '', fechaNac: f.fecha_nac }));
+      },
       async usuarios() {
         const [p, e] = await Promise.all([
           todo(() => sb.from('perfiles').select('*').order('nombre').order('id')),
           todo(() => sb.from('taller_equipo').select('*').order('taller_id').order('perfil_id')),
         ]);
-        return p.map(u => ({ ...u, talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
+        return p.map(u => ({ ...u, fechaNac: u.fecha_nac || '', talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
       },
       async invitar(datos) {
-        const { data, error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'invitar', ...datos, redirectTo: urlBase() } });
+        // La función publicada puede ser anterior al rol «equipo»: se invita como tallerista sin
+        // talleres (no ve a nadie) y enseguida se cambia el rol.
+        const rolFuncion = datos.rol === 'equipo' ? 'tallerista' : datos.rol;
+        const { data, error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'invitar', ...datos, rol: rolFuncion, talleres: rolFuncion === 'tallerista' ? datos.talleres : [], redirectTo: urlBase() } });
         if (error) {
           let m = error.message;
           try { m = (await error.context.json()).error || m; } catch { /* sin cuerpo */ }
           throw traducir(m);
         }
+        // La función de invitación no conoce la fecha de nacimiento: se guarda aparte.
+        const extra = {};
+        if (datos.fechaNac) extra.fecha_nac = datos.fechaNac;
+        if (datos.rol === 'equipo') extra.rol = 'equipo';
+        if (Object.keys(extra).length && data?.id) ok(await sb.from('perfiles').update(extra).eq('id', data.id));
         return data;
       },
       async actualizarUsuario(id, u) {
-        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo }).eq('id', id));
+        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo, fecha_nac: u.fechaNac || null }).eq('id', id));
         await sincronizar('taller_equipo', 'perfil_id', id, 'taller_id', u.rol === 'tallerista' ? u.talleres : []);
       },
       async eliminarUsuario(id) {
@@ -183,7 +196,7 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v2';
+  const CLAVE_DEMO = 'spectrumpro:demo:v6';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -196,20 +209,35 @@
     const rnd = mulberry32(1710);
     const t = hoy();
     const perfiles = [
-      { id: 'u-admin', email: 'direccion@ejemplo.cl', nombre: 'Dirección (demo)', rol: 'admin', activo: true },
-      { id: 'u-tera', email: 'terapeuta@ejemplo.cl', nombre: 'Terapeuta (demo)', rol: 'terapeuta', activo: true },
-      { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true },
-      { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false },
+      { id: 'u-admin', email: 'direccion@ejemplo.cl', nombre: 'Dirección (demo)', rol: 'admin', activo: true, fechaNac: iso(new Date(t.getFullYear() - 44, (t.getMonth() + 2) % 12, 9)) },
+      { id: 'u-tera', email: 'terapeuta@ejemplo.cl', nombre: 'Terapeuta (demo)', rol: 'terapeuta', activo: true, fechaNac: iso(new Date(t.getFullYear() - 36, sumarDias(t, 12).getMonth(), sumarDias(t, 12).getDate())) },
+      { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true, fechaNac: iso(new Date(t.getFullYear() - 31, (t.getMonth() + 5) % 12, 23)) },
+      { id: 'u-equipo', email: 'equipo@ejemplo.cl', nombre: 'Equipo (demo)', rol: 'equipo', activo: true, fechaNac: iso(new Date(1904, sumarDias(t, 20).getMonth(), sumarDias(t, 20).getDate())) },
+      { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false, fechaNac: '' },
     ];
+    // Lista y profesores según spectrumpro.cl; los horarios son de ejemplo (el sitio no los publica).
     const talleres = [
-      ['lab', 'Laboratorio Creativo', 'Arte y Apoyo', [2], '16:00', '17:30', 'Equipo Arte y Apoyo', '#635CC7', []],
-      ['anim', 'Animación Digital', 'Centro de Formación', [1, 3], '15:00', '17:00', 'Encargado de Animación Digital', '#31B4E7', ['u-talle']],
-      ['dibujo', 'Dibujo e Ilustración', 'Centro de Formación', [2, 4], '15:00', '16:30', 'Encargada de Dibujo e Ilustración', '#E65EBE', []],
-      ['teatro', 'Teatro', 'Centro de Formación', [4], '16:30', '18:00', 'Encargado de Teatro', '#F8384B', []],
-      ['titeres', 'Títeres y TV', 'Centro de Formación', [5], '15:00', '17:00', 'Equipo de Títeres y TV', '#E0B800', []],
-      ['video', 'Videojuegos', 'Centro de Formación', [3], '17:00', '18:30', 'Encargado de Videojuegos', '#00BC70', ['u-talle']],
-      ['cocina', 'Habilidades para la vida diaria con Cocina', 'Terapia Ocupacional', [1], '11:00', '12:30', 'Terapeuta ocupacional', '#2A9D8F', []],
-      ['vellon', 'Cuentos con Vellón', 'Terapia Ocupacional', [5], '11:00', '12:30', 'Terapeuta ocupacional', '#9B6AD6', []],
+      ['lab', 'Laboratorio Creativo', 'Arte y Apoyo', [2], '16:00', '17:30', 'Vicente Bernal', '#635CC7', []],
+      ['anim', 'Animación Digital', 'Centro de Formación', [1, 3], '15:00', '17:00', 'Carlos González', '#31B4E7', ['u-talle']],
+      ['dibujo', 'Dibujo e Ilustración', 'Centro de Formación', [2, 4], '15:00', '16:30', 'Naru Torres', '#E65EBE', []],
+      ['teatro', 'Teatro', 'Centro de Formación', [4], '16:30', '18:00', 'Pedro González', '#F8384B', []],
+      ['titeres', 'Títeres y TV', 'Centro de Formación', [5], '15:00', '17:00', 'Paco Pasquette y Gonzalo Pavez', '#E0B800', []],
+      ['video', 'Videojuegos', 'Centro de Formación', [3], '17:00', '18:30', 'Bruno Díaz', '#00BC70', ['u-talle']],
+      ['cocina', 'Habilidades para la vida diaria con Cocina', 'Terapia Ocupacional', [1], '11:00', '12:30', 'Laura Quintana', '#2A9D8F', []],
+      ['vellon', 'Cuentos con Vellón', 'Terapia Ocupacional', [5], '11:00', '12:30', 'Laura Quintana', '#9B6AD6', []],
+      ['tonteras', 'Club de Tonteras', 'Centro de Formación', [], '', '', 'Benjamín Villalobos', '#F58A1F', []],
+      ['rol', 'Juegos de Rol', 'Centro de Formación', [], '', '', 'Carlos González y Naru Torres', '#7A5C3E', []],
+      ['dibdig', 'Dibujo e Ilustración Digital', 'Centro de Formación', [], '', '', 'Naru Torres', '#C2409E', []],
+      ['stop', 'Animación Stop-Motion', 'Centro de Formación', [], '', '', 'Carlos González', '#1F8FBF', []],
+      ['m3d', 'Modelado 3D', 'Centro de Formación', [], '', '', '', '#4B7BE5', []],
+      ['refer', 'Referentes Culturales', 'Formación general', [], '', '', '', '#8C6D1F', []],
+      ['corp', 'Expresión Corporal y Creación Escénica', 'Formación general', [], '', '', '', '#D94F70', []],
+      ['vocal', 'Expresión Corporal y Creación Escénica: expresión vocal', 'Formación general', [], '', '', '', '#B03A5B', []],
+      ['arteter', 'Arte Terapia', 'Arte y Apoyo', [], '', '', 'Vicente Bernal y Paula Jiménez', '#7C4DCC', []],
+      ['m-dib', 'Mentoría de Dibujo Digital o Análogo', 'Mentorías', [], '', '', 'Naru Torres', '#E65EBE', []],
+      ['m-vj', 'Mentoría de Creación de Videojuegos y Animación 3D', 'Mentorías', [], '', '', 'Bruno Díaz', '#00BC70', []],
+      ['m-ed', 'Mentoría de Edición de Videos e Introducción a IA', 'Mentorías', [], '', '', 'Gonzalo Pavez', '#31B4E7', []],
+      ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', []],
     ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo], i) =>
       ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo }));
 
@@ -257,6 +285,7 @@
         tutorNombre: `${resp} ${ap1}`, tutorRelacion: parentesco[i % parentesco.length], tutorTelefono: tel(),
         tutorEmail: `${resp.toLowerCase()}.${ap1.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')}@ejemplo.cl`,
         emergencia: `${responsables[(i + 3) % responsables.length]} ${ap1} · ${tel()}`,
+        emergencia2: i % 2 === 0 ? `${responsables[(i + 5) % responsables.length]} ${apellidos.split(' ')[1] || ap1} · ${tel()}` : '',
         direccion: comunas[i % comunas.length], intereses: intereses[i % intereses.length], apoyos: apoyos[i % apoyos.length],
         alergias: i % 5 === 0 ? 'Frutos secos' : (i % 7 === 3 ? 'Lactosa' : ''),
       };
@@ -312,6 +341,14 @@
       async recuperar() { },
       async cambiarClave() { },
       async perfil() { await espera(); return copia(yo() || null); },
+      async guardarMiFechaNac(fecha) {
+        if (!yo()?.rol || !yo().activo) prohibido();
+        if (fecha && fecha > iso(hoy())) throw new Error('La fecha de nacimiento no puede ser futura.');
+        await espera();
+        yo().fechaNac = fecha || '';
+        auditar('update', 'perfiles', { campos: ['fecha_nac'] });
+        guardar();
+      },
       async talleres() { await espera(); return copia(db.talleres); },
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();
@@ -376,17 +413,21 @@
         await espera(60);
         return db.alumnos.filter(a => ['activo', 'pausa'].includes(a.estado)).map(a => ({ id: a.id, nombre: a.nombre, apodo: a.apodo, apellidos: a.apellidos, fechaNac: a.fechaNac }));
       },
+      async cumpleanosEquipo() {
+        await espera(60);
+        return db.perfiles.filter(p => p.rol && p.activo && p.fechaNac).map(p => ({ id: p.id, nombre: p.nombre || p.email, apellidos: '', fechaNac: p.fechaNac }));
+      },
       async usuarios() {
         if (!esAdmin()) prohibido();
         await espera();
         return copia(db.perfiles.map(u => ({ ...u, talleres: db.talleres.filter(t => t.equipo.includes(u.id)).map(t => t.id) })));
       },
-      async invitar({ email, nombre, rol, talleres }) {
+      async invitar({ email, nombre, rol, talleres, fechaNac }) {
         if (!esAdmin()) prohibido();
         await espera(400);
         if (db.perfiles.some(p => p.email.toLowerCase() === email.toLowerCase())) throw new Error('Ya existe una cuenta con ese correo.');
         const id = nuevoId();
-        db.perfiles.push({ id, email, nombre, rol, activo: true });
+        db.perfiles.push({ id, email, nombre, rol, activo: true, fechaNac: fechaNac || '' });
         db.talleres.forEach(t => { if (talleres.includes(t.id)) t.equipo.push(id); });
         auditar('insert', 'perfiles', { email, rol });
         guardar();
@@ -397,7 +438,7 @@
         const p = db.perfiles.find(x => x.id === id);
         const quedan = db.perfiles.filter(x => x.rol === 'admin' && x.activo && x.id !== id).length;
         if (p.rol === 'admin' && p.activo && (u.rol !== 'admin' || !u.activo) && !quedan) throw new Error('Debe quedar al menos una persona con rol admin activa.');
-        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo });
+        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo, fechaNac: u.fechaNac || '' });
         db.talleres.forEach(t => {
           t.equipo = t.equipo.filter(x => x !== id);
           if (u.rol === 'tallerista' && u.talleres.includes(t.id)) t.equipo.push(id);

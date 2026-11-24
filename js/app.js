@@ -14,7 +14,7 @@ const ESTADOS = {
   J: { label: 'Justificada', chip: 'chip-info' },
 };
 const ESTADO_ALUMNO = { activo: 'Activo', pausa: 'En pausa', egresado: 'Egresado', retirado: 'Retirado' };
-const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista' };
+const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista', equipo: 'Equipo' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -41,6 +41,9 @@ function proximoCumple(fechaNac, ref = hoy()) {
   if (n < ref) n = new Date(ref.getFullYear() + 1, b.getMonth(), b.getDate());
   return { fecha: n, dias: Math.round((n - ref) / 864e5), cumple: n.getFullYear() - b.getFullYear() };
 }
+// Año 1904 = año de nacimiento desconocido: se muestra el día, no la edad.
+const sinAnio = fechaNac => String(fechaNac || '').startsWith('1904-');
+const cumpleTxt = x => sinAnio(x.a.fechaNac) ? '' : ` · cumple ${x.cumple}`;
 const nombreVisible = a => `${a.apodo || a.nombre} ${(a.apellidos || '').split(' ')[0]}`;
 const nombreCompleto = a => `${a.nombre} ${a.apellidos}`;
 const iniciales = s => String(s || '').split(/[\s@._-]+/).filter(p => /^\p{L}/u.test(p)).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
@@ -54,14 +57,15 @@ const S = {
   perfil: null,
   talleres: [],
   alumnos: [],
-  cumple: [],
+  cumple: [],         // jóvenes vigentes
+  cumpleEquipo: [],   // profesores y resto del equipo con fecha de nacimiento
   asistencia: {},     // { 'AAAA-MM-DD': { tallerId: { alumnoId: 'P'|'R'|'A'|'J' } } }
   usuarios: [],
   auditoria: null,
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
-  busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
+  tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
   expDesde: iso(sumarDias(hoy(), -30)), expHasta: iso(hoy()),
 };
 
@@ -71,6 +75,8 @@ const puede = {
   editarFichas: () => ['admin', 'terapeuta'].includes(rol()),
   eliminarFichas: () => rol() === 'admin',
   admin: () => rol() === 'admin',
+  // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
+  esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
 };
 const taller = id => S.talleres.find(t => t.id === id);
@@ -236,10 +242,10 @@ async function iniciarSesion() {
 async function cargarTodo() {
   textoArranque('Cargando talleres, fichas y asistencia…');
   const desde = iso(sumarDias(hoy(), -DIAS_HISTORIA));
-  const [talleres, alumnos, asistencia, cumple, usuarios] = await Promise.all([
-    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), puede.admin() ? D.usuarios() : Promise.resolve([]),
+  const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
+    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
-  Object.assign(S, { talleres, alumnos, cumple, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
   mostrarApp();
 }
 
@@ -256,6 +262,7 @@ function mostrarApp() {
   $('#usuario-nombre').textContent = p.nombre || p.email;
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
+  $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
 
@@ -339,11 +346,19 @@ $('#plegar').addEventListener('click', () => aplicarPlegado(!document.body.class
    Vistas
    ===================================================================== */
 function vistaPanel(el) {
+  if (puede.esEquipo()) return vistaPanelEquipo(el);
   const t = hoy(), f = iso(t);
   const vig = vigentes();
   const sesionesHoy = misTalleres().filter(x => x.dias.includes(t.getDay()));
   const r30 = resumen(registros({ desde: hace30() }));
-  const proximos = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proximos = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proxJovenes = proximos(S.cumple), proxEquipo = proximos(S.cumpleEquipo);
+  const listaProximos = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
+            ${avatar(x.a)}
+            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
+            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+          </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
   const cumpleMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
   const alerta = ordenarAlumnos(vig)
     .map(a => ({ a, r: resumen(registros({ alumno: a.id, desde: hace30() })) }))
@@ -391,12 +406,10 @@ function vistaPanel(el) {
 
       <section class="tarjeta">
         <h2>Próximos cumpleaños <small>30 días</small></h2>
-        ${proximos.length ? `<ul class="lista">${proximos.slice(0, 6).map(x => `
-          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
-            ${avatar(x.a)}
-            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]} · cumple ${x.cumple}</small></div>
-            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
-          </li>`).join('')}</ul>` : '<p class="vacio">Nadie cumple años en los próximos 30 días.</p>'}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${listaProximos(proxJovenes, 'Ningún joven cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${listaProximos(proxEquipo, 'Nadie del equipo cumple años en los próximos 30 días.')}
       </section>
 
       <section class="tarjeta">
@@ -415,6 +428,44 @@ function vistaPanel(el) {
             <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.r.A} ausencias · ${x.r.J} justificadas</small></div>
             ${chipPct(x.r.pct)}
           </li>`).join('')}</ul>` : '<p class="vacio">Todo el alumnado está sobre 75% de asistencia.</p>'}
+      </section>
+    </div>`;
+}
+
+// Panel del rol «equipo»: sin datos del alumnado ni asistencia.
+function vistaPanelEquipo(el) {
+  const t = hoy();
+  const hoyTalleres = S.talleres.filter(x => x.activo && x.dias.includes(t.getDay()))
+    .sort((a, b) => (a.horaInicio || '99').localeCompare(b.horaInicio || '99'));
+  const prox = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const lista = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+    <li>${avatar(x.a)}
+      <div class="txt"><b>${esc(x.a.apodo !== undefined ? nombreVisible(x.a) : x.a.nombre)}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
+      <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+    </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
+  const delMes = arr => arr.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
+  const saludo = (S.perfil.nombre || '').split(' ')[0];
+  el.innerHTML = `
+    <header class="cabecera">
+      <div><p class="eyebrow">${esc(fechaLarga(t))}</p><h1>Hola${saludo ? ', ' + esc(saludo) : ''}</h1><p>Cumpleaños y talleres de SpectrumPro.</p></div>
+      ${S.perfil.fechaNac ? '' : '<button type="button" class="btn" data-accion="mi-cumple">Añadir mi cumpleaños</button>'}
+    </header>
+    <section class="kpis" aria-label="Indicadores">
+      <div class="kpi"><span class="kpi-valor">${hoyTalleres.length}</span><span class="kpi-etq">Talleres hoy</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumpleEquipo)}</span><span class="kpi-etq">Cumpleaños del equipo en ${MESES[t.getMonth()]}</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumple)}</span><span class="kpi-etq">Cumpleaños de jóvenes en ${MESES[t.getMonth()]}</span></div>
+    </section>
+    <div class="rejilla">
+      <section class="tarjeta">
+        <h2>Talleres de hoy <small>${DIAS[t.getDay()]}</small></h2>
+        ${hoyTalleres.length ? hoyTalleres.map(s => `<div class="sesion">${punto(s)}<div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))}${s.encargado ? ' · ' + esc(s.encargado) : ''}</small></div></div>`).join('') : '<p class="vacio">Hoy no hay talleres programados.</p>'}
+      </section>
+      <section class="tarjeta">
+        <h2>Próximos cumpleaños <small>30 días</small></h2>
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${lista(prox(S.cumpleEquipo), 'Nadie del equipo cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${lista(prox(S.cumple), 'Ningún joven cumple años en los próximos 30 días.')}
       </section>
     </div>`;
 }
@@ -562,35 +613,51 @@ function resumenMensual(el) {
 
 function vistaCumpleanos(el) {
   const t = hoy();
-  const lista = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
+  const esEquipo = ui.tabCumple === 'equipo';
+  const fuente = esEquipo ? S.cumpleEquipo : S.cumple;
+  const lista = fuente.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
   const deHoy = lista.filter(x => x.dias === 0);
   const prox = lista.filter(x => x.dias > 0 && x.dias <= 30).sort((x, y) => x.dias - y.dias);
   const meses = Array.from({ length: 12 }, (_, i) => (t.getMonth() + i) % 12);
   const abrible = id => alumno(id) ? `data-ficha="${id}"` : '';
+  const nombreLargo = a => esEquipo ? a.nombre : nombreCompleto(a);
+  const nombreCorto = a => esEquipo ? a.nombre : nombreVisible(a);
+  const vacioEquipo = puede.admin()
+    ? 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí, o tú desde Administración → Cuentas del equipo.'
+    : 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí.';
 
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${S.cumple.length} jóvenes vigentes</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div><p class="eyebrow">${esEquipo ? `${S.cumpleEquipo.length} ${S.cumpleEquipo.length === 1 ? 'persona del equipo' : 'personas del equipo'} con fecha` : `${S.cumple.length} jóvenes vigentes`}</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div class="pestanas" role="group" aria-label="Cumpleaños de">
+        <button type="button" data-tab-cumple="jovenes" aria-pressed="${!esEquipo}">Jóvenes <small>${S.cumple.length}</small></button>
+        <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Equipo <small>${S.cumpleEquipo.length}</small></button>
+      </div>
     </header>
-    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreCompleto(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
+    ${esEquipo ? `<section class="tarjeta mi-cumple">
+      <div class="txt"><b>Tu cumpleaños</b><br><small class="muted">${S.perfil.fechaNac ? esc(fechaLarga(proximoCumple(S.perfil.fechaNac, t).fecha).replace(/^\S+ /, '')) : 'Aún no has puesto tu fecha de nacimiento.'}</small></div>
+      <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
+    </section>` : ''}
+    ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
+    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} ${sinAnio(x.a.fechaNac) ? 'está de cumpleaños' : `cumple ${x.cumple} años`}</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
     <section class="tarjeta">
       <h2>Próximos 30 días <small>${prox.length} cumpleaños</small></h2>
       ${prox.length ? `<ul class="lista">${prox.map(x => `
         <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)}>
           ${avatar(x.a)}
-          <div class="txt"><b>${esc(nombreCompleto(x.a))}</b><small>${esc(fechaLarga(x.fecha))} · cumple ${x.cumple}</small></div>
+          <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))}${cumpleTxt(x)}</small></div>
           <span class="dias">${x.dias}<small>${x.dias === 1 ? 'día' : 'días'}</small></span>
         </li>`).join('')}</ul>` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
     </section>
     <section class="meses" aria-label="Cumpleaños por mes">
       ${meses.map((m, i) => {
-        const delMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
+        const delMes = fuente.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
         return `<div class="mes ${i === 0 ? 'actual' : ''}">
           <h3>${MESES[m]} <small>${delMes.length || ''}</small></h3>
-          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreVisible(a))}</span><span class="e">${proximoCumple(a.fechaNac, t).cumple} años</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
+          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${sinAnio(a.fechaNac) ? '' : proximoCumple(a.fechaNac, t).cumple + ' años'}</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
         </div>`;
       }).join('')}
-    </section>`;
+    </section>`}`;
 }
 
 function filtrarFichas() {
@@ -630,10 +697,11 @@ function pintarFichas() {
 }
 
 function vistaTalleres(el) {
-  const lista = puede.verTodo() ? S.talleres : misTalleres();
+  const eq = puede.esEquipo();
+  const lista = puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres();
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? 'Talleres' : 'Tus talleres'}</h1><p>Horario semanal y asistencia de los últimos 30 días.</p></div>
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? 'Talleres' : 'Tus talleres'}</h1><p>${eq ? 'Horario semanal y quién está a cargo.' : 'Horario semanal y asistencia de los últimos 30 días.'}</p></div>
       ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
@@ -648,9 +716,9 @@ function vistaTalleres(el) {
           <dt>Horario</dt><dd class="num">${esc(horario(t))}</dd>
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
-          <dt>Inscritos</dt><dd class="num">${ins.length}</dd>
+          ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
         </dl>
-        <div class="acciones">${chipPct(r.pct)}
+        <div class="acciones">${eq ? '' : chipPct(r.pct)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
           <button type="button" class="btn btn-sec btn-peq" data-ver-mes="${t.id}">Ver mes</button>` : ''}
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
@@ -689,7 +757,7 @@ function adminUsuarios(el) {
   el.innerHTML = `
     <section class="tarjeta">
       <h2><span>Cuentas del equipo</span><button type="button" class="btn btn-peq" data-accion="invitar">+ Invitar persona</button></h2>
-      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud.</p>
+      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud. El rol Equipo ve cumpleaños y talleres, sin fichas ni asistencia.</p>
       ${pendientes.length ? `<h3 class="sub">Esperando acceso</h3><ul class="lista">${pendientes.map(fila).join('')}</ul>` : ''}
       <h3 class="sub">Con acceso</h3>
       <ul class="lista">${activos.map(fila).join('')}</ul>
@@ -798,7 +866,8 @@ async function abrirFicha(id) {
             ${fila('Responsable', a.tutorNombre ? `${esc(a.tutorNombre)}${a.tutorRelacion ? ' · ' + esc(a.tutorRelacion) : ''}` : '')}
             ${fila('Teléfono', copiable(a.tutorTelefono))}
             ${fila('Correo', copiable(a.tutorEmail))}
-            ${fila('Emergencia', esc(a.emergencia))}
+            ${fila(a.emergencia2 ? 'Emergencia 1' : 'Emergencia', esc(a.emergencia))}
+            ${fila('Emergencia 2', esc(a.emergencia2))}
           </dl>
         </section>
         <section>
@@ -851,7 +920,7 @@ async function abrirFicha(id) {
 
 /* ---------- formulario de ficha ---------- */
 let editando = null;
-const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'direccion', 'intereses', 'apoyos', 'alergias'];
+const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'emergencia2', 'direccion', 'intereses', 'apoyos', 'alergias'];
 async function abrirFormulario(id = null) {
   editando = id;
   const a = id ? alumno(id) : null;
@@ -864,6 +933,8 @@ async function abrirFormulario(id = null) {
   if (!a) { $('#f-programa').value = 'FormaPro'; $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
   $('#f-privado').hidden = !puede.verTodo();
+  $('#f-fechaNac').max = iso(hoy());
+  mostrarEdad();
   avisoTO();
   if ($('#dlg-ficha').open) $('#dlg-ficha').close();
   $('#dlg-form').showModal();
@@ -873,8 +944,30 @@ async function abrirFormulario(id = null) {
     catch (e) { toast(`No se cargaron los datos privados. ${e.message}`, 'error'); }
   }
 }
+// Edad al momento, mientras se escribe la fecha de nacimiento.
+function mostrarEdad() {
+  const v = $('#f-fechaNac').value, out = $('#f-edad');
+  out.classList.remove('error');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < '1900-01-02') { out.textContent = ''; return; }
+  if (v > iso(hoy())) { out.textContent = 'La fecha no puede ser futura'; out.classList.add('error'); return; }
+  const n = edad(v);
+  out.textContent = n === 1 ? '1 año' : `${n} años`;
+}
+$('#f-fechaNac').addEventListener('input', mostrarEdad);
+$('#f-fechaNac').addEventListener('change', mostrarEdad);
+// Requisito publicado en spectrumpro.cl para FormaPro y Terapia Ocupacional:
+// al menos 3 módulos, uno de ellos de formación general
+// (Referentes artístico-culturales, Habilidades para la vida o Arte Terapéutico).
+const esFormacionGeneral = t => t.area === 'Formación general' || /referentes|habilidades para la vida|arte terap/i.test(t.nombre);
 function avisoTO() {
-  $('#f-aviso-to').hidden = !($('#f-programa').value === 'Terapia Ocupacional' && $$('#f-talleres input:checked').length < 3);
+  const prog = $('#f-programa').value;
+  const aviso = $('#f-aviso-to');
+  const elegidos = $$('#f-talleres input:checked').map(i => taller(i.value)).filter(Boolean);
+  const faltan = [];
+  if (elegidos.length < 3) faltan.push('al menos 3 módulos');
+  if (S.talleres.some(esFormacionGeneral) && !elegidos.some(esFormacionGeneral)) faltan.push('uno de formación general');
+  aviso.hidden = !(['FormaPro', 'Terapia Ocupacional'].includes(prog) && faltan.length);
+  aviso.textContent = `${prog} pide ${faltan.join(' y ')} (Referentes culturales, Habilidades para la vida o Arte Terapia). También pide una entrevista previa.`;
 }
 $('#form-alumno').addEventListener('submit', async ev => {
   ev.preventDefault();
@@ -985,6 +1078,8 @@ function abrirUsuario(id = null) {
   $('#u-email').value = u?.email || '';
   $('#u-email').disabled = !!u;
   $('#u-rol').value = u?.rol || 'tallerista';
+  $('#u-fechaNac').value = u?.fechaNac || '';
+  $('#u-fechaNac').max = iso(hoy());
   $('#u-activo').checked = u ? (u.rol ? u.activo : true) : true;
   $('#u-activo-box').hidden = !u;
   $('#u-nota').hidden = !!u;
@@ -1000,18 +1095,19 @@ $('#u-rol').addEventListener('change', mostrarTalleresUsuario);
 $('#form-usuario').addEventListener('submit', async ev => {
   ev.preventDefault();
   const fd = new FormData(ev.target);
-  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres') };
+  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres'), fechaNac: String(fd.get('fechaNac') || '') };
   if (datos.rol !== 'tallerista') datos.talleres = [];
   const err = $('#usuario-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (!datos.nombre) return mostrar('Escribe el nombre.');
   if (!editandoUsuario && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email)) return mostrar('Escribe un correo válido.');
+  if (datos.fechaNac && datos.fechaNac > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
   if (editandoUsuario === S.perfil.id && (datos.rol !== 'admin' || !datos.activo)) return mostrar('No puedes quitarte tu propio acceso de dirección. Pide a otra persona de dirección que lo haga.');
   const btn = ev.submitter;
   botonOcupado(btn, true, editandoUsuario ? 'Guardando…' : 'Enviando…');
   try {
     await conCarga(() => editandoUsuario ? D.actualizarUsuario(editandoUsuario, datos) : D.invitar(datos));
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     $('#dlg-usuario').close();
     toast(editandoUsuario ? 'Cuenta actualizada' : `Invitación enviada a ${datos.email}`);
     render();
@@ -1024,14 +1120,41 @@ $('#u-eliminar').addEventListener('click', async () => {
   if (!await confirmar(`¿Eliminar la cuenta de ${u.nombre || u.email}?`, 'La persona ya no podrá entrar. La asistencia que registró se conserva.', 'Eliminar cuenta')) return;
   try {
     await intentar(() => D.eliminarUsuario(u.id), 'Cuenta eliminada');
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     render();
   } catch { /* ya avisado */ }
 });
 
+/* ---------- mi fecha de nacimiento ---------- */
+function abrirMiCumple() {
+  $('#mi-cumple-error').hidden = true;
+  $('#mi-fechaNac').value = S.perfil.fechaNac || '';
+  $('#mi-fechaNac').max = iso(hoy());
+  $('#dlg-mi-cumple').showModal();
+  $('#mi-fechaNac').focus();
+}
+$('#form-mi-cumple').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const fecha = $('#mi-fechaNac').value;
+  const err = $('#mi-cumple-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  if (fecha && fecha > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true);
+  try {
+    await conCarga(() => D.guardarMiFechaNac(fecha));
+    S.perfil.fechaNac = fecha;
+    [S.cumpleEquipo, S.usuarios] = await Promise.all([D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([])]);
+    $('#dlg-mi-cumple').close();
+    toast(fecha ? 'Fecha de nacimiento guardada' : 'Fecha de nacimiento borrada');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia 1', 'emergencia'], ['Emergencia 2', 'emergencia2'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');
@@ -1058,6 +1181,7 @@ function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if (v === 'administracion' && !puede.admin()) return 'panel';
+  if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
 let vistaPintada = null;
@@ -1139,6 +1263,7 @@ document.addEventListener('click', async ev => {
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
+  if ((x = el('[data-tab-cumple]'))) { ui.tabCumple = x.dataset.tabCumple; render(); return; }
   if ((x = el('[data-modo]'))) { ui.modoAsis = x.dataset.modo; render(); return; }
   if ((x = el('[data-taller]'))) { ui.taller = x.dataset.taller; render(); return; }
   if ((x = el('.seg button'))) { marcar(x.closest('.seg').dataset.alumno, x.dataset.e, x.closest('.seg')); return; }
@@ -1162,6 +1287,7 @@ document.addEventListener('click', async ev => {
       S.perfil = null;
       mostrarAcceso('entrar');
     }
+    if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
     if (acc === 'nuevo-taller') abrirTaller();
     if (acc === 'invitar') abrirUsuario();

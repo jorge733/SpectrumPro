@@ -1,6 +1,7 @@
 // Service worker de SpectrumPro.
 // - Páginas: primero red (siempre la versión nueva); sin conexión, la última copia guardada.
-// - Archivos propios (css, js, imágenes): copia guardada al instante y actualización en segundo plano.
+// - Archivos propios (css, js, imágenes): también primero red; sin conexión, la copia guardada.
+//   (Antes se servía la copia guardada y, tras publicar, se mezclaba HTML nuevo con JS viejo.)
 // - Supabase y CDNs: pasan directo, nunca se guardan (son datos privados o con su propia caché).
 const VERSION = 'spectrumpro-v3';
 const BASE = ['./', './index.html', './styles.css', './config.js', './js/datos.js', './js/app.js', './manifest.webmanifest', './assets/logo.svg', './assets/icono-192.png'];
@@ -25,10 +26,11 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
+  // Archivos propios: también primero red, para que HTML, JS y CSS sean siempre de la misma versión.
+  // Sin conexión se usa la copia guardada.
   e.respondWith(
-    caches.match(req).then(guardado => {
-      const red = fetch(req).then(r => { if (r.ok) { const copia = r.clone(); caches.open(VERSION).then(c => c.put(req, copia)); } return r; }).catch(() => guardado);
-      return guardado || red;
-    })
+    fetch(req, { cache: 'no-cache' })
+      .then(r => { if (r.ok) { const copia = r.clone(); caches.open(VERSION).then(c => c.put(req, copia)); } return r; })
+      .catch(() => caches.match(req))
   );
 });
