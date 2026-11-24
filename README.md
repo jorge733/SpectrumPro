@@ -10,7 +10,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | --- | --- |
 | **Panel** | Sesiones del día, próximos cumpleaños, asistencia semanal y jóvenes con menos de 75% de asistencia |
 | **Asistencia** | Pasar lista por sesión de taller (Presente, Retraso, Ausente, Justificada) y resumen mensual por taller |
-| **Cumpleaños** | Cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses |
+| **Cumpleaños** | Separados en **Jóvenes** y **Profesores**: cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses. La fecha de nacimiento de cada profesor la añade dirección en su cuenta |
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
 | **Talleres** | Horario semanal, equipo a cargo e inscritos. Dirección crea y edita talleres |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
@@ -21,7 +21,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | --- | --- |
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
-| **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado (nombre y fecha) |
+| **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
@@ -35,6 +35,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
 2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
+   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql`, que añade los cumpleaños de los profesores). En un proyecto ya creado basta con ejecutar los que falten.
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
@@ -105,7 +106,7 @@ Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
 | `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión |
-| `supabase/migrations/…sql` | Tablas, RLS, auditoría y función de cumpleaños |
+| `supabase/migrations/…sql` | Tablas, RLS, auditoría y funciones de cumpleaños (jóvenes y equipo) |
 | `supabase/seed.sql` | Talleres iniciales |
 | `supabase/functions/gestionar-usuario` | Invitar y eliminar cuentas (solo dirección) |
 

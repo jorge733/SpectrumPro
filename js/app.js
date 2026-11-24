@@ -54,14 +54,15 @@ const S = {
   perfil: null,
   talleres: [],
   alumnos: [],
-  cumple: [],
+  cumple: [],         // jóvenes vigentes
+  cumpleEquipo: [],   // profesores y resto del equipo con fecha de nacimiento
   asistencia: {},     // { 'AAAA-MM-DD': { tallerId: { alumnoId: 'P'|'R'|'A'|'J' } } }
   usuarios: [],
   auditoria: null,
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
-  busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
+  tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
   expDesde: iso(sumarDias(hoy(), -30)), expHasta: iso(hoy()),
 };
 
@@ -236,10 +237,10 @@ async function iniciarSesion() {
 async function cargarTodo() {
   textoArranque('Cargando talleres, fichas y asistencia…');
   const desde = iso(sumarDias(hoy(), -DIAS_HISTORIA));
-  const [talleres, alumnos, asistencia, cumple, usuarios] = await Promise.all([
-    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), puede.admin() ? D.usuarios() : Promise.resolve([]),
+  const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
+    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
-  Object.assign(S, { talleres, alumnos, cumple, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
   mostrarApp();
 }
 
@@ -343,7 +344,14 @@ function vistaPanel(el) {
   const vig = vigentes();
   const sesionesHoy = misTalleres().filter(x => x.dias.includes(t.getDay()));
   const r30 = resumen(registros({ desde: hace30() }));
-  const proximos = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proximos = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proxJovenes = proximos(S.cumple), proxEquipo = proximos(S.cumpleEquipo);
+  const listaProximos = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
+            ${avatar(x.a)}
+            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]} · cumple ${x.cumple}</small></div>
+            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+          </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
   const cumpleMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
   const alerta = ordenarAlumnos(vig)
     .map(a => ({ a, r: resumen(registros({ alumno: a.id, desde: hace30() })) }))
@@ -391,12 +399,10 @@ function vistaPanel(el) {
 
       <section class="tarjeta">
         <h2>Próximos cumpleaños <small>30 días</small></h2>
-        ${proximos.length ? `<ul class="lista">${proximos.slice(0, 6).map(x => `
-          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
-            ${avatar(x.a)}
-            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]} · cumple ${x.cumple}</small></div>
-            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
-          </li>`).join('')}</ul>` : '<p class="vacio">Nadie cumple años en los próximos 30 días.</p>'}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${listaProximos(proxJovenes, 'Ningún joven cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Profesores</h3>
+        ${listaProximos(proxEquipo, 'Ningún profesor cumple años en los próximos 30 días.')}
       </section>
 
       <section class="tarjeta">
@@ -562,35 +568,47 @@ function resumenMensual(el) {
 
 function vistaCumpleanos(el) {
   const t = hoy();
-  const lista = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
+  const esEquipo = ui.tabCumple === 'equipo';
+  const fuente = esEquipo ? S.cumpleEquipo : S.cumple;
+  const lista = fuente.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
   const deHoy = lista.filter(x => x.dias === 0);
   const prox = lista.filter(x => x.dias > 0 && x.dias <= 30).sort((x, y) => x.dias - y.dias);
   const meses = Array.from({ length: 12 }, (_, i) => (t.getMonth() + i) % 12);
   const abrible = id => alumno(id) ? `data-ficha="${id}"` : '';
+  const nombreLargo = a => esEquipo ? a.nombre : nombreCompleto(a);
+  const nombreCorto = a => esEquipo ? a.nombre : nombreVisible(a);
+  const vacioEquipo = puede.admin()
+    ? 'Aún no hay fechas de nacimiento del equipo. Añádelas en Administración → Cuentas del equipo.'
+    : 'Aún no hay fechas de nacimiento del equipo. Dirección puede añadirlas en la cuenta de cada persona.';
 
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${S.cumple.length} jóvenes vigentes</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div><p class="eyebrow">${esEquipo ? `${S.cumpleEquipo.length} ${S.cumpleEquipo.length === 1 ? 'profesor' : 'profesores'} con fecha` : `${S.cumple.length} jóvenes vigentes`}</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div class="pestanas" role="group" aria-label="Cumpleaños de">
+        <button type="button" data-tab-cumple="jovenes" aria-pressed="${!esEquipo}">Jóvenes <small>${S.cumple.length}</small></button>
+        <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Profesores <small>${S.cumpleEquipo.length}</small></button>
+      </div>
     </header>
-    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreCompleto(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
+    ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
+    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
     <section class="tarjeta">
       <h2>Próximos 30 días <small>${prox.length} cumpleaños</small></h2>
       ${prox.length ? `<ul class="lista">${prox.map(x => `
         <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)}>
           ${avatar(x.a)}
-          <div class="txt"><b>${esc(nombreCompleto(x.a))}</b><small>${esc(fechaLarga(x.fecha))} · cumple ${x.cumple}</small></div>
+          <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))} · cumple ${x.cumple}</small></div>
           <span class="dias">${x.dias}<small>${x.dias === 1 ? 'día' : 'días'}</small></span>
         </li>`).join('')}</ul>` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
     </section>
     <section class="meses" aria-label="Cumpleaños por mes">
       ${meses.map((m, i) => {
-        const delMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
+        const delMes = fuente.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
         return `<div class="mes ${i === 0 ? 'actual' : ''}">
           <h3>${MESES[m]} <small>${delMes.length || ''}</small></h3>
-          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreVisible(a))}</span><span class="e">${proximoCumple(a.fechaNac, t).cumple} años</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
+          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${proximoCumple(a.fechaNac, t).cumple} años</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
         </div>`;
       }).join('')}
-    </section>`;
+    </section>`}`;
 }
 
 function filtrarFichas() {
@@ -985,6 +1003,8 @@ function abrirUsuario(id = null) {
   $('#u-email').value = u?.email || '';
   $('#u-email').disabled = !!u;
   $('#u-rol').value = u?.rol || 'tallerista';
+  $('#u-fechaNac').value = u?.fechaNac || '';
+  $('#u-fechaNac').max = iso(hoy());
   $('#u-activo').checked = u ? (u.rol ? u.activo : true) : true;
   $('#u-activo-box').hidden = !u;
   $('#u-nota').hidden = !!u;
@@ -1000,18 +1020,19 @@ $('#u-rol').addEventListener('change', mostrarTalleresUsuario);
 $('#form-usuario').addEventListener('submit', async ev => {
   ev.preventDefault();
   const fd = new FormData(ev.target);
-  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres') };
+  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres'), fechaNac: String(fd.get('fechaNac') || '') };
   if (datos.rol !== 'tallerista') datos.talleres = [];
   const err = $('#usuario-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (!datos.nombre) return mostrar('Escribe el nombre.');
   if (!editandoUsuario && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email)) return mostrar('Escribe un correo válido.');
+  if (datos.fechaNac && datos.fechaNac > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
   if (editandoUsuario === S.perfil.id && (datos.rol !== 'admin' || !datos.activo)) return mostrar('No puedes quitarte tu propio acceso de dirección. Pide a otra persona de dirección que lo haga.');
   const btn = ev.submitter;
   botonOcupado(btn, true, editandoUsuario ? 'Guardando…' : 'Enviando…');
   try {
     await conCarga(() => editandoUsuario ? D.actualizarUsuario(editandoUsuario, datos) : D.invitar(datos));
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     $('#dlg-usuario').close();
     toast(editandoUsuario ? 'Cuenta actualizada' : `Invitación enviada a ${datos.email}`);
     render();
@@ -1024,7 +1045,7 @@ $('#u-eliminar').addEventListener('click', async () => {
   if (!await confirmar(`¿Eliminar la cuenta de ${u.nombre || u.email}?`, 'La persona ya no podrá entrar. La asistencia que registró se conserva.', 'Eliminar cuenta')) return;
   try {
     await intentar(() => D.eliminarUsuario(u.id), 'Cuenta eliminada');
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     render();
   } catch { /* ya avisado */ }
 });
@@ -1139,6 +1160,7 @@ document.addEventListener('click', async ev => {
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
+  if ((x = el('[data-tab-cumple]'))) { ui.tabCumple = x.dataset.tabCumple; render(); return; }
   if ((x = el('[data-modo]'))) { ui.modoAsis = x.dataset.modo; render(); return; }
   if ((x = el('[data-taller]'))) { ui.taller = x.dataset.taller; render(); return; }
   if ((x = el('.seg button'))) { marcar(x.closest('.seg').dataset.alumno, x.dataset.e, x.closest('.seg')); return; }

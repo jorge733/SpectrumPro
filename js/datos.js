@@ -146,12 +146,15 @@
       async cumpleanos() {
         return ok(await sb.rpc('cumpleanos')).map(f => ({ id: f.id, nombre: f.nombre, apodo: f.apodo, apellidos: f.apellidos, fechaNac: f.fecha_nac }));
       },
+      async cumpleanosEquipo() {
+        return ok(await sb.rpc('cumpleanos_equipo')).map(f => ({ id: f.id, nombre: f.nombre, apellidos: '', fechaNac: f.fecha_nac }));
+      },
       async usuarios() {
         const [p, e] = await Promise.all([
           todo(() => sb.from('perfiles').select('*').order('nombre').order('id')),
           todo(() => sb.from('taller_equipo').select('*').order('taller_id').order('perfil_id')),
         ]);
-        return p.map(u => ({ ...u, talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
+        return p.map(u => ({ ...u, fechaNac: u.fecha_nac || '', talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
       },
       async invitar(datos) {
         const { data, error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'invitar', ...datos, redirectTo: urlBase() } });
@@ -160,10 +163,12 @@
           try { m = (await error.context.json()).error || m; } catch { /* sin cuerpo */ }
           throw traducir(m);
         }
+        // La función de invitación no conoce la fecha de nacimiento: se guarda aparte.
+        if (datos.fechaNac && data?.id) ok(await sb.from('perfiles').update({ fecha_nac: datos.fechaNac }).eq('id', data.id));
         return data;
       },
       async actualizarUsuario(id, u) {
-        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo }).eq('id', id));
+        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo, fecha_nac: u.fechaNac || null }).eq('id', id));
         await sincronizar('taller_equipo', 'perfil_id', id, 'taller_id', u.rol === 'tallerista' ? u.talleres : []);
       },
       async eliminarUsuario(id) {
@@ -183,7 +188,7 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v2';
+  const CLAVE_DEMO = 'spectrumpro:demo:v3';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -196,10 +201,10 @@
     const rnd = mulberry32(1710);
     const t = hoy();
     const perfiles = [
-      { id: 'u-admin', email: 'direccion@ejemplo.cl', nombre: 'Dirección (demo)', rol: 'admin', activo: true },
-      { id: 'u-tera', email: 'terapeuta@ejemplo.cl', nombre: 'Terapeuta (demo)', rol: 'terapeuta', activo: true },
-      { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true },
-      { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false },
+      { id: 'u-admin', email: 'direccion@ejemplo.cl', nombre: 'Dirección (demo)', rol: 'admin', activo: true, fechaNac: iso(new Date(t.getFullYear() - 44, (t.getMonth() + 2) % 12, 9)) },
+      { id: 'u-tera', email: 'terapeuta@ejemplo.cl', nombre: 'Terapeuta (demo)', rol: 'terapeuta', activo: true, fechaNac: iso(new Date(t.getFullYear() - 36, sumarDias(t, 12).getMonth(), sumarDias(t, 12).getDate())) },
+      { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true, fechaNac: iso(new Date(t.getFullYear() - 31, (t.getMonth() + 5) % 12, 23)) },
+      { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false, fechaNac: '' },
     ];
     const talleres = [
       ['lab', 'Laboratorio Creativo', 'Arte y Apoyo', [2], '16:00', '17:30', 'Equipo Arte y Apoyo', '#635CC7', []],
@@ -376,17 +381,21 @@
         await espera(60);
         return db.alumnos.filter(a => ['activo', 'pausa'].includes(a.estado)).map(a => ({ id: a.id, nombre: a.nombre, apodo: a.apodo, apellidos: a.apellidos, fechaNac: a.fechaNac }));
       },
+      async cumpleanosEquipo() {
+        await espera(60);
+        return db.perfiles.filter(p => p.rol && p.activo && p.fechaNac).map(p => ({ id: p.id, nombre: p.nombre || p.email, apellidos: '', fechaNac: p.fechaNac }));
+      },
       async usuarios() {
         if (!esAdmin()) prohibido();
         await espera();
         return copia(db.perfiles.map(u => ({ ...u, talleres: db.talleres.filter(t => t.equipo.includes(u.id)).map(t => t.id) })));
       },
-      async invitar({ email, nombre, rol, talleres }) {
+      async invitar({ email, nombre, rol, talleres, fechaNac }) {
         if (!esAdmin()) prohibido();
         await espera(400);
         if (db.perfiles.some(p => p.email.toLowerCase() === email.toLowerCase())) throw new Error('Ya existe una cuenta con ese correo.');
         const id = nuevoId();
-        db.perfiles.push({ id, email, nombre, rol, activo: true });
+        db.perfiles.push({ id, email, nombre, rol, activo: true, fechaNac: fechaNac || '' });
         db.talleres.forEach(t => { if (talleres.includes(t.id)) t.equipo.push(id); });
         auditar('insert', 'perfiles', { email, rol });
         guardar();
@@ -397,7 +406,7 @@
         const p = db.perfiles.find(x => x.id === id);
         const quedan = db.perfiles.filter(x => x.rol === 'admin' && x.activo && x.id !== id).length;
         if (p.rol === 'admin' && p.activo && (u.rol !== 'admin' || !u.activo) && !quedan) throw new Error('Debe quedar al menos una persona con rol admin activa.');
-        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo });
+        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo, fechaNac: u.fechaNac || '' });
         db.talleres.forEach(t => {
           t.equipo = t.equipo.filter(x => x !== id);
           if (u.rol === 'tallerista' && u.talleres.includes(t.id)) t.equipo.push(id);
