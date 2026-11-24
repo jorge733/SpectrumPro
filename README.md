@@ -146,7 +146,7 @@ Lo marcado en amarillo son datos que faltan (precios, forma de pago y entrega, I
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
 | `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
-| `assets/` | Logo, íconos de la app e imágenes de la Muestra |
+| `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |
 | `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |
 | `supabase/seed.sql` | Talleres iniciales |
 | `supabase/functions/gestionar-usuario` | Invitar y eliminar cuentas (solo dirección) |
