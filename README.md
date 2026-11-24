@@ -108,12 +108,19 @@ Para activarla:
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
 
+## Tienda (propuesta)
+
+`tienda/index.html` es una propuesta de rediseño de la tienda de productos de SpectrumPro (hoy en Google Sites, `spectrumprostore`). Es una página estática y pública: portada, catálogo de los 8 productos con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto. Las fotos están en `tienda/img/`.
+
+Lo marcado en amarillo son datos que faltan (precios, forma de pago y entrega, Instagram). Cuando estén completos, se quita el aviso de «Propuesta de rediseño» del principio. Los productos se editan en la lista `P` del script al final de la página.
+
 ## Estructura
 
 | Archivo | Contenido |
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
+| `tienda/` | Propuesta de tienda de productos (página pública) |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
