@@ -190,7 +190,7 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v4';
+  const CLAVE_DEMO = 'spectrumpro:demo:v5';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -208,15 +208,29 @@
       { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true, fechaNac: iso(new Date(t.getFullYear() - 31, (t.getMonth() + 5) % 12, 23)) },
       { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false, fechaNac: '' },
     ];
+    // Lista y profesores según spectrumpro.cl; los horarios son de ejemplo (el sitio no los publica).
     const talleres = [
-      ['lab', 'Laboratorio Creativo', 'Arte y Apoyo', [2], '16:00', '17:30', 'Equipo Arte y Apoyo', '#635CC7', []],
-      ['anim', 'Animación Digital', 'Centro de Formación', [1, 3], '15:00', '17:00', 'Encargado de Animación Digital', '#31B4E7', ['u-talle']],
-      ['dibujo', 'Dibujo e Ilustración', 'Centro de Formación', [2, 4], '15:00', '16:30', 'Encargada de Dibujo e Ilustración', '#E65EBE', []],
-      ['teatro', 'Teatro', 'Centro de Formación', [4], '16:30', '18:00', 'Encargado de Teatro', '#F8384B', []],
-      ['titeres', 'Títeres y TV', 'Centro de Formación', [5], '15:00', '17:00', 'Equipo de Títeres y TV', '#E0B800', []],
-      ['video', 'Videojuegos', 'Centro de Formación', [3], '17:00', '18:30', 'Encargado de Videojuegos', '#00BC70', ['u-talle']],
-      ['cocina', 'Habilidades para la vida diaria con Cocina', 'Terapia Ocupacional', [1], '11:00', '12:30', 'Terapeuta ocupacional', '#2A9D8F', []],
-      ['vellon', 'Cuentos con Vellón', 'Terapia Ocupacional', [5], '11:00', '12:30', 'Terapeuta ocupacional', '#9B6AD6', []],
+      ['lab', 'Laboratorio Creativo', 'Arte y Apoyo', [2], '16:00', '17:30', 'Vicente Bernal', '#635CC7', []],
+      ['anim', 'Animación Digital', 'Centro de Formación', [1, 3], '15:00', '17:00', 'Carlos González', '#31B4E7', ['u-talle']],
+      ['dibujo', 'Dibujo e Ilustración', 'Centro de Formación', [2, 4], '15:00', '16:30', 'Naru Torres', '#E65EBE', []],
+      ['teatro', 'Teatro', 'Centro de Formación', [4], '16:30', '18:00', 'Pedro González', '#F8384B', []],
+      ['titeres', 'Títeres y TV', 'Centro de Formación', [5], '15:00', '17:00', 'Paco Pasquette y Gonzalo Pavez', '#E0B800', []],
+      ['video', 'Videojuegos', 'Centro de Formación', [3], '17:00', '18:30', 'Bruno Díaz', '#00BC70', ['u-talle']],
+      ['cocina', 'Habilidades para la vida diaria con Cocina', 'Terapia Ocupacional', [1], '11:00', '12:30', 'Laura Quintana', '#2A9D8F', []],
+      ['vellon', 'Cuentos con Vellón', 'Terapia Ocupacional', [5], '11:00', '12:30', 'Laura Quintana', '#9B6AD6', []],
+      ['tonteras', 'Club de Tonteras', 'Centro de Formación', [], '', '', 'Benjamín Villalobos', '#F58A1F', []],
+      ['rol', 'Juegos de Rol', 'Centro de Formación', [], '', '', 'Carlos González y Naru Torres', '#7A5C3E', []],
+      ['dibdig', 'Dibujo e Ilustración Digital', 'Centro de Formación', [], '', '', 'Naru Torres', '#C2409E', []],
+      ['stop', 'Animación Stop-Motion', 'Centro de Formación', [], '', '', 'Carlos González', '#1F8FBF', []],
+      ['m3d', 'Modelado 3D', 'Centro de Formación', [], '', '', '', '#4B7BE5', []],
+      ['refer', 'Referentes Culturales', 'Formación general', [], '', '', '', '#8C6D1F', []],
+      ['corp', 'Expresión Corporal y Creación Escénica', 'Formación general', [], '', '', '', '#D94F70', []],
+      ['vocal', 'Expresión Corporal y Creación Escénica: expresión vocal', 'Formación general', [], '', '', '', '#B03A5B', []],
+      ['arteter', 'Arte Terapia', 'Arte y Apoyo', [], '', '', 'Vicente Bernal y Paula Jiménez', '#7C4DCC', []],
+      ['m-dib', 'Mentoría de Dibujo Digital o Análogo', 'Mentorías', [], '', '', 'Naru Torres', '#E65EBE', []],
+      ['m-vj', 'Mentoría de Creación de Videojuegos y Animación 3D', 'Mentorías', [], '', '', 'Bruno Díaz', '#00BC70', []],
+      ['m-ed', 'Mentoría de Edición de Videos e Introducción a IA', 'Mentorías', [], '', '', 'Gonzalo Pavez', '#31B4E7', []],
+      ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', []],
     ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo], i) =>
       ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo }));
 

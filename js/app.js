@@ -909,8 +909,19 @@ function mostrarEdad() {
 }
 $('#f-fechaNac').addEventListener('input', mostrarEdad);
 $('#f-fechaNac').addEventListener('change', mostrarEdad);
+// Requisito publicado en spectrumpro.cl para FormaPro y Terapia Ocupacional:
+// al menos 3 módulos, uno de ellos de formación general
+// (Referentes artístico-culturales, Habilidades para la vida o Arte Terapéutico).
+const esFormacionGeneral = t => t.area === 'Formación general' || /referentes|habilidades para la vida|arte terap/i.test(t.nombre);
 function avisoTO() {
-  $('#f-aviso-to').hidden = !($('#f-programa').value === 'Terapia Ocupacional' && $$('#f-talleres input:checked').length < 3);
+  const prog = $('#f-programa').value;
+  const aviso = $('#f-aviso-to');
+  const elegidos = $$('#f-talleres input:checked').map(i => taller(i.value)).filter(Boolean);
+  const faltan = [];
+  if (elegidos.length < 3) faltan.push('al menos 3 módulos');
+  if (S.talleres.some(esFormacionGeneral) && !elegidos.some(esFormacionGeneral)) faltan.push('uno de formación general');
+  aviso.hidden = !(['FormaPro', 'Terapia Ocupacional'].includes(prog) && faltan.length);
+  aviso.textContent = `${prog} pide ${faltan.join(' y ')} (Referentes culturales, Habilidades para la vida o Arte Terapia). También pide una entrevista previa.`;
 }
 $('#form-alumno').addEventListener('submit', async ev => {
   ev.preventDefault();

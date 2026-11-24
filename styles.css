@@ -410,6 +410,8 @@ body.resolviendo .app, body.resolviendo .acceso { display: none !important; }
 .acceso-nombre { font-family: var(--f-marca); font-size: 1.35rem; letter-spacing: -.03em; margin-top: 8px; }
 .acceso-lema { font-family: var(--f-display); font-size: 1.1rem; font-weight: 500; opacity: .95; }
 .acceso-desc { font-size: .9rem; opacity: .8; max-width: 34ch; }
+.acceso-contacto { font-style: normal; font-size: .82rem; opacity: .85; display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+.acceso-contacto a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .acceso-form { padding: 44px 40px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .acceso-form form, #acceso-demo { display: flex; flex-direction: column; gap: 14px; }
 .acceso-form h1 { font-size: 1.5rem; }
