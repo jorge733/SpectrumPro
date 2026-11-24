@@ -103,7 +103,7 @@ Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings
 
 Para activarla:
 
-1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124000000_encuesta_muestra.sql`. Crea la tabla `encuesta_evento`.
+1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124050000_encuesta_muestra.sql`. Crea la tabla `encuesta_evento`.
 2. Publica el sitio y comparte el enlace `…/encuesta.html` (o un código QR que apunte a él).
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
