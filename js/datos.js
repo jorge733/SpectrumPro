@@ -380,6 +380,7 @@
     const yo = () => db.perfiles.find(p => p.id === leer(CLAVE_SESION));
     const veTodo = () => ['admin', 'terapeuta'].includes(yo()?.rol);
     const esAdmin = () => yo()?.rol === 'admin';
+    const editaTienda = () => ['admin', 'equipo'].includes(yo()?.rol);
     const misTalleres = () => db.talleres.filter(t => t.equipo.includes(yo()?.id)).map(t => t.id);
     const puedeVer = a => veTodo() || a.talleres.some(t => misTalleres().includes(t));
     const prohibido = () => { throw new Error('No tienes permiso para hacer este cambio.'); };
@@ -519,9 +520,9 @@
         auditar('delete', 'perfiles', { email: p?.email });
         guardar();
       },
-      async tienda() { if (!esAdmin()) prohibido(); await espera(); return copia(db.tienda); },
+      async tienda() { if (!editaTienda()) prohibido(); await espera(); return copia(db.tienda); },
       async guardarProducto(p) {
-        if (!esAdmin()) prohibido();
+        if (!editaTienda()) prohibido();
         await espera();
         const id = p.id || nuevoId();
         const i = db.tienda.productos.findIndex(x => x.id === id);
@@ -531,19 +532,19 @@
         guardar(); return id;
       },
       async eliminarProducto(id) {
-        if (!esAdmin()) prohibido();
+        if (!editaTienda()) prohibido();
         const p = db.tienda.productos.find(x => x.id === id);
         db.tienda.productos = db.tienda.productos.filter(x => x.id !== id);
         auditar('delete', 'tienda_productos', { producto: p?.nombre });
         guardar();
       },
       async ordenarProductos(ids) {
-        if (!esAdmin()) prohibido();
+        if (!editaTienda()) prohibido();
         ids.forEach((id, i) => { const p = db.tienda.productos.find(x => x.id === id); if (p) p.orden = i + 1; });
         guardar();
       },
       async guardarAjustesTienda(a) {
-        if (!esAdmin()) prohibido();
+        if (!editaTienda()) prohibido();
         if (a.whatsapp && !/^[0-9]{8,15}$/.test(a.whatsapp)) throw new Error('El WhatsApp debe tener solo números, con el código de país (por ejemplo 56912345678).');
         await espera();
         for (const c of AJUSTES_TIENDA) db.tienda.ajustes[c] = a[c] ?? '';
@@ -552,7 +553,7 @@
       },
       // En la demostración la foto queda en este navegador, como texto (ya viene reducida).
       async subirFotoProducto(blob) {
-        if (!esAdmin()) prohibido();
+        if (!editaTienda()) prohibido();
         return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async borrarFotoProducto() { },

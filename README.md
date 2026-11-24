@@ -22,7 +22,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
 | **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
-| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, y ponen el suyo |
+| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo y editan la tienda |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
@@ -56,6 +56,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261124040000_rol_equipo.sql` | Rol **Equipo** |
    | `20261124050000_encuesta_muestra.sql` | Tabla de la encuesta de la Muestra Audiovisual |
    | `20261124060000_tienda.sql` | Tienda: productos, contacto y bucket de fotos |
+   | `20261124070000_tienda_equipo.sql` | El rol Equipo también edita la tienda |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
@@ -132,14 +133,14 @@ El público solo puede **enviar** respuestas: no puede leer las de otras persona
 
 `tienda/index.html` es la tienda pública de productos (`/tienda/`): portada, catálogo con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto.
 
-Los productos y el contacto se editan en la plataforma, sección **Tienda** (solo dirección): nombre, foto, tipo, precio, tallas o colores, descripción, orden, «Agotado» y «Mostrar en la tienda»; además el WhatsApp, Instagram, forma de pago y entrega. Los cambios se ven al instante en la tienda.
+Los productos y el contacto se editan en la plataforma, sección **Tienda** (dirección y rol Equipo): nombre, foto, tipo, precio, tallas o colores, descripción, orden, «Agotado» y «Mostrar en la tienda»; además el WhatsApp, Instagram, forma de pago y entrega. Los cambios se ven al instante en la tienda.
 
 Para activarla:
 
 1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124060000_tienda.sql`. Crea las tablas `tienda_productos` y `tienda_ajustes`, el bucket público de fotos `tienda` y carga los 8 productos actuales.
 2. Listo: la tienda lee de Supabase. Mientras no se ejecute la migración, muestra la lista de respaldo que trae la página (sin precios).
 
-El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo puede hacer solo dirección, y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
+El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo pueden hacer solo dirección y el rol Equipo (después de ejecutar `20261124070000_tienda_equipo.sql`), y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
 
 ## Estructura
 

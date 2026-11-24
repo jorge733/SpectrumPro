@@ -76,6 +76,8 @@ const puede = {
   editarFichas: () => ['admin', 'terapeuta'].includes(rol()),
   eliminarFichas: () => rol() === 'admin',
   admin: () => rol() === 'admin',
+  // La tienda la editan dirección y el rol Equipo.
+  tienda: () => ['admin', 'equipo'].includes(rol()),
   // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
   esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
@@ -263,6 +265,7 @@ function mostrarApp() {
   $('#usuario-nombre').textContent = p.nombre || p.email;
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
+  $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
   $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
@@ -772,10 +775,10 @@ const productosOrdenados = () => [...S.tienda.productos].sort((a, b) => (a.orden
 const producto = id => S.tienda?.productos.find(p => p.id === id);
 
 async function vistaTienda(el) {
-  if (!puede.admin()) { location.hash = 'panel'; return; }
+  if (!puede.tienda()) { location.hash = 'panel'; return; }
   const cab = `
     <header class="cabecera">
-      <div><p class="eyebrow">Solo dirección</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
+      <div><p class="eyebrow">Dirección y equipo</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
       <div class="controles">
         <a class="btn btn-sec" href="tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
         ${S.tienda ? '<button type="button" class="btn" data-accion="nuevo-producto">+ Nuevo producto</button>' : ''}
@@ -1373,7 +1376,8 @@ const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vis
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
-  if ((v === 'administracion' || v === 'tienda') && !puede.admin()) return 'panel';
+  if (v === 'administracion' && !puede.admin()) return 'panel';
+  if (v === 'tienda' && !puede.tienda()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
