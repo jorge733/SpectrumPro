@@ -238,7 +238,7 @@ async function cargarTodo() {
   textoArranque('Cargando talleres, fichas y asistencia…');
   const desde = iso(sumarDias(hoy(), -DIAS_HISTORIA));
   const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
-    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([]),
+    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
   Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
   mostrarApp();
