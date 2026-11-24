@@ -99,8 +99,10 @@
       async cambiarClave(clave) { ok(await sb.auth.updateUser({ password: clave })); },
       async perfil() {
         const u = ok(await sb.auth.getUser()).user;
-        return ok(await sb.from('perfiles').select('*').eq('id', u.id).maybeSingle());
+        const p = ok(await sb.from('perfiles').select('*').eq('id', u.id).maybeSingle());
+        return p && { ...p, fechaNac: p.fecha_nac || '' };
       },
+      async guardarMiFechaNac(fecha) { ok(await sb.rpc('guardar_mi_fecha_nac', { p_fecha: fecha || null })); },
       async talleres() {
         const [t, e] = await Promise.all([
           todo(() => sb.from('talleres').select('*').order('orden').order('nombre')),
@@ -317,6 +319,14 @@
       async recuperar() { },
       async cambiarClave() { },
       async perfil() { await espera(); return copia(yo() || null); },
+      async guardarMiFechaNac(fecha) {
+        if (!yo()?.rol || !yo().activo) prohibido();
+        if (fecha && fecha > iso(hoy())) throw new Error('La fecha de nacimiento no puede ser futura.');
+        await espera();
+        yo().fechaNac = fecha || '';
+        auditar('update', 'perfiles', { campos: ['fecha_nac'] });
+        guardar();
+      },
       async talleres() { await espera(); return copia(db.talleres); },
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();

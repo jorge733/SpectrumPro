@@ -107,6 +107,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .plegar svg { transition: transform .2s; }
 
 .usuario { margin-top: auto; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding: 14px 4px 0; min-width: 0; }
+.usuario-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 4px; margin: -4px; border-radius: 10px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.usuario-btn:hover { background: var(--surface-2); }
+.mi-cumple { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mi-cumple .txt { flex: 1; min-width: 200px; }
 .usuario-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .usuario-txt b { font-family: var(--f-display); font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usuario-txt small { color: var(--muted); font-size: .78rem; }
@@ -123,6 +127,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   body.menu-plegado .usuario-txt { display: none; }
   body.menu-plegado .nav a { justify-content: center; padding: 12px 0; }
   body.menu-plegado .usuario { flex-direction: column; padding-inline: 0; }
+  body.menu-plegado .usuario-btn { flex: 0 0 auto; }
   body.menu-plegado .plegar svg { transform: rotate(180deg); }
 }
 

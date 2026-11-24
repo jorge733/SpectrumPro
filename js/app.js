@@ -578,8 +578,8 @@ function vistaCumpleanos(el) {
   const nombreLargo = a => esEquipo ? a.nombre : nombreCompleto(a);
   const nombreCorto = a => esEquipo ? a.nombre : nombreVisible(a);
   const vacioEquipo = puede.admin()
-    ? 'Aún no hay fechas de nacimiento del equipo. Añádelas en Administración → Cuentas del equipo.'
-    : 'Aún no hay fechas de nacimiento del equipo. Dirección puede añadirlas en la cuenta de cada persona.';
+    ? 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí, o tú desde Administración → Cuentas del equipo.'
+    : 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí.';
 
   el.innerHTML = `
     <header class="cabecera">
@@ -589,6 +589,10 @@ function vistaCumpleanos(el) {
         <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Profesores <small>${S.cumpleEquipo.length}</small></button>
       </div>
     </header>
+    ${esEquipo ? `<section class="tarjeta mi-cumple">
+      <div class="txt"><b>Tu cumpleaños</b><br><small class="muted">${S.perfil.fechaNac ? esc(fechaLarga(proximoCumple(S.perfil.fechaNac, t).fecha).replace(/^\S+ /, '')) : 'Aún no has puesto tu fecha de nacimiento.'}</small></div>
+      <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
+    </section>` : ''}
     ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
     ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
     <section class="tarjeta">
@@ -1050,6 +1054,33 @@ $('#u-eliminar').addEventListener('click', async () => {
   } catch { /* ya avisado */ }
 });
 
+/* ---------- mi fecha de nacimiento ---------- */
+function abrirMiCumple() {
+  $('#mi-cumple-error').hidden = true;
+  $('#mi-fechaNac').value = S.perfil.fechaNac || '';
+  $('#mi-fechaNac').max = iso(hoy());
+  $('#dlg-mi-cumple').showModal();
+  $('#mi-fechaNac').focus();
+}
+$('#form-mi-cumple').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const fecha = $('#mi-fechaNac').value;
+  const err = $('#mi-cumple-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  if (fecha && fecha > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true);
+  try {
+    await conCarga(() => D.guardarMiFechaNac(fecha));
+    S.perfil.fechaNac = fecha;
+    [S.cumpleEquipo, S.usuarios] = await Promise.all([D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([])]);
+    $('#dlg-mi-cumple').close();
+    toast(fecha ? 'Fecha de nacimiento guardada' : 'Fecha de nacimiento borrada');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+
 /* ---------- exportar ---------- */
 function exportarFichas() {
   const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
@@ -1184,6 +1215,7 @@ document.addEventListener('click', async ev => {
       S.perfil = null;
       mostrarAcceso('entrar');
     }
+    if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
     if (acc === 'nuevo-taller') abrirTaller();
     if (acc === 'invitar') abrirUsuario();
