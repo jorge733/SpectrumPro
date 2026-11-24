@@ -121,6 +121,7 @@ Lo marcado en amarillo son datos que faltan (precios, forma de pago y entrega, I
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
 | `tienda/` | Propuesta de tienda de productos (página pública) |
+| `assets/og/` | Imágenes de 1200×630 para la vista previa al compartir cada página (Open Graph) |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
