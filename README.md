@@ -28,15 +28,34 @@ Los permisos se aplican **en la base de datos** con políticas RLS. Aunque algui
 
 ## Probarla sin configurar nada
 
-Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostración**: eliges un rol y recorres la plataforma con jóvenes ficticios guardados solo en ese navegador.
+No hay que compilar nada: son archivos estáticos (HTML, CSS y JavaScript sin dependencias; `supabase-js` se carga desde jsDelivr). Sírvelos con cualquier servidor local, por ejemplo:
+
+```bash
+python3 -m http.server 8000
+```
+
+y abre <http://localhost:8000>. (Abrir `index.html` directamente también funciona, pero el service worker solo se activa con `http://localhost` o `https://`.)
+
+Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostración**: eliges un rol y recorres la plataforma con jóvenes ficticios guardados solo en ese navegador. Para probar así con este repositorio, deja vacíos `supabaseUrl` y `supabaseAnonKey` en una copia local (sin subir el cambio).
 
 ## Conectar Supabase
 
 ### 1. Crear el proyecto
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
-2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
-   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` `20261124030000_talleres_sitio_web.sql` (talleres de spectrumpro.cl) y `20261124040000_rol_equipo.sql` (rol Equipo)). En un proyecto ya creado basta con ejecutar los que falten.
+2. En **SQL Editor**, ejecuta **en orden** los archivos de `supabase/migrations/`. En un proyecto ya creado basta con ejecutar los que falten; todos se pueden volver a ejecutar sin romper nada.
+
+   | Archivo | Qué hace |
+   | --- | --- |
+   | `20261120000000_spectrumpro.sql` | Tablas, permisos por rol (RLS) y auditoría |
+   | `20261120010000_talleres_unicos.sql` | Quita talleres duplicados e impide que se repitan |
+   | `20261124000000_cumpleanos_equipo.sql` | Fecha de nacimiento en las cuentas del equipo |
+   | `20261124010000_mi_fecha_nac.sql` | Cada persona del equipo pone su propio cumpleaños |
+   | `20261124020000_emergencia2.sql` | Segundo contacto de emergencia en la ficha |
+   | `20261124030000_talleres_sitio_web.sql` | Talleres, módulos y mentorías publicados en spectrumpro.cl |
+   | `20261124040000_rol_equipo.sql` | Rol **Equipo** |
+   | `20261124050000_encuesta_muestra.sql` | Tabla de la encuesta de la Muestra Audiovisual |
+
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
@@ -103,7 +122,7 @@ Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings
 
 Para activarla:
 
-1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124050000_encuesta_muestra.sql`. Crea la tabla `encuesta_evento`.
+1. Asegúrate de haber ejecutado `supabase/migrations/20261124050000_encuesta_muestra.sql` (crea la tabla `encuesta_evento`).
 2. Publica el sitio y comparte el enlace `…/encuesta.html` (o un código QR que apunte a él).
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
@@ -118,8 +137,9 @@ El público solo puede **enviar** respuestas: no puede leer las de otras persona
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
-| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión |
-| `supabase/migrations/…sql` | Tablas, RLS, auditoría y funciones de cumpleaños (jóvenes y equipo) |
+| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
+| `assets/` | Logo, íconos de la app e imágenes de la Muestra |
+| `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |
 | `supabase/seed.sql` | Talleres iniciales |
 | `supabase/functions/gestionar-usuario` | Invitar y eliminar cuentas (solo dirección) |
 
