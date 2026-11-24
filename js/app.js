@@ -14,7 +14,7 @@ const ESTADOS = {
   J: { label: 'Justificada', chip: 'chip-info' },
 };
 const ESTADO_ALUMNO = { activo: 'Activo', pausa: 'En pausa', egresado: 'Egresado', retirado: 'Retirado' };
-const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista' };
+const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista', equipo: 'Equipo' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -41,6 +41,9 @@ function proximoCumple(fechaNac, ref = hoy()) {
   if (n < ref) n = new Date(ref.getFullYear() + 1, b.getMonth(), b.getDate());
   return { fecha: n, dias: Math.round((n - ref) / 864e5), cumple: n.getFullYear() - b.getFullYear() };
 }
+// Año 1904 = año de nacimiento desconocido: se muestra el día, no la edad.
+const sinAnio = fechaNac => String(fechaNac || '').startsWith('1904-');
+const cumpleTxt = x => sinAnio(x.a.fechaNac) ? '' : ` · cumple ${x.cumple}`;
 const nombreVisible = a => `${a.apodo || a.nombre} ${(a.apellidos || '').split(' ')[0]}`;
 const nombreCompleto = a => `${a.nombre} ${a.apellidos}`;
 const iniciales = s => String(s || '').split(/[\s@._-]+/).filter(p => /^\p{L}/u.test(p)).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
@@ -72,6 +75,8 @@ const puede = {
   editarFichas: () => ['admin', 'terapeuta'].includes(rol()),
   eliminarFichas: () => rol() === 'admin',
   admin: () => rol() === 'admin',
+  // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
+  esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
 };
 const taller = id => S.talleres.find(t => t.id === id);
@@ -257,6 +262,7 @@ function mostrarApp() {
   $('#usuario-nombre').textContent = p.nombre || p.email;
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
+  $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
 
@@ -340,6 +346,7 @@ $('#plegar').addEventListener('click', () => aplicarPlegado(!document.body.class
    Vistas
    ===================================================================== */
 function vistaPanel(el) {
+  if (puede.esEquipo()) return vistaPanelEquipo(el);
   const t = hoy(), f = iso(t);
   const vig = vigentes();
   const sesionesHoy = misTalleres().filter(x => x.dias.includes(t.getDay()));
@@ -349,7 +356,7 @@ function vistaPanel(el) {
   const listaProximos = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
           <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
             ${avatar(x.a)}
-            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]} · cumple ${x.cumple}</small></div>
+            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
             <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
           </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
   const cumpleMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
@@ -401,8 +408,8 @@ function vistaPanel(el) {
         <h2>Próximos cumpleaños <small>30 días</small></h2>
         <h3 class="subtitulo-lista">Jóvenes</h3>
         ${listaProximos(proxJovenes, 'Ningún joven cumple años en los próximos 30 días.')}
-        <h3 class="subtitulo-lista">Profesores</h3>
-        ${listaProximos(proxEquipo, 'Ningún profesor cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${listaProximos(proxEquipo, 'Nadie del equipo cumple años en los próximos 30 días.')}
       </section>
 
       <section class="tarjeta">
@@ -421,6 +428,44 @@ function vistaPanel(el) {
             <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.r.A} ausencias · ${x.r.J} justificadas</small></div>
             ${chipPct(x.r.pct)}
           </li>`).join('')}</ul>` : '<p class="vacio">Todo el alumnado está sobre 75% de asistencia.</p>'}
+      </section>
+    </div>`;
+}
+
+// Panel del rol «equipo»: sin datos del alumnado ni asistencia.
+function vistaPanelEquipo(el) {
+  const t = hoy();
+  const hoyTalleres = S.talleres.filter(x => x.activo && x.dias.includes(t.getDay()))
+    .sort((a, b) => (a.horaInicio || '99').localeCompare(b.horaInicio || '99'));
+  const prox = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const lista = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+    <li>${avatar(x.a)}
+      <div class="txt"><b>${esc(x.a.apodo !== undefined ? nombreVisible(x.a) : x.a.nombre)}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
+      <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+    </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
+  const delMes = arr => arr.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
+  const saludo = (S.perfil.nombre || '').split(' ')[0];
+  el.innerHTML = `
+    <header class="cabecera">
+      <div><p class="eyebrow">${esc(fechaLarga(t))}</p><h1>Hola${saludo ? ', ' + esc(saludo) : ''}</h1><p>Cumpleaños y talleres de SpectrumPro.</p></div>
+      ${S.perfil.fechaNac ? '' : '<button type="button" class="btn" data-accion="mi-cumple">Añadir mi cumpleaños</button>'}
+    </header>
+    <section class="kpis" aria-label="Indicadores">
+      <div class="kpi"><span class="kpi-valor">${hoyTalleres.length}</span><span class="kpi-etq">Talleres hoy</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumpleEquipo)}</span><span class="kpi-etq">Cumpleaños del equipo en ${MESES[t.getMonth()]}</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumple)}</span><span class="kpi-etq">Cumpleaños de jóvenes en ${MESES[t.getMonth()]}</span></div>
+    </section>
+    <div class="rejilla">
+      <section class="tarjeta">
+        <h2>Talleres de hoy <small>${DIAS[t.getDay()]}</small></h2>
+        ${hoyTalleres.length ? hoyTalleres.map(s => `<div class="sesion">${punto(s)}<div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))}${s.encargado ? ' · ' + esc(s.encargado) : ''}</small></div></div>`).join('') : '<p class="vacio">Hoy no hay talleres programados.</p>'}
+      </section>
+      <section class="tarjeta">
+        <h2>Próximos cumpleaños <small>30 días</small></h2>
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${lista(prox(S.cumpleEquipo), 'Nadie del equipo cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${lista(prox(S.cumple), 'Ningún joven cumple años en los próximos 30 días.')}
       </section>
     </div>`;
 }
@@ -583,10 +628,10 @@ function vistaCumpleanos(el) {
 
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${esEquipo ? `${S.cumpleEquipo.length} ${S.cumpleEquipo.length === 1 ? 'profesor' : 'profesores'} con fecha` : `${S.cumple.length} jóvenes vigentes`}</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div><p class="eyebrow">${esEquipo ? `${S.cumpleEquipo.length} ${S.cumpleEquipo.length === 1 ? 'persona del equipo' : 'personas del equipo'} con fecha` : `${S.cumple.length} jóvenes vigentes`}</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
       <div class="pestanas" role="group" aria-label="Cumpleaños de">
         <button type="button" data-tab-cumple="jovenes" aria-pressed="${!esEquipo}">Jóvenes <small>${S.cumple.length}</small></button>
-        <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Profesores <small>${S.cumpleEquipo.length}</small></button>
+        <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Equipo <small>${S.cumpleEquipo.length}</small></button>
       </div>
     </header>
     ${esEquipo ? `<section class="tarjeta mi-cumple">
@@ -594,13 +639,13 @@ function vistaCumpleanos(el) {
       <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
     </section>` : ''}
     ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
-    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
+    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} ${sinAnio(x.a.fechaNac) ? 'está de cumpleaños' : `cumple ${x.cumple} años`}</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
     <section class="tarjeta">
       <h2>Próximos 30 días <small>${prox.length} cumpleaños</small></h2>
       ${prox.length ? `<ul class="lista">${prox.map(x => `
         <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)}>
           ${avatar(x.a)}
-          <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))} · cumple ${x.cumple}</small></div>
+          <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))}${cumpleTxt(x)}</small></div>
           <span class="dias">${x.dias}<small>${x.dias === 1 ? 'día' : 'días'}</small></span>
         </li>`).join('')}</ul>` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
     </section>
@@ -609,7 +654,7 @@ function vistaCumpleanos(el) {
         const delMes = fuente.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
         return `<div class="mes ${i === 0 ? 'actual' : ''}">
           <h3>${MESES[m]} <small>${delMes.length || ''}</small></h3>
-          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${proximoCumple(a.fechaNac, t).cumple} años</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
+          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${sinAnio(a.fechaNac) ? '' : proximoCumple(a.fechaNac, t).cumple + ' años'}</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
         </div>`;
       }).join('')}
     </section>`}`;
@@ -652,10 +697,11 @@ function pintarFichas() {
 }
 
 function vistaTalleres(el) {
-  const lista = puede.verTodo() ? S.talleres : misTalleres();
+  const eq = puede.esEquipo();
+  const lista = puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres();
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? 'Talleres' : 'Tus talleres'}</h1><p>Horario semanal y asistencia de los últimos 30 días.</p></div>
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? 'Talleres' : 'Tus talleres'}</h1><p>${eq ? 'Horario semanal y quién está a cargo.' : 'Horario semanal y asistencia de los últimos 30 días.'}</p></div>
       ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
@@ -670,9 +716,9 @@ function vistaTalleres(el) {
           <dt>Horario</dt><dd class="num">${esc(horario(t))}</dd>
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
-          <dt>Inscritos</dt><dd class="num">${ins.length}</dd>
+          ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
         </dl>
-        <div class="acciones">${chipPct(r.pct)}
+        <div class="acciones">${eq ? '' : chipPct(r.pct)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
           <button type="button" class="btn btn-sec btn-peq" data-ver-mes="${t.id}">Ver mes</button>` : ''}
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
@@ -711,7 +757,7 @@ function adminUsuarios(el) {
   el.innerHTML = `
     <section class="tarjeta">
       <h2><span>Cuentas del equipo</span><button type="button" class="btn btn-peq" data-accion="invitar">+ Invitar persona</button></h2>
-      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud.</p>
+      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud. El rol Equipo ve cumpleaños y talleres, sin fichas ni asistencia.</p>
       ${pendientes.length ? `<h3 class="sub">Esperando acceso</h3><ul class="lista">${pendientes.map(fila).join('')}</ul>` : ''}
       <h3 class="sub">Con acceso</h3>
       <ul class="lista">${activos.map(fila).join('')}</ul>
@@ -1135,6 +1181,7 @@ function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if (v === 'administracion' && !puede.admin()) return 'panel';
+  if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
 let vistaPintada = null;

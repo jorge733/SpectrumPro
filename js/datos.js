@@ -159,14 +159,20 @@
         return p.map(u => ({ ...u, fechaNac: u.fecha_nac || '', talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
       },
       async invitar(datos) {
-        const { data, error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'invitar', ...datos, redirectTo: urlBase() } });
+        // La función publicada puede ser anterior al rol «equipo»: se invita como tallerista sin
+        // talleres (no ve a nadie) y enseguida se cambia el rol.
+        const rolFuncion = datos.rol === 'equipo' ? 'tallerista' : datos.rol;
+        const { data, error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'invitar', ...datos, rol: rolFuncion, talleres: rolFuncion === 'tallerista' ? datos.talleres : [], redirectTo: urlBase() } });
         if (error) {
           let m = error.message;
           try { m = (await error.context.json()).error || m; } catch { /* sin cuerpo */ }
           throw traducir(m);
         }
         // La función de invitación no conoce la fecha de nacimiento: se guarda aparte.
-        if (datos.fechaNac && data?.id) ok(await sb.from('perfiles').update({ fecha_nac: datos.fechaNac }).eq('id', data.id));
+        const extra = {};
+        if (datos.fechaNac) extra.fecha_nac = datos.fechaNac;
+        if (datos.rol === 'equipo') extra.rol = 'equipo';
+        if (Object.keys(extra).length && data?.id) ok(await sb.from('perfiles').update(extra).eq('id', data.id));
         return data;
       },
       async actualizarUsuario(id, u) {
@@ -190,7 +196,7 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v5';
+  const CLAVE_DEMO = 'spectrumpro:demo:v6';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -206,6 +212,7 @@
       { id: 'u-admin', email: 'direccion@ejemplo.cl', nombre: 'Dirección (demo)', rol: 'admin', activo: true, fechaNac: iso(new Date(t.getFullYear() - 44, (t.getMonth() + 2) % 12, 9)) },
       { id: 'u-tera', email: 'terapeuta@ejemplo.cl', nombre: 'Terapeuta (demo)', rol: 'terapeuta', activo: true, fechaNac: iso(new Date(t.getFullYear() - 36, sumarDias(t, 12).getMonth(), sumarDias(t, 12).getDate())) },
       { id: 'u-talle', email: 'tallerista@ejemplo.cl', nombre: 'Tallerista (demo)', rol: 'tallerista', activo: true, fechaNac: iso(new Date(t.getFullYear() - 31, (t.getMonth() + 5) % 12, 23)) },
+      { id: 'u-equipo', email: 'equipo@ejemplo.cl', nombre: 'Equipo (demo)', rol: 'equipo', activo: true, fechaNac: iso(new Date(1904, sumarDias(t, 20).getMonth(), sumarDias(t, 20).getDate())) },
       { id: 'u-pend', email: 'nueva.persona@ejemplo.cl', nombre: 'Persona invitada', rol: null, activo: false, fechaNac: '' },
     ];
     // Lista y profesores según spectrumpro.cl; los horarios son de ejemplo (el sitio no los publica).

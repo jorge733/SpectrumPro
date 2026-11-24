@@ -448,6 +448,7 @@ body.resolviendo .app, body.resolviendo .acceso { display: none !important; }
 .chip-rol-admin { background: var(--accent-soft); color: var(--accent); }
 .chip-rol-terapeuta { background: var(--info-soft); color: var(--info); }
 .chip-rol-tallerista { background: var(--ok-soft); color: var(--ok); }
+.chip-rol-equipo { background: var(--warn-soft); color: var(--warn); }
 .mes li.clic { cursor: pointer; }
 .mes li:not(.clic):hover { color: inherit; }
 .ficha-cuerpo section.privado { background: var(--surface-2); border-radius: 12px; padding: 14px 16px; }

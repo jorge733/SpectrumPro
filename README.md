@@ -22,6 +22,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
 | **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
+| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, y ponen el suyo |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
@@ -35,7 +36,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
 2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
-   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` y `20261124030000_talleres_sitio_web.sql`, que añade los talleres, módulos y mentorías de spectrumpro.cl). En un proyecto ya creado basta con ejecutar los que falten.
+   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` `20261124030000_talleres_sitio_web.sql` (talleres de spectrumpro.cl) y `20261124040000_rol_equipo.sql` (rol Equipo)). En un proyecto ya creado basta con ejecutar los que falten.
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
