@@ -74,7 +74,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- estructura ---------- */
 .app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .lateral {
-  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  position: sticky; top: 0; height: 100vh; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;
   display: flex; flex-direction: column; gap: 24px;
   padding: 0 16px 20px; background: var(--surface); border-right: 1px solid var(--line);
 }
@@ -82,7 +82,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: block; height: 6px; margin: 0 -16px;
   background: linear-gradient(90deg, var(--sp-violeta) 0 16.6%, var(--sp-azul) 0 33.3%, var(--sp-verde) 0 50%, var(--sp-amarillo) 0 66.6%, var(--sp-rojo) 0 83.3%, var(--sp-rosa) 0);
 }
-.marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); padding: 4px 8px; }
+.lateral::-webkit-scrollbar { display: none; }
+.marca { display: flex; align-items: center; gap: 12px; min-width: 0; text-decoration: none; color: var(--ink); padding: 4px 8px; }
 .marca img { flex: none; }
 .marca-texto { display: flex; flex-direction: column; min-width: 0; }
 .marca-nombre { font-family: var(--f-marca); font-size: .78rem; letter-spacing: -.02em; }
