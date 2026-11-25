@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#635cc7">
+<meta name="description" content="Ficha cualitativa del participante de SpectrumPro: cuéntanos cómo es, qué le gusta y qué le ayuda a participar.">
+<meta name="robots" content="noindex">
+<meta name="format-detection" content="telephone=no">
+<title>Ficha del participante · SpectrumPro</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Montserrat:wght@400;500;600&display=swap">
+<style>
+/* Ficha cualitativa: una sección por pantalla, con barra de avance, borrador automático
+   en el dispositivo y un resumen final que se puede imprimir o guardar como PDF. */
+:root {
+  --bg: #f6f5fb; --surface: #ffffff; --surface-2: #efedf8;
+  --ink: #1e1b34; --muted: #615d78; --line: #dcd8ee;
+  --accent: #635cc7; --accent-hondo: #4f48b8; --accent-ink: #ffffff; --accent-soft: #ebe9fb;
+  --bad: #c42034; --bad-soft: #fde1e4; --ok: #0a8f57;
+  --sp-violeta: #635cc7; --sp-azul: #31b4e7; --sp-verde: #00bc70; --sp-amarillo: #fadd41; --sp-rojo: #f8384b; --sp-rosa: #e65ebe;
+  --shadow: 0 1px 2px rgb(30 27 52 / .06), 0 6px 20px rgb(30 27 52 / .07);
+  --f-display: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --f-texto: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14121f; --surface: #1d1a2c; --surface-2: #262338; --ink: #ecebf5; --muted: #a7a3bf; --line: #3a3652;
+    --accent: #8b85e6; --accent-hondo: #a9a4f0; --accent-ink: #14121f; --accent-soft: #2b2850;
+    --bad: #ff7a88; --bad-soft: #43171f; --ok: #4fd39a;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 6px 20px rgb(0 0 0 / .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14121f; --surface: #1d1a2c; --surface-2: #262338; --ink: #ecebf5; --muted: #a7a3bf; --line: #3a3652;
+  --accent: #8b85e6; --accent-hondo: #a9a4f0; --accent-ink: #14121f; --accent-soft: #2b2850;
+  --bad: #ff7a88; --bad-soft: #43171f; --ok: #4fd39a;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 6px 20px rgb(0 0 0 / .25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-texto); }
+.franja { height: 6px; background: linear-gradient(90deg, var(--sp-violeta) 0 16.6%, var(--sp-azul) 0 33.3%, var(--sp-verde) 0 50%, var(--sp-amarillo) 0 66.6%, var(--sp-rojo) 0 83.3%, var(--sp-rosa) 0); }
+.envoltura {
+  max-width: 820px; margin: 0 auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 24px) calc(env(safe-area-inset-bottom, 0px) + 48px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Cabecera */
+.cabecera { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.cabecera img { width: 56px; height: auto; flex: none; }
+.cabecera h1 { margin: 0; font: 700 clamp(1.3rem, 4.4vw, 1.85rem)/1.15 var(--f-display); text-wrap: balance; }
+.cabecera p { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
+
+/* Avance */
+.avance { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 12px; margin-bottom: 6px; }
+.avance-texto { display: flex; justify-content: space-between; gap: 12px; font: 500 .85rem var(--f-display); color: var(--muted); margin-bottom: 8px; }
+.avance-texto b { color: var(--ink); font-weight: 600; }
+.barra { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.barra i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width .25s; }
+.pasos-nav { display: flex; gap: 6px; margin: 10px 0 0; padding: 0 0 4px; list-style: none; overflow-x: auto; scrollbar-width: thin; }
+.pasos-nav button {
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer;
+  border-radius: 99px; padding: 5px 11px; font: 500 .8rem var(--f-display); white-space: nowrap;
+}
+.pasos-nav button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.pasos-nav button.hecho:not([aria-current]) { border-color: var(--accent); color: var(--accent-hondo); }
+.pasos-nav button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Tarjeta */
+.tarjeta { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); padding: clamp(20px, 4.5vw, 36px); }
+.paso h2 { margin: 0 0 4px; font: 700 clamp(1.35rem, 4vw, 1.7rem)/1.2 var(--f-display); display: flex; gap: 12px; align-items: center; }
+.paso h2 .num { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-hondo); font-size: 1rem; flex: none; }
+.paso h2:focus { outline: none; }
+.paso > .intro { margin: 0 0 22px; color: var(--muted); max-width: 62ch; }
+.preguntas { display: grid; gap: 22px; }
+.dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
+
+.q { display: grid; gap: 7px; min-width: 0; border: 0; margin: 0; padding: 0; }
+.q-titulo { font: 600 1rem/1.35 var(--f-display); padding: 0; }
+.ayuda { margin: -2px 0 2px; color: var(--muted); font-size: .88rem; }
+.opc { color: var(--muted); font: 500 .8rem var(--f-texto); }
+.req { color: var(--bad); }
+
+input[type=text], input[type=email], input[type=tel], input[type=date], textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 13px; min-height: 46px;
+}
+textarea { min-height: 92px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
+input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent-soft); border-color: var(--accent); }
+[aria-invalid=true] { border-color: var(--bad) !important; background: var(--bad-soft) !important; }
+
+.edad { display: flex; align-items: center; min-height: 46px; padding: 0 14px; border-radius: 12px; background: var(--surface-2); font: 600 1rem var(--f-display); }
+.edad:empty::before { content: "Se calcula con la fecha de nacimiento"; font: 400 .88rem var(--f-texto); color: var(--muted); }
+
+/* Listas con viñetas */
+.lista { display: grid; gap: 8px; }
+.lista-item { display: flex; gap: 8px; align-items: center; }
+.lista-item::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.lista-item input { flex: 1; }
+.quitar { flex: none; width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+.quitar:hover { background: var(--surface-2); color: var(--bad); }
+.agregar { justify-self: start; border: 1.5px dashed var(--accent); background: none; color: var(--accent-hondo); border-radius: 99px; padding: 7px 14px; font: 600 .88rem var(--f-display); cursor: pointer; }
+.agregar:hover { background: var(--accent-soft); }
+
+/* Opciones como fichas */
+.fichas { display: flex; flex-wrap: wrap; gap: 8px; }
+.ficha { position: relative; }
+.ficha input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.ficha span {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 14px;
+  border: 1.5px solid var(--line); border-radius: 99px; background: var(--surface);
+  font: 500 .92rem/1.25 var(--f-display); cursor: pointer; transition: background .15s, border-color .15s;
+}
+.ficha span::before { content: ""; width: 14px; height: 14px; border: 2px solid var(--muted); border-radius: 50%; flex: none; }
+.ficha input[type=checkbox] + span::before { border-radius: 4px; }
+.ficha:hover span { border-color: var(--accent); }
+.ficha input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.ficha input:checked + span::before { border-color: var(--accent-ink); background: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
+.ficha input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.otra { max-width: 360px; }
+
+/* Perfil sensorial */
+.aviso { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: .9rem; margin: 0 0 18px; }
+.sensorial { display: grid; gap: 10px; }
+.sen { display: grid; grid-template-columns: 1fr auto; gap: 8px 18px; align-items: center; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 0; }
+.sen legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; font: 700 .78rem/1 var(--f-display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent-hondo); }
+.sen p { margin: 0; font-size: .95rem; clear: both; }
+.sen .fichas { flex-wrap: nowrap; gap: 6px; }
+.sen .ficha span { min-height: 38px; padding: 6px 12px; font-size: .85rem; }
+.sen .ficha span::before { display: none; }
+@media (max-width: 640px) { .sen { grid-template-columns: 1fr; } .sen .fichas { flex-wrap: wrap; } }
+.fuente { margin: 10px 0 0; font-size: .76rem; color: var(--muted); font-style: italic; }
+
+/* Navegación entre pasos */
+.acciones { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--line); }
+.btn { border: 0; border-radius: 99px; cursor: pointer; padding: 13px 26px; font: 600 1rem var(--f-display); background: var(--accent); color: var(--accent-ink); }
+.btn:hover { filter: brightness(1.06); }
+.btn:focus-visible, .btn-sec:focus-visible, .agregar:focus-visible, .quitar:focus-visible, .enlace:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.btn[disabled] { opacity: .6; cursor: progress; }
+.btn-sec { border: 1.5px solid var(--line); border-radius: 99px; cursor: pointer; padding: 12px 22px; font: 600 1rem var(--f-display); background: var(--surface); color: var(--ink); }
+.btn-sec:hover { border-color: var(--accent); }
+.acciones .derecha { margin-left: auto; }
+.enlace { border: 0; background: none; padding: 0; color: var(--accent-hondo); font: 600 .85rem var(--f-display); text-decoration: underline; cursor: pointer; }
+
+.borrador { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin: 14px 4px 0; color: var(--muted); font-size: .82rem; }
+
+.casilla { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.casilla input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.error { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-weight: 600; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* Resumen */
+.resumen { margin-top: 8px; border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.resumen details { border-top: 1px solid var(--line); }
+.resumen details:first-child { border-top: 0; }
+.resumen summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; font: 600 .95rem var(--f-display); background: var(--surface-2); }
+.resumen summary small { font: 500 .8rem var(--f-texto); color: var(--muted); }
+.resumen dl { margin: 0; padding: 6px 16px 14px; display: grid; grid-template-columns: minmax(150px, 34%) 1fr; gap: 8px 16px; }
+.resumen dt { font: 600 .85rem/1.4 var(--f-display); color: var(--muted); }
+.resumen dd { margin: 0; font-size: .92rem; white-space: pre-line; overflow-wrap: anywhere; }
+.resumen dd.vacio { color: var(--muted); opacity: .7; }
+@media (max-width: 560px) { .resumen dl { grid-template-columns: 1fr; gap: 2px; } .resumen dd { margin-bottom: 8px; } }
+
+.gracias { text-align: center; display: grid; gap: 14px; justify-items: center; padding: 16px 0; }
+.gracias svg { width: 84px; height: 84px; }
+.gracias h2 { justify-content: center; }
+.anexo { margin: 22px 0 0; padding: 14px 16px; border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: 0 12px 12px 0; font-size: .92rem; }
+
+/* Impresión: solo la ficha completa, en blanco y negro legible */
+#impresion { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  body > :not(#impresion) { display: none !important; }
+  #impresion { display: block; }
+  #impresion header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #2d3e57; padding-bottom: 8px; margin-bottom: 10px; }
+  #impresion header img { width: 46px; }
+  #impresion h1 { font: 700 15pt var(--f-display); margin: 0; color: #2d3e57; }
+  #impresion header p { margin: 0; font-size: 9pt; color: #444; }
+  #impresion h2 { font: 700 11pt var(--f-display); background: #2d3e57; color: #fff; padding: 3px 8px; margin: 12px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-after: avoid; }
+  #impresion dl { display: grid; grid-template-columns: 34% 1fr; margin: 0; border: 1px solid #9aa6b8; border-top: 0; }
+  #impresion dt, #impresion dd { margin: 0; padding: 4px 8px; border-top: 1px solid #9aa6b8; break-inside: avoid; }
+  #impresion dt { font: 600 9.5pt var(--f-display); background: #dde5ef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #impresion dd { white-space: pre-line; }
+  #impresion .vacio { color: #888; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="franja" aria-hidden="true"></div>
+<div class="envoltura">
+
+  <header class="cabecera">
+    <img src="assets/logo.svg" width="75" height="73" alt="SpectrumPro">
+    <div>
+      <h1>Ficha cualitativa del participante</h1>
+      <p>Nos ayuda a conocer a cada joven para acompañarle mejor en los talleres.</p>
+    </div>
+  </header>
+
+  <div class="avance" id="avance">
+    <div class="avance-texto"><span id="avance-paso"><b>Paso 1 de 10</b> · Identificación</span><span id="avance-pct">0%</span></div>
+    <div class="barra" role="progressbar" aria-labelledby="avance-paso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barra"><i></i></div>
+    <ol class="pasos-nav" id="pasos-nav" aria-label="Secciones de la ficha"></ol>
+  </div>
+
+  <main class="tarjeta" id="tarjeta">
+  <form id="ficha" novalidate>
+
+    <!-- 1. Identificación -->
+    <section class="paso" data-titulo="Identificación">
+      <h2 tabindex="-1"><span class="num">1</span>Identificación</h2>
+      <p class="intro">Datos básicos del participante y de las personas de contacto. Solo el nombre completo es obligatorio: completa lo que sepas, puedes volver después.</p>
+      <div class="preguntas">
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Nombre completo <span class="req" aria-hidden="true">*</span></span>
+            <input type="text" name="nombre_completo" id="nombre_completo" autocomplete="off" maxlength="160" required></label>
+          <label class="q"><span class="q-titulo">Nombre o forma en que prefiere ser llamado/a</span>
+            <input type="text" name="nombre_preferido" maxlength="80"></label>
+        </div>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Fecha de nacimiento</span>
+            <input type="date" name="fecha_nacimiento" id="fecha_nacimiento" min="1950-01-01"></label>
+          <div class="q"><span class="q-titulo" id="et-edad">Edad</span>
+            <output class="edad" id="edad" aria-labelledby="et-edad" aria-live="polite"></output></div>
+        </div>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Fecha de ingreso</span>
+            <input type="date" name="fecha_ingreso" min="2000-01-01"></label>
+          <label class="q"><span class="q-titulo">Curso</span>
+            <input type="text" name="curso" maxlength="60" placeholder="Ej.: 2° medio"></label>
+        </div>
+        <label class="q"><span class="q-titulo">Colegio o establecimiento educacional</span>
+          <input type="text" name="colegio" maxlength="160"></label>
+        <div class="q"><span class="q-titulo" id="et-talleres">Talleres o actividades actuales</span>
+          <div class="lista" data-name="talleres_actuales" data-min="3" aria-labelledby="et-talleres"></div></div>
+        <label class="q"><span class="q-titulo">Talleres anteriores en la organización</span>
+          <textarea name="talleres_anteriores" maxlength="1000"></textarea></label>
+        <label class="q"><span class="q-titulo">Apoderado/a o cuidador/a principal</span>
+          <input type="text" name="apoderado" maxlength="160" placeholder="Nombre y parentesco"></label>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Contacto</span>
+            <input type="text" name="contacto" maxlength="160" inputmode="tel" placeholder="+56 9 1234 5678 o correo"></label>
+          <label class="q"><span class="q-titulo">Contacto de emergencia</span>
+            <input type="text" name="contacto_emergencia" maxlength="160" placeholder="Nombre y teléfono"></label>
+        </div>
+        <label class="q"><span class="q-titulo">Profesional o monitor referente</span>
+          <input type="text" name="profesional_referente" maxlength="160"></label>
+      </div>
+    </section>
+
+    <!-- 2. Antecedentes -->
+    <section class="paso" data-titulo="Antecedentes relevantes" hidden>
+      <h2 tabindex="-1"><span class="num">2</span>Antecedentes relevantes</h2>
+      <p class="intro">Información útil para cuidar su seguridad y ofrecer los apoyos adecuados. Se guarda de forma confidencial.</p>
+      <div class="preguntas">
+        <label class="q"><span class="q-titulo">Diagnósticos o condiciones relevantes para su participación y apoyos</span>
+          <textarea name="diagnosticos" maxlength="2000"></textarea></label>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Profesionales externos</span>
+            <textarea name="profesionales_externos" maxlength="1000" placeholder="Ej.: psicóloga, terapeuta ocupacional, fonoaudiólogo…"></textarea></label>
+          <label class="q"><span class="q-titulo">Tratamiento farmacológico</span>
+            <textarea name="tratamiento_farmacologico" maxlength="1000" placeholder="Medicamento, dosis y horario"></textarea></label>
+        </div>
+        <label class="q"><span class="q-titulo">Antecedentes médicos relevantes para su seguridad o participación</span>
+          <span class="ayuda">Alergias, epilepsia, restricciones de actividad física, etc.</span>
+          <textarea name="antecedentes_medicos" maxlength="2000"></textarea></label>
+        <label class="q"><span class="q-titulo">Otros antecedentes importantes</span>
+          <textarea name="otros_antecedentes" maxlength="2000"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 3. Fortalezas -->
+    <section class="paso" data-titulo="Fortalezas" hidden>
+      <h2 tabindex="-1"><span class="num">3</span>Fortalezas</h2>
+      <p class="intro">Lo que hace bien, lo que le destaca y en lo que podemos apoyarnos.</p>
+      <div class="preguntas">
+        <div class="q"><span class="q-titulo" id="et-fortalezas">Principales fortalezas observadas o informadas</span>
+          <div class="lista" data-name="fortalezas" data-min="5" aria-labelledby="et-fortalezas"></div></div>
+        <label class="q"><span class="q-titulo">¿En qué actividades o situaciones se desenvuelve especialmente bien?</span>
+          <textarea name="se_desenvuelve_bien" maxlength="2000"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 4. Intereses -->
+    <section class="paso" data-titulo="Intereses y motivaciones" hidden>
+      <h2 tabindex="-1"><span class="num">4</span>Intereses y motivaciones</h2>
+      <p class="intro">Sus temas favoritos nos ayudan a diseñar actividades que le motiven.</p>
+      <div class="preguntas">
+        <div class="q"><span class="q-titulo" id="et-intereses">Intereses y actividades principales</span>
+          <div class="lista" data-name="intereses" data-min="3" aria-labelledby="et-intereses"></div></div>
+        <div class="q"><span class="q-titulo" id="et-evita">Actividades o situaciones que tiende a evitar o disfrutar menos</span>
+          <div class="lista" data-name="evita" data-min="3" aria-labelledby="et-evita"></div></div>
+      </div>
+    </section>
+
+    <!-- 5. Comunicación -->
+    <section class="paso" data-titulo="Perfil de comunicación" hidden>
+      <h2 tabindex="-1"><span class="num">5</span>Perfil de comunicación</h2>
+      <p class="intro">Cómo se comunica y cómo podemos comunicarnos mejor con él o ella.</p>
+      <div class="preguntas">
+        <label class="q"><span class="q-titulo">Evaluación cognitiva previa (WISC, WAIS u otra), si corresponde</span>
+          <textarea name="evaluacion_cognitiva" maxlength="1500" placeholder="Instrumento, año y resultados principales"></textarea></label>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Forma principal de comunicación</span>
+            <textarea name="forma_comunicacion" maxlength="1000" placeholder="Ej.: verbal, gestos, pictogramas, escritura…"></textarea></label>
+          <label class="q"><span class="q-titulo">Tiempo de procesamiento o respuesta</span>
+            <textarea name="tiempo_procesamiento" maxlength="1000"></textarea></label>
+        </div>
+        <fieldset class="q"><legend class="q-titulo">¿Cómo comprende mejor las instrucciones?</legend>
+          <span class="ayuda">Puedes marcar más de una.</span>
+          <div class="fichas">
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Verbales"><span>Verbales</span></label>
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Escritas"><span>Escritas</span></label>
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Visuales"><span>Visuales</span></label>
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Mediante demostración"><span>Mediante demostración</span></label>
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Combinación"><span>Combinación</span></label>
+            <label class="ficha"><input type="checkbox" name="comprende_instrucciones" value="Otra" data-otra="comprende_otra"><span>Otra</span></label>
+          </div>
+          <input class="otra" type="text" name="comprende_otra" data-prefijo="Otra" maxlength="200" placeholder="¿Cuál?" aria-label="Otra forma de comprender instrucciones" hidden>
+        </fieldset>
+        <label class="q"><span class="q-titulo">Aspectos importantes para comunicarse con él/ella</span>
+          <textarea name="aspectos_comunicarse" maxlength="1500"></textarea></label>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Cómo comunica que necesita ayuda</span>
+            <textarea name="comunica_ayuda" maxlength="1000"></textarea></label>
+          <label class="q"><span class="q-titulo">Cómo comunica malestar o necesidad de detenerse</span>
+            <textarea name="comunica_malestar" maxlength="1000"></textarea></label>
+        </div>
+        <label class="q"><span class="q-titulo">Otros aspectos relevantes de su comunicación</span>
+          <textarea name="otros_comunicacion" maxlength="1500"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 6. Sensorial -->
+    <section class="paso" data-titulo="Perfil sensorial" hidden>
+      <h2 tabindex="-1"><span class="num">6</span>Perfil sensorial</h2>
+      <p class="intro">Para cada situación, marca con qué frecuencia la has observado.</p>
+      <p class="aviso">Pauta breve de cribado sensorial: no es diagnóstica, orienta la exploración clínica y no reemplaza instrumentos estandarizados.</p>
+      <div class="preguntas">
+        <div class="sensorial" id="sensorial"></div>
+        <p class="fuente">Ítems adaptados de: Bogdashina, O. (2007), citado en conductas observadas por sistema sensorial en personas autistas adultas; Brown, C. &amp; Dunn, W. (2002). Adolescent/Adult Sensory Profile. Pearson; Dunn, W. (2014). Sensory Profile 2. Pearson. Uso exploratorio, no sustituye evaluación con instrumentos estandarizados.</p>
+        <label class="q"><span class="q-titulo">Estrategias o adaptaciones sensoriales que le ayudan</span>
+          <textarea name="estrategias_sensoriales" maxlength="1500" placeholder="Ej.: audífonos con cancelación de ruido, luz tenue, objeto para manipular…"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 7. Regulación emocional -->
+    <section class="paso" data-titulo="Regulación emocional" hidden>
+      <h2 tabindex="-1"><span class="num">7</span>Regulación emocional</h2>
+      <p class="intro">Cómo se ve cuando está bien, qué le desregula y qué le ayuda a volver a la calma.</p>
+      <div class="preguntas">
+        <label class="q"><span class="q-titulo">Cuando está cómodo/a y regulado/a, generalmente…</span>
+          <textarea name="regulado" maxlength="1500"></textarea></label>
+        <label class="q"><span class="q-titulo">Situaciones que pueden aumentar estrés, frustración o sobrecarga</span>
+          <textarea name="situaciones_estres" maxlength="1500"></textarea></label>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Señales tempranas de malestar</span>
+            <textarea name="senales_tempranas" maxlength="1500"></textarea></label>
+          <label class="q"><span class="q-titulo">Cuando el malestar aumenta se observa…</span>
+            <textarea name="malestar_aumenta" maxlength="1500"></textarea></label>
+        </div>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Estrategias que suelen ayudar</span>
+            <textarea name="estrategias_ayudan" maxlength="1500"></textarea></label>
+          <label class="q"><span class="q-titulo">Estrategias o respuestas a evitar</span>
+            <textarea name="estrategias_evitar" maxlength="1500"></textarea></label>
+        </div>
+        <label class="q"><span class="q-titulo">Persona(s) de referencia ante mayor necesidad de apoyo</span>
+          <input type="text" name="personas_referencia" maxlength="300" placeholder="Nombre y cómo contactarla"></label>
+      </div>
+    </section>
+
+    <!-- 8. Participación -->
+    <section class="paso" data-titulo="Preferencias de participación" hidden>
+      <h2 tabindex="-1"><span class="num">8</span>Preferencias de participación</h2>
+      <p class="intro">Cómo le gusta trabajar y qué hace más fácil (o más difícil) que participe.</p>
+      <div class="preguntas">
+        <fieldset class="q"><legend class="q-titulo">Prefiere generalmente actividades…</legend>
+          <span class="ayuda">Puedes marcar más de una.</span>
+          <div class="fichas">
+            <label class="ficha"><input type="checkbox" name="prefiere_agrupacion" value="Individuales"><span>Individuales</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_agrupacion" value="En pareja"><span>En pareja</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_agrupacion" value="Grupos pequeños"><span>Grupos pequeños</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_agrupacion" value="Grupos grandes"><span>Grupos grandes</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_agrupacion" value="Depende de la actividad"><span>Depende de la actividad</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="q"><legend class="q-titulo">Prefiere actividades…</legend>
+          <div class="fichas">
+            <label class="ficha"><input type="checkbox" name="prefiere_estructura" value="Muy estructuradas"><span>Muy estructuradas</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_estructura" value="Semiestructuradas"><span>Semiestructuradas</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_estructura" value="Abiertas"><span>Abiertas</span></label>
+            <label class="ficha"><input type="checkbox" name="prefiere_estructura" value="Depende del contexto"><span>Depende del contexto</span></label>
+          </div>
+        </fieldset>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">Facilita su participación</span>
+            <textarea name="facilita" maxlength="1500"></textarea></label>
+          <label class="q"><span class="q-titulo">Dificulta su participación</span>
+            <textarea name="dificulta" maxlength="1500"></textarea></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Objetivos -->
+    <section class="paso" data-titulo="Objetivos personales" hidden>
+      <h2 tabindex="-1"><span class="num">9</span>Objetivos personales</h2>
+      <p class="intro">Lo que queremos lograr juntos, desde tres miradas.</p>
+      <div class="preguntas">
+        <label class="q"><span class="q-titulo">Desde el participante: ¿qué le gustaría aprender, mejorar, probar o conseguir?</span>
+          <textarea name="obj_participante" maxlength="2000"></textarea></label>
+        <label class="q"><span class="q-titulo">Desde la familia: aspectos a fortalecer</span>
+          <textarea name="obj_familia" maxlength="2000"></textarea></label>
+        <label class="q"><span class="q-titulo">Desde el equipo: necesidades u oportunidades</span>
+          <textarea name="obj_equipo" maxlength="2000"></textarea></label>
+      </div>
+      <p class="anexo"><strong>Anexo 1: Burnout parental.</strong> Se completa en un documento aparte que te entregará el equipo.</p>
+    </section>
+
+    <!-- 10. Revisar y enviar -->
+    <section class="paso" data-titulo="Revisar y enviar" data-final hidden>
+      <h2 tabindex="-1"><span class="num">10</span>Revisar y enviar</h2>
+      <p class="intro">Revisa las respuestas. Puedes abrir cada sección para verlas y volver a editarla.</p>
+      <div class="preguntas">
+        <div class="resumen" id="resumen"></div>
+        <div class="dos">
+          <label class="q"><span class="q-titulo">¿Quién completa esta ficha? <span class="req" aria-hidden="true">*</span></span>
+            <input type="text" name="completado_por" id="completado_por" autocomplete="name" maxlength="160" required placeholder="Tu nombre y apellido"></label>
+          <label class="q"><span class="q-titulo">Correo de contacto <span class="opc">(opcional)</span></span>
+            <input type="email" name="email_contacto" id="email_contacto" autocomplete="email" maxlength="160"></label>
+        </div>
+        <fieldset class="q"><legend class="q-titulo">Tu relación con el participante</legend>
+          <div class="fichas">
+            <label class="ficha"><input type="radio" name="relacion" value="Madre, padre o apoderado/a"><span>Madre, padre o apoderado/a</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="El/la participante"><span>Soy el/la participante</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Equipo SpectrumPro"><span>Equipo SpectrumPro</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Profesional externo"><span>Profesional externo</span></label>
+            <label class="ficha"><input type="radio" name="relacion" value="Otra"><span>Otra</span></label>
+          </div>
+        </fieldset>
+        <div class="trampa" aria-hidden="true">
+          <label>No completes este campo <input id="sitio" type="text" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <label class="casilla"><input id="consentimiento" type="checkbox" required>
+          <span>Autorizo a SpectrumPro a guardar esta información de forma confidencial, para uso exclusivo del equipo que acompaña al participante.</span></label>
+        <p id="error" class="error" role="alert" hidden></p>
+      </div>
+    </section>
+
+    <section class="paso gracias" id="paso-gracias" hidden>
+      <svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38" fill="var(--accent-soft)"/><path d="M26 43l11 11 22-24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2 tabindex="-1" id="titulo-gracias">¡Gracias! Recibimos la ficha</h2>
+      <p id="gracias-texto" class="intro">El equipo de SpectrumPro la revisará antes de los talleres.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button type="button" class="btn" id="imprimir">Imprimir o guardar PDF</button>
+        <button type="button" class="btn-sec" id="otra-ficha">Completar otra ficha</button>
+      </div>
+    </section>
+
+    <div class="acciones" id="acciones">
+      <button type="button" class="btn-sec" id="anterior">← Anterior</button>
+      <button type="button" class="btn derecha" id="siguiente">Siguiente →</button>
+      <button type="submit" class="btn derecha" id="enviar" hidden>Enviar ficha</button>
+    </div>
+  </form>
+  </main>
+
+  <div class="borrador" id="borrador-barra">
+    <span id="borrador-estado">Lo que escribes se guarda en este dispositivo hasta que envíes la ficha.</span>
+    <span><button type="button" class="enlace" id="imprimir-borrador">Imprimir</button> · <button type="button" class="enlace" id="borrar">Empezar de nuevo</button></span>
+  </div>
+</div>
+
+<div id="impresion" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const cfg = window.SPECTRUMPRO_CONFIG || {};
+  const conectado = !!(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
+  const sb = conectado
+    ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    : null;
+  const CLAVE = 'spectrumpro-ficha-borrador-v1';
+  const $ = id => document.getElementById(id);
+  const form = $('ficha');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // ---------- Perfil sensorial ----------
+  const SENSORIAL = [
+    ['visual', 'Visual', 'Se incomoda con luces brillantes, fluorescentes o ambientes muy iluminados.'],
+    ['auditivo', 'Auditivo', 'Se sobresalta, tapa los oídos o evita ambientes con ruidos inesperados o conversaciones simultáneas.'],
+    ['tactil', 'Táctil', 'Evita o rechaza el contacto físico ligero, ciertas texturas de ropa o etiquetas.'],
+    ['interoceptivo', 'Interoceptivo', 'Le cuesta identificar señales internas como hambre, sed, frío/calor o necesidad de ir al baño.'],
+    ['oral', 'Oral', 'Presenta selectividad alimentaria marcada por textura, sabor, olor o temperatura de los alimentos.'],
+    ['vestibular', 'Vestibular', 'Evita o busca en exceso el movimiento (columpios, escaleras mecánicas, giros, alturas).'],
+    ['propioceptivo', 'Propioceptivo', 'Busca actividades de fuerza o presión, o tiene dificultad para permanecer quieto/a.'],
+    ['olfativo', 'Olfativo', 'Reacciona con incomodidad o náuseas ante ciertos olores, o no percibe olores del entorno.'],
+  ];
+  $('sensorial').innerHTML = SENSORIAL.map(([k, sis, txt]) => `
+    <fieldset class="sen q" data-titulo="${sis}">
+      <legend>${sis}</legend>
+      <p>${txt}</p>
+      <div class="fichas">
+        ${['Nunca', 'A veces', 'Frecuente'].map(v => `<label class="ficha"><input type="radio" name="sen_${k}" value="${v}"><span>${v}</span></label>`).join('')}
+      </div>
+    </fieldset>`).join('');
+
+  // ---------- Listas con viñetas ----------
+  function itemLista(lista, valor) {
+    const div = document.createElement('div');
+    div.className = 'lista-item';
+    const n = lista.querySelectorAll('.lista-item').length + 1;
+    const titulo = document.getElementById(lista.getAttribute('aria-labelledby')).textContent;
+    div.innerHTML = `<input type="text" name="${lista.dataset.name}" maxlength="300" aria-label="${esc(titulo)} ${n}">
+      <button type="button" class="quitar" aria-label="Quitar">×</button>`;
+    div.querySelector('input').value = valor || '';
+    lista.insertBefore(div, lista.querySelector('.agregar'));
+    return div.querySelector('input');
+  }
+  function prepararLista(lista, valores) {
+    lista.querySelectorAll('.lista-item').forEach(i => i.remove());
+    if (!lista.querySelector('.agregar')) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'agregar'; b.textContent = '+ Agregar otro';
+      lista.appendChild(b);
+    }
+    const n = Math.max(+lista.dataset.min || 1, (valores || []).length);
+    for (let i = 0; i < n; i++) itemLista(lista, (valores || [])[i]);
+  }
+  form.querySelectorAll('.lista').forEach(l => prepararLista(l));
+  form.addEventListener('click', e => {
+    if (e.target.matches('.agregar')) {
+      const lista = e.target.closest('.lista');
+      if (lista.querySelectorAll('.lista-item').length < 15) itemLista(lista).focus();
+    } else if (e.target.matches('.quitar')) {
+      const lista = e.target.closest('.lista');
+      const item = e.target.closest('.lista-item');
+      if (lista.querySelectorAll('.lista-item').length > 1) {
+        const prev = item.previousElementSibling || item.nextElementSibling;
+        item.remove();
+        (prev && prev.querySelector('input') || lista.querySelector('.agregar')).focus();
+      } else item.querySelector('input').value = '';
+      guardar();
+    }
+  });
+
+  // ---------- "Otra" con campo de texto ----------
+  function sincronizarOtras() {
+    form.querySelectorAll('input[data-otra]').forEach(c => {
+      const campo = form.elements[c.dataset.otra];
+      campo.hidden = !c.checked;
+    });
+  }
+  form.addEventListener('change', e => {
+    if (e.target.dataset.otra) { sincronizarOtras(); if (e.target.checked) form.elements[e.target.dataset.otra].focus(); }
+  });
+
+  // ---------- Edad ----------
+  function calcularEdad() {
+    const v = $('fecha_nacimiento').value;
+    if (!v) { $('edad').textContent = ''; return null; }
+    const [a, m, d] = v.split('-').map(Number);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - a;
+    if (hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) edad--;
+    if (edad < 0 || edad > 120) { $('edad').textContent = ''; return null; }
+    $('edad').textContent = `${edad} ${edad === 1 ? 'año' : 'años'}`;
+    return edad;
+  }
+  $('fecha_nacimiento').max = new Date().toISOString().slice(0, 10);
+  $('fecha_nacimiento').addEventListener('input', calcularEdad);
+
+  // ---------- Leer y restaurar respuestas ----------
+  function leer() {
+    const d = {};
+    for (const el of form.elements) {
+      if (!el.name) continue;
+      if (el.type === 'checkbox') { (d[el.name] ||= []); if (el.checked) d[el.name].push(el.value); }
+      else if (el.type === 'radio') { if (!(el.name in d)) d[el.name] = ''; if (el.checked) d[el.name] = el.value; }
+      else if (el.closest('.lista')) { (d[el.name] ||= []); const v = el.value.trim(); if (v) d[el.name].push(v); }
+      else d[el.name] = el.value.trim();
+    }
+    if (!(d.comprende_instrucciones || []).includes('Otra')) d.comprende_otra = '';
+    return d;
+  }
+  function restaurar(d) {
+    form.querySelectorAll('.lista').forEach(l => prepararLista(l, d[l.dataset.name]));
+    for (const el of form.elements) {
+      if (!el.name || !(el.name in d) || el.closest('.lista')) continue;
+      const v = d[el.name];
+      if (el.type === 'checkbox') el.checked = Array.isArray(v) && v.includes(el.value);
+      else if (el.type === 'radio') el.checked = v === el.value;
+      else el.value = v || '';
+    }
+    sincronizarOtras(); calcularEdad();
+  }
+
+  let enviado = false;
+  let temporizador;
+  function guardar() {
+    if (enviado) return;
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => {
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify({ paso: actual, datos: leer(), hora: Date.now() }));
+        const h = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        $('borrador-estado').textContent = `Borrador guardado en este dispositivo a las ${h}.`;
+      } catch (_) { /* sin almacenamiento: la ficha igual se puede enviar */ }
+    }, 400);
+  }
+  form.addEventListener('input', e => {
+    e.target.removeAttribute('aria-invalid'); $('error').hidden = true; guardar();
+  });
+  form.addEventListener('change', guardar);
+
+  // ---------- Pasos ----------
+  const pasos = [...form.querySelectorAll('.paso:not(#paso-gracias)')];
+  let actual = 0;
+  const nav = $('pasos-nav');
+  nav.innerHTML = pasos.map((p, i) =>
+    `<li><button type="button" data-ir="${i}" aria-label="Paso ${i + 1}: ${esc(p.dataset.titulo)}">${i + 1}. ${esc(p.dataset.titulo)}</button></li>`).join('');
+  nav.addEventListener('click', e => { const b = e.target.closest('[data-ir]'); if (b) ir(+b.dataset.ir); });
+
+  function ir(n, sinFoco) {
+    if (n > 0 && actual === 0 && !validarNombre()) return;
+    actual = Math.max(0, Math.min(pasos.length - 1, n));
+    pasos.forEach((p, i) => { p.hidden = i !== actual; });
+    const final = actual === pasos.length - 1;
+    if (final) pintarResumen();
+    $('anterior').style.visibility = actual === 0 ? 'hidden' : 'visible';
+    $('siguiente').hidden = final;
+    $('enviar').hidden = !final;
+    const pct = Math.round(actual / (pasos.length - 1) * 100);
+    $('avance-paso').innerHTML = `<b>Paso ${actual + 1} de ${pasos.length}</b> · ${esc(pasos[actual].dataset.titulo)}`;
+    $('avance-pct').textContent = `${pct}%`;
+    $('barra').setAttribute('aria-valuenow', pct);
+    $('barra').firstElementChild.style.width = pct + '%';
+    nav.querySelectorAll('button').forEach((b, i) => {
+      b.classList.toggle('hecho', i < actual);
+      if (i === actual) { b.setAttribute('aria-current', 'step'); b.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+      else b.removeAttribute('aria-current');
+    });
+    if (!sinFoco) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      pasos[actual].querySelector('h2').focus({ preventScroll: true });
+    }
+    guardar();
+  }
+  $('siguiente').addEventListener('click', () => ir(actual + 1));
+  $('anterior').addEventListener('click', () => ir(actual - 1));
+
+  function validarNombre() {
+    const el = $('nombre_completo');
+    if (el.value.trim().length >= 2) return true;
+    if (actual !== 0) ir(0);
+    el.setAttribute('aria-invalid', 'true');
+    el.focus();
+    mostrarAvisoNombre();
+    return false;
+  }
+  function mostrarAvisoNombre() {
+    let a = $('aviso-nombre');
+    if (!a) {
+      a = document.createElement('p'); a.id = 'aviso-nombre'; a.className = 'error'; a.setAttribute('role', 'alert');
+      $('nombre_completo').after(a);
+    }
+    a.textContent = 'Escribe el nombre completo del participante para continuar.';
+    a.hidden = false;
+    $('nombre_completo').addEventListener('input', () => { a.hidden = true; }, { once: true });
+  }
+
+  // ---------- Resumen ----------
+  function valorPregunta(q) {
+    const partes = [];
+    q.querySelectorAll('input, textarea').forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        if (el.checked && !el.dataset.otra) partes.push(el.value);
+      } else if (el.type === 'date' && el.value) {
+        partes.push(el.value.split('-').reverse().join('-'));
+      } else if (el.value.trim()) {
+        partes.push(el.dataset.prefijo ? `${el.dataset.prefijo}: ${el.value.trim()}` : el.value.trim());
+      }
+    });
+    const out = q.querySelector('output');
+    if (out && out.textContent) partes.push(out.textContent);
+    if (q.querySelector('.lista')) return partes.map(p => '• ' + p).join('\n');
+    return partes.join(q.querySelector('input[type=checkbox], input[type=radio]') ? ', ' : '\n');
+  }
+  function secciones() {
+    return pasos.slice(0, -1).map((p, i) => {
+      const filas = [...p.querySelectorAll('.q')].filter(q => !q.parentElement.closest('.q')).map(q => ({
+        titulo: q.dataset.titulo || q.querySelector('.q-titulo').textContent.replace('*', '').trim(),
+        valor: valorPregunta(q),
+      }));
+      return { i, titulo: p.dataset.titulo, filas };
+    });
+  }
+  function pintarResumen() {
+    $('resumen').innerHTML = secciones().map(s => {
+      const llenas = s.filas.filter(f => f.valor).length;
+      return `<details${s.i === 0 ? ' open' : ''}>
+        <summary><span>${s.i + 1}. ${esc(s.titulo)}</span><small>${llenas} de ${s.filas.length} respondidas</small></summary>
+        <dl>${s.filas.map(f => `<dt>${esc(f.titulo)}</dt><dd${f.valor ? '' : ' class="vacio"'}>${f.valor ? esc(f.valor) : 'Sin completar'}</dd>`).join('')}</dl>
+        <p style="margin:0;padding:0 16px 14px"><button type="button" class="enlace" data-ir-paso="${s.i}">Editar esta sección</button></p>
+      </details>`;
+    }).join('');
+  }
+  $('resumen').addEventListener('click', e => { const b = e.target.closest('[data-ir-paso]'); if (b) ir(+b.dataset.irPaso); });
+
+  function imprimir() {
+    const fecha = new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+    const d = leer();
+    $('impresion').innerHTML = `
+      <header><img src="assets/logo.svg" alt=""><div><h1>Ficha cualitativa del participante</h1>
+      <p>${esc(d.nombre_completo || '')} · ${esc(fecha)}${d.completado_por ? ' · Completada por ' + esc(d.completado_por) : ''}</p></div></header>
+      ${secciones().map(s => `<h2>${s.i + 1}. ${esc(s.titulo)}</h2><dl>${s.filas.map(f =>
+        `<dt>${esc(f.titulo)}</dt><dd${f.valor ? '' : ' class="vacio"'}>${f.valor ? esc(f.valor) : '—'}</dd>`).join('')}</dl>`).join('')}
+      <p style="margin-top:14px;font-size:9pt"><b>Anexo 1: Burnout parental</b> (documento adjunto por separado).</p>`;
+    window.print();
+  }
+  $('imprimir').addEventListener('click', imprimir);
+  $('imprimir-borrador').addEventListener('click', imprimir);
+
+  // ---------- Enviar ----------
+  const error = $('error');
+  function mostrarError(msg, foco) {
+    error.textContent = msg; error.hidden = false;
+    if (foco) { foco.setAttribute('aria-invalid', 'true'); foco.focus(); }
+  }
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (actual !== pasos.length - 1) { ir(actual + 1); return; }
+    error.hidden = true;
+    if (!validarNombre()) return;
+    const d = leer();
+    if (!d.completado_por || d.completado_por.length < 2) return mostrarError('Escribe tu nombre: quién completa la ficha.', $('completado_por'));
+    if (d.email_contacto && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email_contacto)) return mostrarError('Revisa el correo: debe tener la forma nombre@dominio.cl.', $('email_contacto'));
+    if (!$('consentimiento').checked) return mostrarError('Para enviar, marca la casilla de autorización.', $('consentimiento'));
+    if ($('sitio').value) { terminar(); return; }   // bot: se descarta sin avisar
+
+    const { nombre_completo, fecha_nacimiento, completado_por, relacion, email_contacto, ...datos } = d;
+    datos.edad = calcularEdad();
+    const fila = {
+      nombre_completo, completado_por,
+      fecha_nacimiento: fecha_nacimiento || null,
+      relacion: relacion || null,
+      email_contacto: email_contacto ? email_contacto.toLowerCase() : null,
+      datos, consentimiento: true,
+    };
+    if (!sb) { console.info('Modo de prueba: la ficha no se guardó.', fila); terminar(true); return; }
+
+    const boton = $('enviar');
+    boton.disabled = true; boton.textContent = 'Enviando…';
+    try {
+      const { error: err } = await sb.from('ficha_cualitativa').insert(fila);
+      if (err) throw err;
+      terminar();
+    } catch (err) {
+      console.error(err);
+      boton.disabled = false; boton.textContent = 'Enviar ficha';
+      mostrarError(navigator.onLine === false
+        ? 'No hay conexión a internet. Tus respuestas siguen guardadas en este dispositivo: vuelve a enviar cuando tengas conexión.'
+        : 'No pudimos guardar la ficha. Tus respuestas siguen guardadas en este dispositivo; vuelve a intentarlo en un momento.');
+    }
+  });
+
+  function terminar(demo) {
+    enviado = true;
+    clearTimeout(temporizador);
+    try { localStorage.removeItem(CLAVE); } catch (_) {}
+    const nombre = ($('nombre_completo').value.trim().split(/\s+/)[0]) || '';
+    $('titulo-gracias').textContent = '¡Gracias! Recibimos la ficha';
+    $('gracias-texto').textContent = demo
+      ? 'Esta es una prueba: la página no está conectada a la base de datos, así que la ficha no se guardó.'
+      : `La ficha de ${nombre} quedó guardada. El equipo de SpectrumPro la revisará. Si quieres una copia, imprímela o guárdala como PDF ahora: por privacidad, no queda guardada en este dispositivo.`;
+    pasos.forEach(p => { p.hidden = true; });
+    $('acciones').hidden = true; $('avance').hidden = true; $('borrador-barra').hidden = true;
+    const g = $('paso-gracias'); g.hidden = false; g.querySelector('h2').focus();
+    window.scrollTo({ top: 0 });
+  }
+
+  $('otra-ficha').addEventListener('click', () => { location.reload(); });
+  $('borrar').addEventListener('click', () => {
+    if (!confirm('¿Borrar todas las respuestas de esta ficha y empezar de nuevo?')) return;
+    try { localStorage.removeItem(CLAVE); } catch (_) {}
+    location.reload();
+  });
+
+  // ---------- Inicio: recuperar borrador ----------
+  let inicio = 0;
+  try {
+    const b = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+    if (b && b.datos) {
+      restaurar(b.datos);
+      inicio = b.datos.nombre_completo ? (b.paso || 0) : 0;
+      const f = new Date(b.hora).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      $('borrador-estado').textContent = `Recuperamos el borrador del ${f}. Puedes seguir donde quedaste.`;
+    }
+  } catch (_) {}
+  sincronizarOtras();
+  ir(inicio, true);
+})();
+</script>
+</body>
+</html>

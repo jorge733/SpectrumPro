@@ -108,12 +108,24 @@ Para activarla:
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
 
+## Ficha cualitativa del participante
+
+`ficha-participante.html` es la versión web de la *Ficha cualitativa del participante* (sin el logo de la UAI). No pide iniciar sesión: la completan familias, participantes o profesionales desde el celular o el computador.
+
+- Una sección por pantalla (Identificación, Antecedentes, Fortalezas, Intereses, Comunicación, Perfil sensorial, Regulación emocional, Participación y Objetivos), con barra de avance y saltos directos a cada sección.
+- Solo el nombre del participante y de quien completa son obligatorios. La edad se calcula sola con la fecha de nacimiento.
+- Lo escrito se guarda como borrador en el dispositivo hasta enviar; al enviar se borra.
+- Antes de enviar muestra un resumen por sección; se puede imprimir o guardar como PDF.
+
+Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_ficha_cualitativa.sql`, que crea la tabla `ficha_cualitativa`. El público solo puede **enviar** fichas; las ven dirección y terapeutas en **Table Editor → ficha_cualitativa** (las respuestas detalladas están en la columna `datos`). Sin datos de Supabase en `config.js`, funciona en modo de prueba y no guarda nada.
+
 ## Estructura
 
 | Archivo | Contenido |
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
+| `ficha-participante.html` | Ficha cualitativa del participante, para completar en la web |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
