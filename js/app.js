@@ -62,6 +62,7 @@ const S = {
   asistencia: {},     // { 'AAAA-MM-DD': { tallerId: { alumnoId: 'P'|'R'|'A'|'J' } } }
   usuarios: [],
   auditoria: null,
+  tienda: null,       // { productos, ajustes } · se carga al abrir la sección Tienda
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
@@ -75,6 +76,8 @@ const puede = {
   editarFichas: () => ['admin', 'terapeuta'].includes(rol()),
   eliminarFichas: () => rol() === 'admin',
   admin: () => rol() === 'admin',
+  // La tienda la editan dirección y el rol Equipo.
+  tienda: () => ['admin', 'equipo'].includes(rol()),
   // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
   esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
@@ -245,7 +248,7 @@ async function cargarTodo() {
   const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
     D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
-  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null });
   mostrarApp();
 }
 
@@ -262,6 +265,7 @@ function mostrarApp() {
   $('#usuario-nombre').textContent = p.nombre || p.email;
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
+  $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
   $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
@@ -764,13 +768,205 @@ function adminUsuarios(el) {
     </section>`;
 }
 
+/* ---------- Tienda ---------- */
+const CATEGORIAS = { ropa: 'Ropa', accesorios: 'Accesorios', papeleria: 'Papelería' };
+const pesos = n => n == null || n === '' ? '' : '$' + Number(n).toLocaleString('es-CL');
+const productosOrdenados = () => [...S.tienda.productos].sort((a, b) => (a.orden - b.orden) || a.nombre.localeCompare(b.nombre, 'es'));
+const producto = id => S.tienda?.productos.find(p => p.id === id);
+
+async function vistaTienda(el) {
+  if (!puede.tienda()) { location.hash = 'panel'; return; }
+  const cab = `
+    <header class="cabecera">
+      <div><p class="eyebrow">Dirección y equipo</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
+      <div class="controles">
+        <a class="btn btn-sec" href="tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
+        ${S.tienda ? '<button type="button" class="btn" data-accion="nuevo-producto">+ Nuevo producto</button>' : ''}
+      </div>
+    </header>`;
+  if (!S.tienda) {
+    el.innerHTML = cab + '<section class="tarjeta"><p class="vacio">Cargando la tienda…</p></section>';
+    try { S.tienda = await D.tienda(); }
+    catch (e) {
+      if (vistaActual() !== 'tienda') return;
+      el.innerHTML = cab + `<section class="tarjeta"><p class="aviso-error">${esc(e.message)}</p></section>`;
+      return;
+    }
+    if (vistaActual() === 'tienda') render();
+    return;
+  }
+  const lista = productosOrdenados();
+  const a = S.tienda.ajustes;
+  const visibles = lista.filter(p => p.visible).length;
+  el.innerHTML = cab + `
+    <section class="tarjeta">
+      <h2><span>Productos</span><small>${visibles} de ${lista.length} visibles</small></h2>
+      <p class="nota-suave">Toca un producto para editarlo. Con las flechas cambias el orden en que aparecen.</p>
+      ${lista.length ? `<ul class="lista productos">${lista.map((p, i) => `
+        <li class="fila-click ${p.visible ? '' : 'oculto'}" data-producto="${p.id}">
+          ${p.imagen ? `<img class="miniatura" src="${esc(p.imagen)}" alt="" loading="lazy">` : '<span class="miniatura vacia">Sin foto</span>'}
+          <div class="txt"><b>${esc(p.nombre)}</b><small>${esc(CATEGORIAS[p.categoria] || '')}${p.precio != null ? ' · ' + esc(pesos(p.precio)) : ''}${p.variantes ? ' · ' + esc(p.variantes) : ''}</small></div>
+          <span class="chips">${p.visible ? '' : '<span class="chip chip-neutro">Oculto</span>'}${p.agotado ? '<span class="chip chip-warn">Agotado</span>' : ''}${p.precio == null ? '<span class="chip chip-info">Sin precio</span>' : ''}</span>
+          <span class="mover">
+            <button type="button" data-mover-producto="${p.id}" data-dir="-1" aria-label="Subir ${esc(p.nombre)}" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" data-mover-producto="${p.id}" data-dir="1" aria-label="Bajar ${esc(p.nombre)}" ${i === lista.length - 1 ? 'disabled' : ''}>↓</button>
+          </span>
+        </li>`).join('')}</ul>` : '<p class="vacio">Aún no hay productos. Crea el primero con «Nuevo producto».</p>'}
+    </section>
+    <section class="tarjeta">
+      <h2><span>Contacto y compra</span></h2>
+      <form id="form-tienda" class="form-tienda" novalidate>
+        <div class="campos">
+          <label>WhatsApp para pedidos * <small class="muted">· solo números, con 56</small><input id="ti-whatsapp" name="whatsapp" type="tel" inputmode="numeric" value="${esc(a.whatsapp)}" placeholder="56912345678" autocomplete="off"></label>
+          <label>Instagram <small class="muted">· usuario, sin @</small><input id="ti-instagram" name="instagram" value="${esc(a.instagram)}" placeholder="spectrumpro" autocomplete="off"></label>
+          <label class="ancho">Forma de pago<input id="ti-pago" name="pago" maxlength="200" value="${esc(a.pago)}" placeholder="Ej: Transferencia bancaria o efectivo al retirar" autocomplete="off"></label>
+          <label class="ancho">Entrega<input id="ti-entrega" name="entrega" maxlength="200" value="${esc(a.entrega)}" placeholder="Ej: Retiro en la sede de Providencia o envío por pagar" autocomplete="off"></label>
+        </div>
+        <p id="tienda-error" class="aviso-error" role="alert" hidden></p>
+        <div class="dlg-pie"><button type="submit" class="btn">Guardar contacto y compra</button></div>
+      </form>
+    </section>`;
+}
+
+// Reduce la foto a máx. 1000 px y la pasa a JPEG con fondo blanco (las PNG transparentes quedan bien).
+function reducirFoto(archivo, max = 1000) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      const g = c.getContext('2d');
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la foto.')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la foto. Prueba con un JPG o PNG.')); };
+    img.src = url;
+  });
+}
+
+let editandoProducto = null, fotoNueva = null;
+function verFotoProducto(src) {
+  const img = $('#p-foto-vista');
+  img.hidden = !src; $('#p-foto-vacia').hidden = !!src;
+  if (src) img.src = src; else img.removeAttribute('src');
+}
+function abrirProducto(id = null) {
+  editandoProducto = id; fotoNueva = null;
+  const p = id ? producto(id) : null;
+  $('#form-producto').reset();
+  $('#producto-error').hidden = true;
+  $('#producto-titulo').textContent = p ? `Editar ${p.nombre}` : 'Nuevo producto';
+  $('#p-nombre').value = p?.nombre || '';
+  $('#p-categoria').value = p?.categoria || 'ropa';
+  $('#p-precio').value = p?.precio ?? '';
+  $('#p-variantes').value = p?.variantes || '';
+  $('#p-descripcion').value = p?.descripcion || '';
+  $('#p-visible').checked = p ? p.visible : true;
+  $('#p-agotado').checked = !!p?.agotado;
+  $('#p-eliminar').hidden = !p;
+  verFotoProducto(p?.imagen || '');
+  $('#dlg-producto').showModal();
+  $('#p-nombre').focus();
+}
+$('#p-foto').addEventListener('change', async ev => {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const err = $('#producto-error'); err.hidden = true;
+  try {
+    fotoNueva = await reducirFoto(f);
+    verFotoProducto(URL.createObjectURL(fotoNueva));
+  } catch (e) { fotoNueva = null; err.textContent = e.message; err.hidden = false; }
+});
+$('#form-producto').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const previo = editandoProducto ? producto(editandoProducto) : null;
+  const precioTxt = $('#p-precio').value.trim();
+  const p = {
+    id: editandoProducto || undefined,
+    nombre: $('#p-nombre').value.trim(), categoria: $('#p-categoria').value,
+    precio: precioTxt === '' ? null : Math.round(Number(precioTxt)),
+    variantes: $('#p-variantes').value.trim(), descripcion: $('#p-descripcion').value.trim(),
+    visible: $('#p-visible').checked, agotado: $('#p-agotado').checked,
+    imagen: previo?.imagen || '',
+    orden: previo ? previo.orden : Math.max(0, ...S.tienda.productos.map(x => x.orden || 0)) + 1,
+  };
+  const err = $('#producto-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  if (!p.nombre) return mostrar('Escribe el nombre del producto.');
+  if (p.precio != null && (!Number.isFinite(p.precio) || p.precio < 0 || p.precio > 10000000)) return mostrar('Revisa el precio: escribe solo el número, sin puntos ni signo $.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true, fotoNueva ? 'Subiendo foto…' : 'Guardando…');
+  try {
+    await conCarga(async () => {
+      if (fotoNueva) p.imagen = await D.subirFotoProducto(fotoNueva);
+      await D.guardarProducto(p);
+      if (fotoNueva && previo?.imagen && previo.imagen !== p.imagen) await D.borrarFotoProducto(previo.imagen).catch(() => { });
+    });
+    S.tienda = await D.tienda();
+    $('#dlg-producto').close();
+    toast(previo ? 'Producto actualizado' : 'Producto creado');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+$('#p-eliminar').addEventListener('click', async () => {
+  const p = producto(editandoProducto);
+  $('#dlg-producto').close();
+  if (!await confirmar(`¿Eliminar ${p.nombre}?`, 'Desaparece de la tienda y no se puede deshacer. Si solo no hay stock, mejor márcalo como «Agotado» o desmarca «Mostrar en la tienda».', 'Eliminar producto')) return;
+  try {
+    await intentar(() => D.eliminarProducto(p.id), 'Producto eliminado');
+    D.borrarFotoProducto(p.imagen).catch(() => { });
+    S.tienda.productos = S.tienda.productos.filter(x => x.id !== p.id);
+    render();
+  } catch { /* ya avisado */ }
+});
+async function moverProducto(id, dir) {
+  const lista = productosOrdenados();
+  const i = lista.findIndex(p => p.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= lista.length) return;
+  [lista[i], lista[j]] = [lista[j], lista[i]];
+  lista.forEach((p, k) => { p.orden = k + 1; });
+  render();
+  try { await D.ordenarProductos(lista.map(p => p.id)); }
+  catch (e) { toast(e.message, 'error'); S.tienda = await D.tienda().catch(() => S.tienda); render(); }
+}
+document.addEventListener('submit', async ev => {
+  if (ev.target.id !== 'form-tienda') return;
+  ev.preventDefault();
+  const a = {
+    whatsapp: $('#ti-whatsapp').value.replace(/\D/g, ''),
+    instagram: $('#ti-instagram').value.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, ''),
+    pago: $('#ti-pago').value.trim(), entrega: $('#ti-entrega').value.trim(),
+  };
+  const err = $('#tienda-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  err.hidden = true;
+  if (!/^[0-9]{8,15}$/.test(a.whatsapp)) return mostrar('Escribe el WhatsApp con código de país y solo números, por ejemplo 56912345678.');
+  if (a.whatsapp.length === 9 && a.whatsapp.startsWith('9')) return mostrar('Agrega el código de Chile al comienzo: 56' + a.whatsapp + '.');
+  if (!/^[A-Za-z0-9._]{0,30}$/.test(a.instagram)) return mostrar('El usuario de Instagram solo puede tener letras, números, puntos y guiones bajos.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true);
+  try {
+    await conCarga(() => D.guardarAjustesTienda(a));
+    S.tienda.ajustes = { ...S.tienda.ajustes, ...a };
+    toast('Contacto y compra guardados');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+
 const ACCIONES = { insert: 'creó', update: 'editó', delete: 'eliminó', upsert: 'registró', login: 'entró' };
-const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma' };
+const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda' };
 function detalleAuditoria(r) {
   const d = r.detalle || {};
   const partes = [];
   if (d.alumno) partes.push(d.alumno);
   if (d.taller) partes.push(d.taller);
+  if (d.producto) partes.push(d.producto);
   if (d.email) partes.push(d.email);
   if (d.fecha) partes.push(`${fechaCorta(d.fecha)} · ${d.estado}${d.registros > 1 ? ` · ${d.registros} jóvenes` : ''}`);
   if (d.rol && r.tabla !== 'sesion') partes.push(ROLES[d.rol] || d.rol);
@@ -1176,11 +1372,12 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, tienda: vistaTienda, administracion: vistaAdministracion };
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if (v === 'administracion' && !puede.admin()) return 'panel';
+  if (v === 'tienda' && !puede.tienda()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
@@ -1261,6 +1458,8 @@ document.addEventListener('click', async ev => {
     return;
   }
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
+  if ((x = el('[data-mover-producto]'))) { moverProducto(x.dataset.moverProducto, Number(x.dataset.dir)); return; }
+  if ((x = el('[data-producto]'))) { abrirProducto(x.dataset.producto); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
   if ((x = el('[data-tab-cumple]'))) { ui.tabCumple = x.dataset.tabCumple; render(); return; }
@@ -1284,13 +1483,14 @@ document.addEventListener('click', async ev => {
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
       await D.salir();
-      S.perfil = null;
+      S.perfil = null; S.tienda = null;
       mostrarAcceso('entrar');
     }
     if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
     if (acc === 'nuevo-taller') abrirTaller();
     if (acc === 'invitar') abrirUsuario();
+    if (acc === 'nuevo-producto') abrirProducto();
     if (acc === 'exportar-fichas') exportarFichas();
     if (acc === 'exportar-asistencia') exportarAsistencia();
     if (acc === 'restablecer-demo' && await confirmar('¿Restablecer la demostración?', 'Se borran los cambios hechos en este navegador y se cargan de nuevo los datos ficticios.', 'Restablecer')) {

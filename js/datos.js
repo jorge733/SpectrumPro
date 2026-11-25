@@ -47,6 +47,15 @@
     encargado: t.encargado || '', color: t.color || '#635CC7', activo: !!t.activo, orden: t.orden ?? 0,
   });
 
+  const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'precio', 'variantes', 'imagen', 'visible', 'agotado', 'orden'];
+  const productoAFila = p => {
+    const f = {};
+    for (const c of CAMPOS_PRODUCTO) f[c] = p[c];
+    f.precio = p.precio === '' || p.precio == null ? null : Number(p.precio);
+    return f;
+  };
+  const AJUSTES_TIENDA = ['whatsapp', 'instagram', 'pago', 'entrega'];
+
   /* ---------- errores legibles ---------- */
   function traducir(e) {
     const m = String(e?.message || e || '');
@@ -58,6 +67,10 @@
     if (/Password should be|weak password/i.test(m)) return new Error('La contraseña es muy débil. Usa al menos 10 caracteres.');
     if (/talleres_nombre_unico/i.test(m)) return new Error('Ya existe un taller con ese nombre.');
     if (/duplicate key/i.test(m)) return new Error('Ese registro ya existe.');
+    if (/tienda_(productos|ajustes)|bucket not found/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error('Falta activar la tienda en Supabase: ejecuta supabase/migrations/20261124060000_tienda.sql en el SQL Editor.');
+    if (/tienda_whatsapp_formato/i.test(m)) return new Error('El WhatsApp debe tener solo números, con el código de país (por ejemplo 56912345678).');
+    if (/tienda_instagram_formato/i.test(m)) return new Error('El usuario de Instagram solo puede tener letras, números, puntos y guiones bajos.');
+    if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return new Error('La foto es muy pesada. Usa una de menos de 3 MB.');
     return new Error(m || 'Ocurrió un error inesperado.');
   }
 
@@ -187,6 +200,37 @@
           throw traducir(m);
         }
       },
+      /* ----- tienda ----- */
+      async tienda() {
+        const [productos, ajustes] = await Promise.all([
+          todo(() => sb.from('tienda_productos').select('*').order('orden').order('nombre').order('id')),
+          sb.from('tienda_ajustes').select('*').eq('id', 1).maybeSingle().then(ok),
+        ]);
+        return { productos, ajustes: ajustes || { whatsapp: '', instagram: '', pago: '', entrega: '' } };
+      },
+      async guardarProducto(p) {
+        if (p.id) { ok(await sb.from('tienda_productos').update(productoAFila(p)).eq('id', p.id)); return p.id; }
+        return ok(await sb.from('tienda_productos').insert(productoAFila(p)).select('id').single()).id;
+      },
+      async eliminarProducto(id) { ok(await sb.from('tienda_productos').delete().eq('id', id)); },
+      async ordenarProductos(ids) {
+        await Promise.all(ids.map((id, i) => sb.from('tienda_productos').update({ orden: i + 1 }).eq('id', id).then(ok)));
+      },
+      async guardarAjustesTienda(a) {
+        const f = {};
+        for (const c of AJUSTES_TIENDA) f[c] = a[c] ?? '';
+        ok(await sb.from('tienda_ajustes').update(f).eq('id', 1));
+      },
+      async subirFotoProducto(blob) {
+        const ruta = `productos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        ok(await sb.storage.from('tienda').upload(ruta, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false }));
+        return sb.storage.from('tienda').getPublicUrl(ruta).data.publicUrl;
+      },
+      async borrarFotoProducto(url) {
+        // Solo se borran fotos subidas al bucket; las de /tienda/img/ son parte del sitio.
+        const m = String(url || '').match(/\/storage\/v1\/object\/public\/tienda\/(.+)$/);
+        if (m) await sb.storage.from('tienda').remove([decodeURIComponent(m[1])]);
+      },
       async auditoria(limite = 200) {
         return ok(await sb.from('auditoria').select('*').order('creado', { ascending: false }).limit(limite));
       },
@@ -305,18 +349,38 @@
       }
     }
     const auditoria = [{ id: 1, creado: new Date().toISOString(), actor_nombre: 'sistema', accion: 'insert', tabla: 'talleres', registro: '', detalle: { nota: 'Datos de ejemplo cargados' } }];
-    return { perfiles, talleres, alumnos, privado, asistencia, auditoria };
+    return { perfiles, talleres, alumnos, privado, asistencia, auditoria, tienda: crearTiendaDemo() };
+  }
+
+  function crearTiendaDemo() {
+    const p = (id, nombre, descripcion, categoria, variantes, orden) =>
+      ({ id, nombre, descripcion, categoria, variantes, imagen: `tienda/img/${id}.jpg`, precio: null, visible: true, agotado: false, orden });
+    return {
+      productos: [
+        p('poleras', 'Poleras unisex', 'Con el logo de SpectrumPro adelante y atrás.', 'ropa', 'Negra y roja', 1),
+        p('poleron', 'Polerón unisex', 'Con el logo pequeño adelante y grande en la espalda.', 'ropa', 'Gris', 2),
+        p('tazon', 'Tazón y chapita', 'Edición Muestra Audiovisual 2026.', 'accesorios', '', 3),
+        p('calendarios', 'Calendarios', 'De escritorio.', 'papeleria', 'A color o en blanco y negro', 4),
+        p('cuadernos', 'Cuadernos', 'Con el logo o con Pipripiolo para colorear.', 'papeleria', 'Logo o Pipripiolo', 5),
+        p('chapitas', 'Chapitas', 'Con los logos de SpectrumPro.', 'accesorios', 'Negra o a color', 6),
+        p('bolso', 'Bolso blanco', 'Tote bag con el logo de SpectrumPro en negro.', 'accesorios', '', 7),
+        p('morral', 'Morral negro', 'Mochila de cuerdas con el logo en blanco.', 'accesorios', '', 8),
+      ],
+      ajustes: { whatsapp: '56996389673', instagram: '', pago: '', entrega: '' },
+    };
   }
 
   function backendDemo() {
     let db;
     try { db = JSON.parse(leer(CLAVE_DEMO)); } catch { db = null; }
     if (!db?.alumnos) db = crearDemo();
+    db.tienda ??= crearTiendaDemo();
     const guardar = () => escribir(CLAVE_DEMO, JSON.stringify(db));
     guardar();
     const yo = () => db.perfiles.find(p => p.id === leer(CLAVE_SESION));
     const veTodo = () => ['admin', 'terapeuta'].includes(yo()?.rol);
     const esAdmin = () => yo()?.rol === 'admin';
+    const editaTienda = () => ['admin', 'equipo'].includes(yo()?.rol);
     const misTalleres = () => db.talleres.filter(t => t.equipo.includes(yo()?.id)).map(t => t.id);
     const puedeVer = a => veTodo() || a.talleres.some(t => misTalleres().includes(t));
     const prohibido = () => { throw new Error('No tienes permiso para hacer este cambio.'); };
@@ -456,6 +520,43 @@
         auditar('delete', 'perfiles', { email: p?.email });
         guardar();
       },
+      async tienda() { if (!editaTienda()) prohibido(); await espera(); return copia(db.tienda); },
+      async guardarProducto(p) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        const id = p.id || nuevoId();
+        const i = db.tienda.productos.findIndex(x => x.id === id);
+        const fila = { ...productoAFila(p), id };
+        if (i >= 0) db.tienda.productos[i] = fila; else db.tienda.productos.push(fila);
+        auditar(i >= 0 ? 'update' : 'insert', 'tienda_productos', { producto: p.nombre });
+        guardar(); return id;
+      },
+      async eliminarProducto(id) {
+        if (!editaTienda()) prohibido();
+        const p = db.tienda.productos.find(x => x.id === id);
+        db.tienda.productos = db.tienda.productos.filter(x => x.id !== id);
+        auditar('delete', 'tienda_productos', { producto: p?.nombre });
+        guardar();
+      },
+      async ordenarProductos(ids) {
+        if (!editaTienda()) prohibido();
+        ids.forEach((id, i) => { const p = db.tienda.productos.find(x => x.id === id); if (p) p.orden = i + 1; });
+        guardar();
+      },
+      async guardarAjustesTienda(a) {
+        if (!editaTienda()) prohibido();
+        if (a.whatsapp && !/^[0-9]{8,15}$/.test(a.whatsapp)) throw new Error('El WhatsApp debe tener solo números, con el código de país (por ejemplo 56912345678).');
+        await espera();
+        for (const c of AJUSTES_TIENDA) db.tienda.ajustes[c] = a[c] ?? '';
+        auditar('update', 'tienda_ajustes', {});
+        guardar();
+      },
+      // En la demostración la foto queda en este navegador, como texto (ya viene reducida).
+      async subirFotoProducto(blob) {
+        if (!editaTienda()) prohibido();
+        return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+      },
+      async borrarFotoProducto() { },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
       async restablecer() { db = crearDemo(); guardar(); },
     };

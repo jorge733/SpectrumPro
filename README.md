@@ -22,21 +22,43 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
 | **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
-| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, y ponen el suyo |
+| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo y editan la tienda |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
 ## Probarla sin configurar nada
 
-Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostración**: eliges un rol y recorres la plataforma con jóvenes ficticios guardados solo en ese navegador.
+No hay que compilar nada: son archivos estáticos (HTML, CSS y JavaScript sin dependencias; `supabase-js` se carga desde jsDelivr). Sírvelos con cualquier servidor local, por ejemplo:
+
+```bash
+python3 -m http.server 8000
+```
+
+y abre <http://localhost:8000>. (Abrir `index.html` directamente también funciona, pero el service worker solo se activa con `http://localhost` o `https://`.)
+
+Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostración**: eliges un rol y recorres la plataforma con jóvenes ficticios guardados solo en ese navegador. Para probar así con este repositorio, deja vacíos `supabaseUrl` y `supabaseAnonKey` en una copia local (sin subir el cambio).
 
 ## Conectar Supabase
 
 ### 1. Crear el proyecto
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
-2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
-   Después ejecuta, en orden, los demás archivos de `supabase/migrations/` (por ejemplo `20261124000000_cumpleanos_equipo.sql` , `20261124010000_mi_fecha_nac.sql`, `20261124020000_emergencia2.sql` `20261124030000_talleres_sitio_web.sql` (talleres de spectrumpro.cl) y `20261124040000_rol_equipo.sql` (rol Equipo)). En un proyecto ya creado basta con ejecutar los que falten.
+2. En **SQL Editor**, ejecuta **en orden** los archivos de `supabase/migrations/`. En un proyecto ya creado basta con ejecutar los que falten; todos se pueden volver a ejecutar sin romper nada.
+
+   | Archivo | Qué hace |
+   | --- | --- |
+   | `20261120000000_spectrumpro.sql` | Tablas, permisos por rol (RLS) y auditoría |
+   | `20261120010000_talleres_unicos.sql` | Quita talleres duplicados e impide que se repitan |
+   | `20261124000000_cumpleanos_equipo.sql` | Fecha de nacimiento en las cuentas del equipo |
+   | `20261124010000_mi_fecha_nac.sql` | Cada persona del equipo pone su propio cumpleaños |
+   | `20261124020000_emergencia2.sql` | Segundo contacto de emergencia en la ficha |
+   | `20261124030000_talleres_sitio_web.sql` | Talleres, módulos y mentorías publicados en spectrumpro.cl |
+   | `20261124040000_rol_equipo.sql` | Rol **Equipo** |
+   | `20261124050000_encuesta_muestra.sql` | Tabla de la encuesta de la Muestra Audiovisual |
+   | `20261124060000_tienda.sql` | Tienda: productos, contacto y bucket de fotos |
+   | `20261124070000_tienda_equipo.sql` | El rol Equipo también edita la tienda |
+   | `20261125000000_ficha_cualitativa.sql` | Ficha cualitativa del participante (formulario web) |
+
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
@@ -103,10 +125,25 @@ Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings
 
 Para activarla:
 
-1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124050000_encuesta_muestra.sql`. Crea la tabla `encuesta_evento`.
+1. Asegúrate de haber ejecutado `supabase/migrations/20261124050000_encuesta_muestra.sql` (crea la tabla `encuesta_evento`).
 2. Publica el sitio y comparte el enlace `…/encuesta.html` (o un código QR que apunte a él).
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
+
+## Tienda
+
+`tienda/index.html` es la tienda pública de productos (`/tienda/`): portada, catálogo con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto.
+
+Los productos y el contacto se editan en la plataforma, sección **Tienda** (dirección y rol Equipo): nombre, foto, tipo, precio, tallas o colores, descripción, orden, «Agotado» y «Mostrar en la tienda»; además el WhatsApp, Instagram, forma de pago y entrega. Los cambios se ven al instante en la tienda.
+
+Para activarla:
+
+1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124060000_tienda.sql`. Crea las tablas `tienda_productos` y `tienda_ajustes`, el bucket público de fotos `tienda` y carga los 8 productos actuales.
+2. Listo: la tienda lee de Supabase. Mientras no se ejecute la migración, muestra la lista de respaldo que trae la página (sin precios).
+
+**Incrustarla en spectrumpro.cl (WordPress):** pega el contenido de `tienda/wordpress.html` en un widget **HTML** de Elementor, en una página con plantilla de ancho completo. Ese código carga `/tienda/?embed=1`, que oculta la cabecera y el pie propios de la tienda, ajusta el alto solo y hace scroll en la página de WordPress al tocar «Ver productos» o «Cómo pedir».
+
+El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo pueden hacer solo dirección y el rol Equipo (después de ejecutar `20261124070000_tienda_equipo.sql`), y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
 
 ## Ficha cualitativa del participante
 
@@ -125,13 +162,16 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
+| `tienda/` | Tienda pública de productos; se edita en la sección Tienda |
+| `assets/og/` | Imágenes de 1200×630 para la vista previa al compartir cada página (Open Graph) |
 | `ficha-participante.html` | Ficha cualitativa del participante, para completar en la web |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
-| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión |
-| `supabase/migrations/…sql` | Tablas, RLS, auditoría y funciones de cumpleaños (jóvenes y equipo) |
+| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
+| `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |
+| `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |
 | `supabase/seed.sql` | Talleres iniciales |
 | `supabase/functions/gestionar-usuario` | Invitar y eliminar cuentas (solo dirección) |
 
