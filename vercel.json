@@ -1,0 +1,24 @@
+{
+  "redirects": [
+    { "source": "/quienes-somos", "destination": "/nosotros/", "permanent": true },
+    { "source": "/quienes-somos/", "destination": "/nosotros/", "permanent": true },
+    { "source": "/que-hacemos", "destination": "/productora/", "permanent": true },
+    { "source": "/que-hacemos/", "destination": "/productora/", "permanent": true },
+    { "source": "/nuestros-talleres", "destination": "/formacion/#talleres", "permanent": true },
+    { "source": "/nuestros-talleres/", "destination": "/formacion/#talleres", "permanent": true },
+    { "source": "/nuestras-mentorias", "destination": "/formacion/#mentorias", "permanent": true },
+    { "source": "/nuestras-mentorias/", "destination": "/formacion/#mentorias", "permanent": true },
+    { "source": "/formapro", "destination": "/formacion/#formapro", "permanent": true },
+    { "source": "/formapro/", "destination": "/formacion/#formapro", "permanent": true },
+    { "source": "/spectrumonline", "destination": "/formacion/#online", "permanent": true },
+    { "source": "/spectrumonline/", "destination": "/formacion/#online", "permanent": true },
+    { "source": "/actividades-complementarias", "destination": "/formacion/#actividades", "permanent": true },
+    { "source": "/actividades-complementarias/", "destination": "/formacion/#actividades", "permanent": true },
+    { "source": "/arte-terapia", "destination": "/arte-y-apoyo/", "permanent": true },
+    { "source": "/arte-terapia/", "destination": "/arte-y-apoyo/", "permanent": true },
+    { "source": "/terapia-ocupacional", "destination": "/arte-y-apoyo/#terapia-ocupacional", "permanent": true },
+    { "source": "/terapia-ocupacional/", "destination": "/arte-y-apoyo/#terapia-ocupacional", "permanent": true },
+    { "source": "/nuestros-clientes", "destination": "/productora/#clientes", "permanent": true },
+    { "source": "/nuestros-clientes/", "destination": "/productora/#clientes", "permanent": true }
+  ]
+}

@@ -1,4 +1,6 @@
-# SpectrumPro · Gestión de alumnado
+# SpectrumPro · Sitio web y gestión de alumnado
+
+Este repositorio tiene el **sitio web público** de SpectrumPro (raíz, `spectrumpro.vercel.app/`), la **tienda** (`/tienda/`) y la **plataforma interna** del equipo (`/plataforma/`). Todo se publica en Vercel con cada cambio en `main`.
 
 Plataforma interna de [SpectrumPro](https://spectrumpro.cl/) para registrar la **asistencia** a los talleres, ver los **cumpleaños** y mantener la **ficha** de cada joven.
 
@@ -34,7 +36,7 @@ No hay que compilar nada: son archivos estáticos (HTML, CSS y JavaScript sin de
 python3 -m http.server 8000
 ```
 
-y abre <http://localhost:8000>. (Abrir `index.html` directamente también funciona, pero el service worker solo se activa con `http://localhost` o `https://`.)
+y abre <http://localhost:8000> (sitio) o <http://localhost:8000/plataforma/> (plataforma). El service worker de la plataforma solo se activa con `http://localhost` o `https://`.
 
 Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostración**: eliges un rol y recorres la plataforma con jóvenes ficticios guardados solo en ese navegador. Para probar así con este repositorio, deja vacíos `supabaseUrl` y `supabaseAnonKey` en una copia local (sin subir el cambio).
 
@@ -58,6 +60,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261124060000_tienda.sql` | Tienda: productos, contacto y bucket de fotos |
    | `20261124070000_tienda_equipo.sql` | El rol Equipo también edita la tienda |
    | `20261125000000_ficha_cualitativa.sql` | Ficha cualitativa del participante (formulario web) |
+   | `20261125010000_sitio.sql` | Sitio web: textos y listas editables, bucket de fotos y contenido inicial |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
@@ -66,7 +69,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
 En **Authentication**:
 
 1. **Sign In / Providers → Email**: desactiva **Allow new users to sign up**. Así solo entran personas invitadas por dirección. Aunque alguien lograra registrarse, su cuenta nace sin rol y no ve nada.
-2. **URL Configuration**: en **Site URL** pon la dirección donde publicarás la plataforma (por ejemplo `https://alumnado.spectrumpro.cl`) y agrégala también en **Redirect URLs**.
+2. **URL Configuration**: en **Site URL** pon la dirección de la plataforma, `https://spectrumpro.vercel.app/plataforma/`, y agrégala también en **Redirect URLs**. Los enlaces de invitación y de cambio de contraseña llevan ahí. Si un correo antiguo apunta a la raíz, el sitio lo reenvía solo a `/plataforma/`.
 3. **Emails** (opcional): traduce al español los correos de invitación y de recuperación de contraseña.
 
 ### 3. Crear la primera cuenta de dirección
@@ -117,7 +120,7 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 ### 6. Publicar la plataforma
 
-Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings → Pages* elige la rama y la carpeta raíz. Para un dominio propio como `alumnado.spectrumpro.cl`, agrega el registro DNS que indica GitHub.
+Son archivos estáticos. Hoy se publican en **Vercel** (`spectrumpro.vercel.app`): cada cambio que llega a `main` se publica solo. La plataforma queda en `/plataforma/`; el sitio público, en la raíz.
 
 ## Encuesta de la Muestra Audiovisual
 
@@ -129,6 +132,26 @@ Para activarla:
 2. Publica el sitio y comparte el enlace `…/encuesta.html` (o un código QR que apunte a él).
 
 El público solo puede **enviar** respuestas: no puede leer las de otras personas. Las ven dirección y terapeutas en **Table Editor → encuesta_evento**, desde donde se exportan a CSV. Si `config.js` no tiene datos de Supabase, la encuesta funciona en modo de prueba y no guarda nada.
+
+## Sitio web público
+
+La raíz (`/`) es el sitio de SpectrumPro: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Colabora y Contacto. Reemplaza al sitio en WordPress de spectrumpro.cl, con el mismo contenido (equipo, talleres, mentorías, servicios, producciones) y las imágenes optimizadas (`sitio/img/`, unos 750 KB en total).
+
+**Se edita en la plataforma, sección «Sitio web»** (dirección y rol Equipo): textos de cada página y las listas de equipo, talleres, mentorías, módulos de FormaPro, actividades, Arte y Apoyo, servicios, producciones y valores, con fotos, orden y opción de ocultar. Los cambios se ven al recargar el sitio.
+
+Para activarlo, ejecuta en **SQL Editor** `supabase/migrations/20261125010000_sitio.sql`. Crea `sitio_textos` y `sitio_elementos`, el bucket de fotos `sitio` y carga el contenido inicial. Mientras no se ejecute, el sitio muestra la copia de respaldo `sitio/contenido.js`.
+
+Cómo está hecho:
+
+| Archivo | Contenido |
+| --- | --- |
+| `sitio/paginas/*.html` | El cuerpo de cada página, con su título y descripción |
+| `sitio/construir.py` | Arma las páginas (`index.html`, `nosotros/`, `formacion/`…) con la misma cabecera, pie y metadatos. Después de cambiar una página o la cabecera: `python3 sitio/construir.py` |
+| `sitio/sitio.css`, `sitio/sitio.js` | Estilos y lógica: pinta el contenido de Supabase (y guarda una copia en el navegador para que la próxima visita cargue al instante) |
+| `sitio/contenido-inicial.py` | Contenido inicial; genera `sitio/contenido.js` y la carga inicial de la migración |
+| `vercel.json` | Redirige las direcciones del sitio en WordPress (`/quienes-somos`, `/nuestros-talleres`…) a las nuevas, para cuando spectrumpro.cl apunte a Vercel |
+
+**Para que spectrumpro.cl muestre este sitio:** en Vercel, *Project → Settings → Domains*, agrega `spectrumpro.cl` y `www.spectrumpro.cl` y cambia los registros DNS donde está registrado el dominio según lo que indique Vercel. El correo (`@spectrumpro.cl`) no se ve afectado si solo cambias los registros del sitio (A/CNAME), no los MX.
 
 ## Tienda
 
@@ -160,16 +183,19 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 
 | Archivo | Contenido |
 | --- | --- |
-| `index.html` | Pantalla de carga, acceso, estructura y diálogos |
+| `index.html`, `nosotros/`, `formacion/`, `arte-y-apoyo/`, `productora/`, `colabora/`, `contacto/` | Sitio público (generado; se edita en `sitio/paginas/`) |
+| `sitio/` | Estilos, lógica, imágenes y contenido del sitio público |
+| `plataforma/index.html` | Plataforma interna: pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
 | `tienda/` | Tienda pública de productos; se edita en la sección Tienda |
 | `assets/og/` | Imágenes de 1200×630 para la vista previa al compartir cada página (Open Graph) |
 | `ficha-participante.html` | Ficha cualitativa del participante, para completar en la web |
-| `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |
+| `plataforma/styles.css` | Estilos de la plataforma, con tema claro y oscuro y adaptación a celular |
 | `config.js` | URL y clave pública de Supabase |
-| `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
-| `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
-| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
+| `plataforma/js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
+| `plataforma/js/app.js` | Vistas, roles, formularios y lógica de asistencia, cumpleaños, tienda y sitio web |
+| `plataforma/sw.js`, `plataforma/manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `plataforma/sw.js` |
+| `sw.js` (raíz) | Da de baja el service worker antiguo de la raíz en los teléfonos que tenían instalada la plataforma antes de la mudanza |
 | `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |
 | `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |
 | `supabase/seed.sql` | Talleres iniciales |

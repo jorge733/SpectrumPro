@@ -55,6 +55,8 @@
     return f;
   };
   const AJUSTES_TIENDA = ['whatsapp', 'instagram', 'pago', 'entrega'];
+  const CAMPOS_ELEMENTO = ['tipo', 'titulo', 'subtitulo', 'texto', 'lista', 'nota', 'imagen', 'enlace', 'visible', 'orden'];
+  const elementoAFila = x => { const f = {}; for (const c of CAMPOS_ELEMENTO) f[c] = x[c] ?? (c === 'visible' ? true : c === 'orden' ? 0 : ''); return f; };
 
   /* ---------- errores legibles ---------- */
   function traducir(e) {
@@ -67,6 +69,7 @@
     if (/Password should be|weak password/i.test(m)) return new Error('La contraseña es muy débil. Usa al menos 10 caracteres.');
     if (/talleres_nombre_unico/i.test(m)) return new Error('Ya existe un taller con ese nombre.');
     if (/duplicate key/i.test(m)) return new Error('Ese registro ya existe.');
+    if (/sitio_(textos|elementos)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error('Falta activar el sitio en Supabase: ejecuta supabase/migrations/20261125010000_sitio.sql en el SQL Editor.');
     if (/tienda_(productos|ajustes)|bucket not found/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error('Falta activar la tienda en Supabase: ejecuta supabase/migrations/20261124060000_tienda.sql en el SQL Editor.');
     if (/tienda_whatsapp_formato/i.test(m)) return new Error('El WhatsApp debe tener solo números, con el código de país (por ejemplo 56912345678).');
     if (/tienda_instagram_formato/i.test(m)) return new Error('El usuario de Instagram solo puede tener letras, números, puntos y guiones bajos.');
@@ -226,6 +229,39 @@
         ok(await sb.storage.from('tienda').upload(ruta, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false }));
         return sb.storage.from('tienda').getPublicUrl(ruta).data.publicUrl;
       },
+      /* ----- sitio web ----- */
+      async sitio() {
+        const [textos, elementos] = await Promise.all([
+          todo(() => sb.from('sitio_textos').select('clave, valor').order('clave')),
+          todo(() => sb.from('sitio_elementos').select('*').order('tipo').order('orden').order('id')),
+        ]);
+        const t = {};
+        for (const f of textos) t[f.clave] = f.valor;
+        return { textos: t, elementos };
+      },
+      async guardarTextosSitio(cambios) {
+        const filas = Object.entries(cambios).map(([clave, valor]) => ({ clave, valor: valor ?? '' }));
+        if (filas.length) ok(await sb.from('sitio_textos').upsert(filas, { onConflict: 'clave' }));
+      },
+      async guardarElemento(x) {
+        if (x.id) { ok(await sb.from('sitio_elementos').update(elementoAFila(x)).eq('id', x.id)); return x.id; }
+        return ok(await sb.from('sitio_elementos').insert(elementoAFila(x)).select('id').single()).id;
+      },
+      async eliminarElemento(id) { ok(await sb.from('sitio_elementos').delete().eq('id', id)); },
+      async ordenarElementos(ids) {
+        await Promise.all(ids.map((id, i) => sb.from('sitio_elementos').update({ orden: i + 1 }).eq('id', id).then(ok)));
+      },
+      async subirFotoSitio(blob) {
+        const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+        const ruta = `fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        ok(await sb.storage.from('sitio').upload(ruta, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false }));
+        return sb.storage.from('sitio').getPublicUrl(ruta).data.publicUrl;
+      },
+      async borrarFotoSitio(url) {
+        // Solo se borran fotos subidas al bucket; las de /sitio/img/ son parte del sitio.
+        const m = String(url || '').match(/\/storage\/v1\/object\/public\/sitio\/(.+)$/);
+        if (m) await sb.storage.from('sitio').remove([decodeURIComponent(m[1])]);
+      },
       async borrarFotoProducto(url) {
         // Solo se borran fotos subidas al bucket; las de /tienda/img/ son parte del sitio.
         const m = String(url || '').match(/\/storage\/v1\/object\/public\/tienda\/(.+)$/);
@@ -349,12 +385,12 @@
       }
     }
     const auditoria = [{ id: 1, creado: new Date().toISOString(), actor_nombre: 'sistema', accion: 'insert', tabla: 'talleres', registro: '', detalle: { nota: 'Datos de ejemplo cargados' } }];
-    return { perfiles, talleres, alumnos, privado, asistencia, auditoria, tienda: crearTiendaDemo() };
+    return { perfiles, talleres, alumnos, privado, asistencia, auditoria, tienda: crearTiendaDemo(), sitio: crearSitioDemo() };
   }
 
   function crearTiendaDemo() {
     const p = (id, nombre, descripcion, categoria, variantes, orden) =>
-      ({ id, nombre, descripcion, categoria, variantes, imagen: `tienda/img/${id}.jpg`, precio: null, visible: true, agotado: false, orden });
+      ({ id, nombre, descripcion, categoria, variantes, imagen: `/tienda/img/${id}.jpg`, precio: null, visible: true, agotado: false, orden });
     return {
       productos: [
         p('poleras', 'Poleras unisex', 'Con el logo de SpectrumPro adelante y atrás.', 'ropa', 'Negra y roja', 1),
@@ -370,11 +406,18 @@
     };
   }
 
+  // El contenido inicial del sitio viene de /sitio/contenido.js (el mismo respaldo que usa el sitio).
+  function crearSitioDemo() {
+    const r = window.SITIO_RESPALDO || { textos: {}, elementos: [] };
+    return { textos: { ...r.textos }, elementos: r.elementos.map((x, i) => ({ ...x, id: 'e' + i, visible: true })) };
+  }
+
   function backendDemo() {
     let db;
     try { db = JSON.parse(leer(CLAVE_DEMO)); } catch { db = null; }
     if (!db?.alumnos) db = crearDemo();
     db.tienda ??= crearTiendaDemo();
+    db.sitio ??= crearSitioDemo();
     const guardar = () => escribir(CLAVE_DEMO, JSON.stringify(db));
     guardar();
     const yo = () => db.perfiles.find(p => p.id === leer(CLAVE_SESION));
@@ -557,6 +600,41 @@
         return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async borrarFotoProducto() { },
+      async sitio() { if (!editaTienda()) prohibido(); await espera(); return copia(db.sitio); },
+      async guardarTextosSitio(cambios) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        Object.assign(db.sitio.textos, cambios);
+        auditar('update', 'sitio_textos', { campos: Object.keys(cambios) });
+        guardar();
+      },
+      async guardarElemento(x) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        const id = x.id || nuevoId();
+        const i = db.sitio.elementos.findIndex(e => e.id === id);
+        const fila = { ...elementoAFila(x), id };
+        if (i >= 0) db.sitio.elementos[i] = fila; else db.sitio.elementos.push(fila);
+        auditar(i >= 0 ? 'update' : 'insert', 'sitio_elementos', { elemento: x.titulo });
+        guardar(); return id;
+      },
+      async eliminarElemento(id) {
+        if (!editaTienda()) prohibido();
+        const x = db.sitio.elementos.find(e => e.id === id);
+        db.sitio.elementos = db.sitio.elementos.filter(e => e.id !== id);
+        auditar('delete', 'sitio_elementos', { elemento: x?.titulo });
+        guardar();
+      },
+      async ordenarElementos(ids) {
+        if (!editaTienda()) prohibido();
+        ids.forEach((id, i) => { const x = db.sitio.elementos.find(e => e.id === id); if (x) x.orden = i + 1; });
+        guardar();
+      },
+      async subirFotoSitio(blob) {
+        if (!editaTienda()) prohibido();
+        return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+      },
+      async borrarFotoSitio() { },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
       async restablecer() { db = crearDemo(); guardar(); },
     };
