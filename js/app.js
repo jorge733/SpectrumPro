@@ -63,11 +63,10 @@ const S = {
   usuarios: [],
   auditoria: null,
   tienda: null,       // { productos, ajustes } · se carga al abrir la sección Tienda
-  sitio: null,        // { textos, elementos } · se carga al abrir la sección Sitio web
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
-  tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios', tabSitio: 'textos',
+  tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
   expDesde: iso(sumarDias(hoy(), -30)), expHasta: iso(hoy()),
 };
 
@@ -249,7 +248,7 @@ async function cargarTodo() {
   const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
     D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
-  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null, sitio: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null });
   mostrarApp();
 }
 
@@ -781,7 +780,7 @@ async function vistaTienda(el) {
     <header class="cabecera">
       <div><p class="eyebrow">Dirección y equipo</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
       <div class="controles">
-        <a class="btn btn-sec" href="/tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
+        <a class="btn btn-sec" href="tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
         ${S.tienda ? '<button type="button" class="btn" data-accion="nuevo-producto">+ Nuevo producto</button>' : ''}
       </div>
     </header>`;
@@ -830,7 +829,7 @@ async function vistaTienda(el) {
 }
 
 // Reduce la foto a máx. 1000 px y la pasa a JPEG con fondo blanco (las PNG transparentes quedan bien).
-function reducirFoto(archivo, max = 1000, transparente = false) {
+function reducirFoto(archivo, max = 1000) {
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(archivo);
     const img = new Image();
@@ -839,10 +838,10 @@ function reducirFoto(archivo, max = 1000, transparente = false) {
       const c = document.createElement('canvas');
       c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
       const g = c.getContext('2d');
-      if (!transparente) { g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); }
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
       g.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la foto.')), transparente ? 'image/png' : 'image/jpeg', 0.85);
+      c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la foto.')), 'image/jpeg', 0.85);
     };
     img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la foto. Prueba con un JPG o PNG.')); };
     img.src = url;
@@ -960,220 +959,14 @@ document.addEventListener('submit', async ev => {
   finally { botonOcupado(btn, false); }
 });
 
-/* ---------- Sitio web ---------- */
-// Textos sueltos del sitio, agrupados por página. «largo» = área de texto (cada línea es un párrafo).
-const TEXTOS_SITIO = [
-  ['Inicio', [['inicio_bajada', 'Bajada de la portada', 1], ['inicio_comunidad', '«Un espacio a tu medida»', 1], ['inicio_video', 'Video del reel (enlace de YouTube)']]],
-  ['Nosotros', [['proposito_titulo', 'Título del propósito'], ['proposito_texto', 'Texto del propósito', 1], ['mision', 'Misión', 1], ['vision', 'Visión', 1], ['cultura', 'Cultura de trabajo', 1]]],
-  ['Formación', [['formacion_intro', 'Introducción', 1], ['formapro_texto', 'FormaPro', 1], ['online_texto', 'SpectrumOnline', 1]]],
-  ['Arte y Apoyo', [['arte_terapia_texto', 'Arte Terapia', 1], ['terapia_ocupacional_texto', 'Terapia Ocupacional', 1]]],
-  ['Productora', [['productora_texto', 'Introducción', 1]]],
-  ['Colabora', [['colabora_donacion', 'Donación', 1], ['enlace_donacion', 'Enlace de pago para donar'], ['colabora_suscripcion', 'Suscripción', 1], ['enlace_suscripcion', 'Enlace de pago para suscribirse']]],
-  ['Contacto y redes', [['direccion', 'Dirección'], ['whatsapp', 'WhatsApp (solo números, con 56)'], ['correo', 'Correo'], ['instagram', 'Instagram (usuario, sin @)'], ['youtube', 'Canal de YouTube (enlace)'], ['patreon', 'Patreon (enlace)']]],
-];
-// Qué campos usa cada lista y con qué nombre.
-const TIPOS_SITIO = {
-  equipo: { nombre: 'Equipo', uno: 'persona', campos: { titulo: 'Nombre', subtitulo: 'Cargo', texto: 'Biografía', nota: 'Correo (opcional)', imagen: 'Foto (cuadrada, fondo violeta)' } },
-  taller: { nombre: 'Talleres', uno: 'taller', campos: { titulo: 'Nombre del taller', subtitulo: 'Profesor o profesora', texto: 'Descripción', lista: 'Objetivos (uno por línea)', nota: 'Resultado', imagen: 'Ilustración (PNG con fondo transparente)', enlace: 'Video (enlace de YouTube, opcional)' }, transparente: true },
-  mentoria: { nombre: 'Mentorías', uno: 'mentoría', campos: { titulo: 'Nombre', subtitulo: 'Profesional a cargo', texto: 'Descripción' } },
-  modulo: { nombre: 'Módulos FormaPro', uno: 'módulo', campos: { titulo: 'Nombre', texto: 'Descripción' } },
-  actividad: { nombre: 'Actividades', uno: 'actividad', campos: { titulo: 'Nombre' } },
-  apoyo: { nombre: 'Arte y Apoyo', uno: 'taller de apoyo', campos: { titulo: 'Nombre', subtitulo: 'Área', texto: 'Descripción' }, opciones: ['Arte Terapia', 'Terapia Ocupacional'] },
-  servicio: { nombre: 'Servicios', uno: 'servicio', campos: { titulo: 'Servicio', texto: 'Descripción' } },
-  produccion: { nombre: 'Producciones', uno: 'producción', campos: { titulo: 'Título', subtitulo: 'Tipo (Trailer, Obra completa…)', enlace: 'Enlace de YouTube *', imagen: 'Miniatura (opcional: si no hay, se usa la de YouTube)' } },
-  valor: { nombre: 'Valores', uno: 'valor', campos: { titulo: 'Valor', texto: 'Frase' } },
-};
-const elementosDe = tipo => (S.sitio?.elementos || []).filter(x => x.tipo === tipo).sort((a, b) => (a.orden - b.orden) || a.titulo.localeCompare(b.titulo, 'es'));
-const elemento = id => S.sitio?.elementos.find(x => x.id === id);
-
-async function vistaSitio(el) {
-  if (!puede.tienda()) { location.hash = 'panel'; return; }
-  const tabs = { textos: 'Textos', ...Object.fromEntries(Object.entries(TIPOS_SITIO).map(([k, v]) => [k, v.nombre])) };
-  if (!tabs[ui.tabSitio]) ui.tabSitio = 'textos';
-  const cab = `
-    <header class="cabecera">
-      <div><p class="eyebrow">Dirección y equipo</p><h1>Sitio web</h1><p>Lo que guardes aquí aparece en el sitio público al recargarlo.</p></div>
-      <div class="controles"><a class="btn btn-sec" href="/" target="_blank" rel="noopener">Ver el sitio ↗</a></div>
-    </header>
-    <div class="pestanas pestanas-envuelven" role="tablist" aria-label="Partes del sitio">
-      ${Object.entries(tabs).map(([k, v]) => `<button type="button" role="tab" data-tab-sitio="${k}" aria-pressed="${ui.tabSitio === k}" aria-selected="${ui.tabSitio === k}">${v}</button>`).join('')}
-    </div>`;
-  if (!S.sitio) {
-    el.innerHTML = cab + '<section class="tarjeta"><p class="vacio">Cargando el sitio…</p></section>';
-    try { S.sitio = await D.sitio(); }
-    catch (e) { if (vistaActual() === 'sitio') el.innerHTML = cab + `<section class="tarjeta"><p class="aviso-error">${esc(e.message)}</p></section>`; return; }
-    if (vistaActual() === 'sitio') render();
-    return;
-  }
-  if (ui.tabSitio === 'textos') {
-    const T = S.sitio.textos;
-    el.innerHTML = cab + `<div class="pila">${TEXTOS_SITIO.map(([grupo, campos], gi) => `
-      <section class="tarjeta">
-        <h2><span>${esc(grupo)}</span></h2>
-        <form class="form-tienda" data-form-textos="${gi}" novalidate>
-          <div class="campos">${campos.map(([k, etiqueta, largo]) => `<label class="ancho">${esc(etiqueta)}${largo
-            ? `<textarea name="${k}" rows="${Math.min(8, Math.max(2, Math.ceil((T[k] || '').length / 90)))}" maxlength="4000">${esc(T[k] || '')}</textarea>`
-            : `<input name="${k}" value="${esc(T[k] || '')}" maxlength="500" autocomplete="off">`}</label>`).join('')}</div>
-          <p class="aviso-error" role="alert" hidden></p>
-          <div class="dlg-pie"><button type="submit" class="btn">Guardar ${esc(grupo.toLowerCase())}</button></div>
-        </form>
-      </section>`).join('')}</div>`;
-    return;
-  }
-  const tipo = ui.tabSitio, def = TIPOS_SITIO[tipo], lista = elementosDe(tipo);
-  el.innerHTML = cab + `
-    <section class="tarjeta">
-      <h2><span>${esc(def.nombre)}</span><button type="button" class="btn btn-peq" data-nuevo-elemento="${tipo}">+ Agregar ${esc(def.uno)}</button></h2>
-      <p class="nota-suave">Toca uno para editarlo. Con las flechas cambias el orden en que aparecen en el sitio.</p>
-      ${lista.length ? `<ul class="lista productos">${lista.map((x, i) => `
-        <li class="fila-click ${x.visible ? '' : 'oculto'}" data-elemento="${x.id}">
-          ${def.campos.imagen ? (x.imagen ? `<img class="miniatura" src="${esc(x.imagen)}" alt="" loading="lazy">` : '<span class="miniatura vacia">Sin foto</span>') : ''}
-          <div class="txt"><b>${esc(x.titulo)}</b><small>${esc(x.subtitulo || (x.texto || '').slice(0, 90))}</small></div>
-          <span class="chips">${x.visible ? '' : '<span class="chip chip-neutro">Oculto</span>'}</span>
-          <span class="mover">
-            <button type="button" data-mover-elemento="${x.id}" data-dir="-1" aria-label="Subir ${esc(x.titulo)}" ${i === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" data-mover-elemento="${x.id}" data-dir="1" aria-label="Bajar ${esc(x.titulo)}" ${i === lista.length - 1 ? 'disabled' : ''}>↓</button>
-          </span>
-        </li>`).join('')}</ul>` : '<p class="vacio">No hay nada aún.</p>'}
-    </section>`;
-}
-
-// Guardar un grupo de textos.
-document.addEventListener('submit', async ev => {
-  const f = ev.target.closest('[data-form-textos]');
-  if (!f) return;
-  ev.preventDefault();
-  const err = f.querySelector('.aviso-error'); err.hidden = true;
-  const cambios = {};
-  for (const c of f.querySelectorAll('input[name], textarea[name]')) cambios[c.name] = c.value.trim();
-  if ('whatsapp' in cambios) cambios.whatsapp = cambios.whatsapp.replace(/\D/g, '');
-  if ('instagram' in cambios) cambios.instagram = cambios.instagram.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, '');
-  const mostrar = m => { err.textContent = m; err.hidden = false; };
-  if ('whatsapp' in cambios && !/^[0-9]{8,15}$/.test(cambios.whatsapp)) return mostrar('Escribe el WhatsApp con código de país y solo números, por ejemplo 56912345678.');
-  if ('whatsapp' in cambios && cambios.whatsapp.length === 9 && cambios.whatsapp.startsWith('9')) return mostrar('Agrega el código de Chile al comienzo: 56' + cambios.whatsapp + '.');
-  for (const k of ['inicio_video', 'enlace_donacion', 'enlace_suscripcion', 'youtube', 'patreon']) if (cambios[k] && !/^https:\/\//.test(cambios[k])) return mostrar('Los enlaces deben empezar con https://');
-  const btn = ev.submitter;
-  botonOcupado(btn, true);
-  try {
-    await conCarga(() => D.guardarTextosSitio(cambios));
-    Object.assign(S.sitio.textos, cambios);
-    toast('Textos guardados');
-  } catch (e) { mostrar(e.message); }
-  finally { botonOcupado(btn, false); }
-});
-
-let editandoElemento = null, tipoElemento = null, fotoElemento = null;
-function verFotoElemento(src) {
-  const img = $('#el-foto-vista');
-  img.hidden = !src; $('#el-foto-vacia').hidden = !!src;
-  if (src) img.src = src; else img.removeAttribute('src');
-}
-function abrirElemento(id = null, tipo = null) {
-  const x = id ? elemento(id) : null;
-  editandoElemento = id; tipoElemento = x?.tipo || tipo; fotoElemento = null;
-  const def = TIPOS_SITIO[tipoElemento];
-  $('#form-elemento').reset();
-  $('#elemento-error').hidden = true;
-  $('#elemento-titulo').textContent = x ? `Editar ${x.titulo}` : `Agregar ${def.uno}`;
-  for (const c of ['titulo', 'subtitulo', 'texto', 'lista', 'nota', 'enlace']) {
-    const caja = $(`#el-${c}-caja`);
-    caja.hidden = !def.campos[c];
-    if (def.campos[c]) caja.querySelector('.etq').textContent = def.campos[c];
-  }
-  const sel = $('#el-subtitulo-opciones'), inp = $('#el-subtitulo');
-  sel.hidden = !def.opciones; inp.hidden = !!def.opciones;
-  if (def.opciones) sel.innerHTML = def.opciones.map(o => `<option>${esc(o)}</option>`).join('');
-  $('#el-foto-caja').hidden = !def.campos.imagen;
-  if (def.campos.imagen) $('#el-foto-etq').textContent = def.campos.imagen;
-  $('#el-titulo').value = x?.titulo || '';
-  inp.value = x?.subtitulo || ''; if (def.opciones) sel.value = x?.subtitulo || def.opciones[0];
-  $('#el-texto').value = x?.texto || '';
-  $('#el-lista').value = x?.lista || '';
-  $('#el-nota').value = x?.nota || '';
-  $('#el-enlace').value = x?.enlace || '';
-  $('#el-visible').checked = x ? x.visible : true;
-  $('#el-eliminar').hidden = !x;
-  verFotoElemento(x?.imagen || '');
-  $('#dlg-elemento').showModal();
-  $('#el-titulo').focus();
-}
-$('#el-foto').addEventListener('change', async ev => {
-  const f = ev.target.files[0];
-  if (!f) return;
-  const err = $('#elemento-error'); err.hidden = true;
-  try {
-    fotoElemento = await reducirFoto(f, 1000, !!TIPOS_SITIO[tipoElemento]?.transparente);
-    verFotoElemento(URL.createObjectURL(fotoElemento));
-  } catch (e) { fotoElemento = null; err.textContent = e.message; err.hidden = false; }
-});
-$('#form-elemento').addEventListener('submit', async ev => {
-  ev.preventDefault();
-  const def = TIPOS_SITIO[tipoElemento];
-  const previo = editandoElemento ? elemento(editandoElemento) : null;
-  const x = {
-    id: editandoElemento || undefined, tipo: tipoElemento,
-    titulo: $('#el-titulo').value.trim(),
-    subtitulo: def.opciones ? $('#el-subtitulo-opciones').value : (def.campos.subtitulo ? $('#el-subtitulo').value.trim() : ''),
-    texto: def.campos.texto ? $('#el-texto').value.trim() : '',
-    lista: def.campos.lista ? $('#el-lista').value.trim() : '',
-    nota: def.campos.nota ? $('#el-nota').value.trim() : '',
-    enlace: def.campos.enlace ? $('#el-enlace').value.trim() : '',
-    imagen: previo?.imagen || '',
-    visible: $('#el-visible').checked,
-    orden: previo ? previo.orden : Math.max(0, ...elementosDe(tipoElemento).map(e => e.orden || 0)) + 1,
-  };
-  const err = $('#elemento-error');
-  const mostrar = m => { err.textContent = m; err.hidden = false; };
-  if (!x.titulo) return mostrar(`Escribe ${def.campos.titulo.toLowerCase()}.`);
-  if (tipoElemento === 'produccion' && !/(youtu\.be\/|youtube\.com\/)/.test(x.enlace)) return mostrar('Pega el enlace del video de YouTube.');
-  if (x.enlace && !/^https:\/\//.test(x.enlace)) return mostrar('El enlace debe empezar con https://');
-  const btn = ev.submitter;
-  botonOcupado(btn, true, fotoElemento ? 'Subiendo foto…' : 'Guardando…');
-  try {
-    await conCarga(async () => {
-      if (fotoElemento) x.imagen = await D.subirFotoSitio(fotoElemento);
-      await D.guardarElemento(x);
-      if (fotoElemento && previo?.imagen && previo.imagen !== x.imagen) await D.borrarFotoSitio(previo.imagen).catch(() => { });
-    });
-    S.sitio = await D.sitio();
-    $('#dlg-elemento').close();
-    toast(previo ? 'Cambios guardados' : 'Agregado al sitio');
-    render();
-  } catch (e) { mostrar(e.message); }
-  finally { botonOcupado(btn, false); }
-});
-$('#el-eliminar').addEventListener('click', async () => {
-  const x = elemento(editandoElemento);
-  $('#dlg-elemento').close();
-  if (!await confirmar(`¿Eliminar ${x.titulo}?`, 'Desaparece del sitio y no se puede deshacer. Si solo quieres sacarlo por un tiempo, desmarca «Mostrar en el sitio».', 'Eliminar')) return;
-  try {
-    await intentar(() => D.eliminarElemento(x.id), 'Eliminado del sitio');
-    D.borrarFotoSitio(x.imagen).catch(() => { });
-    S.sitio.elementos = S.sitio.elementos.filter(e => e.id !== x.id);
-    render();
-  } catch { /* ya avisado */ }
-});
-async function moverElemento(id, dir) {
-  const x = elemento(id); if (!x) return;
-  const lista = elementosDe(x.tipo);
-  const i = lista.findIndex(e => e.id === id), j = i + dir;
-  if (j < 0 || j >= lista.length) return;
-  [lista[i], lista[j]] = [lista[j], lista[i]];
-  lista.forEach((e, k) => { e.orden = k + 1; });
-  render();
-  try { await D.ordenarElementos(lista.map(e => e.id)); }
-  catch (e) { toast(e.message, 'error'); S.sitio = await D.sitio().catch(() => S.sitio); render(); }
-}
-
 const ACCIONES = { insert: 'creó', update: 'editó', delete: 'eliminó', upsert: 'registró', login: 'entró' };
-const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda', sitio_textos: 'textos del sitio', sitio_elementos: 'contenido del sitio' };
+const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda' };
 function detalleAuditoria(r) {
   const d = r.detalle || {};
   const partes = [];
   if (d.alumno) partes.push(d.alumno);
   if (d.taller) partes.push(d.taller);
   if (d.producto) partes.push(d.producto);
-  if (d.elemento) partes.push(d.elemento);
   if (d.email) partes.push(d.email);
   if (d.fecha) partes.push(`${fechaCorta(d.fecha)} · ${d.estado}${d.registros > 1 ? ` · ${d.registros} jóvenes` : ''}`);
   if (d.rol && r.tabla !== 'sesion') partes.push(ROLES[d.rol] || d.rol);
@@ -1579,12 +1372,12 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, tienda: vistaTienda, sitio: vistaSitio, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, tienda: vistaTienda, administracion: vistaAdministracion };
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if (v === 'administracion' && !puede.admin()) return 'panel';
-  if ((v === 'tienda' || v === 'sitio') && !puede.tienda()) return 'panel';
+  if (v === 'tienda' && !puede.tienda()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
@@ -1665,10 +1458,6 @@ document.addEventListener('click', async ev => {
     return;
   }
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
-  if ((x = el('[data-tab-sitio]'))) { ui.tabSitio = x.dataset.tabSitio; render(); return; }
-  if ((x = el('[data-nuevo-elemento]'))) { abrirElemento(null, x.dataset.nuevoElemento); return; }
-  if ((x = el('[data-mover-elemento]'))) { moverElemento(x.dataset.moverElemento, Number(x.dataset.dir)); return; }
-  if ((x = el('[data-elemento]'))) { abrirElemento(x.dataset.elemento); return; }
   if ((x = el('[data-mover-producto]'))) { moverProducto(x.dataset.moverProducto, Number(x.dataset.dir)); return; }
   if ((x = el('[data-producto]'))) { abrirProducto(x.dataset.producto); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
@@ -1694,7 +1483,7 @@ document.addEventListener('click', async ev => {
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
       await D.salir();
-      S.perfil = null; S.tienda = null; S.sitio = null;
+      S.perfil = null; S.tienda = null;
       mostrarAcceso('entrar');
     }
     if (acc === 'mi-cumple') abrirMiCumple();

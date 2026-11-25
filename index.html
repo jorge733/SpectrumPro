@@ -1,179 +1,378 @@
 <!doctype html>
-<html lang="es-CL">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SpectrumPro · Productora audiovisual neurodivergente</title>
-<meta name="description" content="Productora audiovisual y centro de formación artística que apuesta por el talento neurodivergente. Talleres, mentorías, arte terapia y producción audiovisual en Providencia, Santiago.">
-<meta name="theme-color" content="#0d0c10">
+<meta name="theme-color" content="#635CC7">
+<meta name="description" content="Plataforma interna de SpectrumPro: asistencia, cumpleaños y fichas del alumnado.">
 <link rel="canonical" href="https://spectrumpro.vercel.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SpectrumPro">
 <meta property="og:locale" content="es_CL">
 <meta property="og:url" content="https://spectrumpro.vercel.app/">
-<meta property="og:title" content="SpectrumPro · Productora audiovisual neurodivergente">
-<meta property="og:description" content="Productora audiovisual y centro de formación artística que apuesta por el talento neurodivergente. Talleres, mentorías, arte terapia y producción audiovisual en Providencia, Santiago.">
-<meta property="og:image" content="https://spectrumpro.vercel.app/assets/og/sitio.jpg">
+<meta property="og:title" content="SpectrumPro Alumnado">
+<meta property="og:description" content="Plataforma interna del equipo de SpectrumPro: asistencia, cumpleaños y fichas de los talleres.">
+<meta property="og:image" content="https://spectrumpro.vercel.app/assets/og/index.jpg">
+<meta property="og:image:secure_url" content="https://spectrumpro.vercel.app/assets/og/index.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SpectrumPro Alumnado: asistencia, cumpleaños y fichas de los talleres.">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/icono-192.png">
+<meta name="twitter:title" content="SpectrumPro Alumnado">
+<meta name="twitter:description" content="Plataforma interna del equipo de SpectrumPro: asistencia, cumpleaños y fichas de los talleres.">
+<meta name="twitter:image" content="https://spectrumpro.vercel.app/assets/og/index.jpg">
+<meta name="twitter:image:alt" content="SpectrumPro Alumnado: asistencia, cumpleaños y fichas de los talleres.">
+<meta name="application-name" content="SpectrumPro">
+<meta name="apple-mobile-web-app-title" content="SpectrumPro">
+<meta name="format-detection" content="telephone=no">
+<title>SpectrumPro Alumnado</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icono-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/sitio/sitio.css">
-<script>
-(function(){var h=location.hash,q=location.search;
-if(/^#(panel|asistencia|cumpleanos|alumnos|talleres|tienda|administracion)$/.test(h)||/access_token=|type=(recovery|invite|signup)|error_description=/.test(h)||/[?&](code|token_hash)=/.test(q))
-location.replace('/plataforma/'+q+h);})();
-</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Lexend+Zetta:wght@600&family=Montserrat:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<a class="saltar" href="#contenido">Saltar al contenido</a>
-<header class="cabecera"><div class="wrap">
-  <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_252_3217)">
-<path d="M11.1752 8.65575C12.282 8.75721 13.4831 8.86501 14.6529 8.97915C16.2376 9.13768 17.4577 10.7547 17.4577 12.7014V14.2614C17.4577 17.5144 15.3006 20.146 12.6467 20.146H4.43359C1.77344 20.1524 0 17.5144 0 14.2677V12.4985H6.48373C6.48373 12.4985 6.40198 13.1961 7.45849 13.1961H10.4268C11.0871 13.1961 11.2695 11.9976 10.6469 11.8644C10.6469 11.8644 8.6345 11.6615 6.2762 11.3888C5.10649 11.2556 3.84873 11.1035 2.71675 10.9513C1.16971 10.742 0 9.14402 0 7.23532V5.89098C0 4.33105 0.503102 2.82818 1.40869 1.72481C2.30798 0.615097 3.53429 0 4.81092 0H11.8481C14.6025 0.196577 17.4577 0.646803 17.4577 7.65384H10.9739C10.9739 7.65384 11.0557 6.95631 9.99916 6.95631H7.03715C6.37682 6.95631 6.18816 8.15479 6.81704 8.28796C6.81704 8.28796 8.76027 8.44015 11.1815 8.65575H11.1752Z" fill="#635CC7"/>
-<path d="M36.4061 7.06408C36.4061 16.6964 27.8219 15.9418 27.8219 15.9418H24.7656V26.3794H18.6592V0.0380249H29.7903C33.1611 0.0380249 36.4061 2.08624 36.4061 7.05774V7.06408ZM29.4822 9.44838C29.7211 9.08693 29.7903 8.54159 29.6583 8.066C29.5262 7.5904 29.2306 7.27969 28.891 7.27969H24.7593V9.81617H28.891C29.1111 9.81617 29.325 9.683 29.4759 9.44204L29.4822 9.44838Z" fill="#635CC7"/>
-<path d="M43.3924 9.03622V11.1796H50.7754V15.2379H46.411V17.3813H55.731V26.4175H37.6885V0H55.731V9.03622H43.3924Z" fill="#31B4E7"/>
-<path d="M68.5225 9.51816V8.2626C68.5225 7.72993 68.3464 7.22264 68.0445 6.84851C67.7364 6.47437 67.3213 6.26511 66.8874 6.26511H65.1076C64.6737 6.26511 64.2587 6.47437 63.9505 6.84851C63.6424 7.22264 63.4726 7.72993 63.4726 8.2626V12.5049C63.4726 13.6082 64.2021 14.5023 65.1076 14.5023H66.8874C67.793 14.5023 68.5225 13.6082 68.5225 12.5049V11.2493H74.9999V14.6989C74.9999 16.3096 74.4779 17.8505 73.5472 18.9919C72.6164 20.127 71.3524 20.7675 70.0381 20.7675H61.957C60.6426 20.7675 59.3786 20.127 58.4478 18.9919C57.5171 17.8568 56.9951 16.3096 56.9951 14.6989V6.06854C56.9951 4.45787 57.5171 2.91696 58.4478 1.77554C59.3786 0.640462 60.6426 0 61.957 0H70.0381C71.3524 0 72.6164 0.640462 73.5472 1.77554C74.4779 2.91061 74.9999 4.45787 74.9999 6.06854V9.51816H68.5225Z" fill="#31B4E7"/>
-<path d="M17.4451 21.3826L17.4577 27.6477L11.4141 29.011V44.7499H6.04981V29.7783L0 27.6033V22.5684L17.4451 21.3762V21.3826Z" fill="#00BC70"/>
-<path d="M36.6632 44.7562H29.0978V38.935C29.0978 37.7999 27.6703 37.9204 27.6703 37.9204H24.8843V44.7562H18.6836V27.6096H30.4751C33.5566 27.6096 36.5186 28.9349 36.5186 32.1689C36.5186 35.403 33.588 36.538 33.588 36.538C36.8707 37.5463 36.6695 44.7626 36.6695 44.7626L36.6632 44.7562ZM29.1921 34.6103C29.406 34.3757 29.4751 34.0206 29.3557 33.7162C29.2362 33.4118 28.9658 33.2089 28.6576 33.2089H24.8843V34.8576H28.6576C28.8588 34.8576 29.0538 34.7688 29.1921 34.6167V34.6103Z" fill="#00BC70"/>
-<path d="M55.7881 27.6033V39.7657C55.7881 42.4861 53.3291 44.6928 50.298 44.6928H43.2294C40.1982 44.6928 37.7393 42.4861 37.7393 39.7657V27.6033H44.2356V37.2102C44.2356 37.4004 44.3173 37.578 44.4683 37.7112C44.6192 37.8443 44.8204 37.9204 45.028 37.9141H48.4994C48.7069 37.9141 48.9081 37.838 49.0591 37.7112C49.21 37.5843 49.2917 37.4004 49.2917 37.2102V27.6033H55.7881Z" fill="#FADD41"/>
-<path d="M74.9438 21.9977V44.7436H70.4284V30.1652L67.8626 44.7436H63.9698L61.404 30.1652V44.7436H56.8887V21.9977H63.6617L65.9194 29.9496L68.177 21.9977H74.9501H74.9438Z" fill="#FADD41"/>
-<path d="M17.4448 53.5008C17.4448 62.6321 9.36368 61.9092 9.36368 61.9092H5.7665V72.3912H0.0185547V45.9738H11.2189C14.3947 45.9738 17.4448 48.7829 17.4448 53.4944V53.5008ZM10.2064 56.2085C10.4265 55.866 10.4957 55.3461 10.3762 54.8958C10.2567 54.4456 9.97369 54.1539 9.65926 54.1539H5.77279V56.5572H9.65926C9.86679 56.5572 10.0617 56.4304 10.2127 56.2021L10.2064 56.2085Z" fill="#F8384B"/>
-<path d="M36.4748 72.3912H29.3433V63.4882C29.3433 61.7317 27.7963 61.9219 27.7963 61.9219H24.7714V72.3912H18.709V45.9738H29.7521C33.0977 45.9738 36.3113 48.0283 36.3113 53.0188C36.3113 58.0094 33.1229 59.7722 33.1229 59.7722C36.6886 61.3322 36.4685 72.3849 36.4685 72.3849L36.4748 72.3912ZM29.4439 56.2592C29.6766 55.8977 29.7458 55.3461 29.62 54.8705C29.4942 54.3949 29.1924 54.0842 28.8591 54.0842H24.7651V56.627H28.8591C29.0792 56.627 29.2867 56.4938 29.4376 56.2529L29.4439 56.2592Z" fill="#F8384B"/>
-<path d="M55.7561 53.6973V64.674C55.7561 68.9353 53.5298 72.3912 50.7879 72.3912H42.7006C41.3799 72.3912 40.1159 71.5795 39.1851 70.1337C38.2544 68.6879 37.7324 66.7222 37.7324 64.674V53.6973C37.7324 51.6491 38.2544 49.6897 39.1851 48.2375C40.1159 46.7918 41.3799 45.9737 42.7006 45.9801H50.7879C53.5298 45.9801 55.7561 49.436 55.7561 53.6973ZM49.2723 57.6289C49.2723 56.8172 48.5365 56.1577 47.631 56.1577H45.8512C44.9457 56.1577 44.2162 56.8172 44.2162 57.6289V60.7424C44.2162 61.5541 44.9519 62.2136 45.8512 62.2136H47.631C48.5365 62.2136 49.266 61.5541 49.2723 60.7424V57.6289Z" fill="#F8384B"/>
-<path d="M57.0018 45.9738C57.0018 45.9738 56.9011 72.3912 57.0018 72.3912C57.1024 72.3912 65.8123 59.1825 65.8123 59.1825L57.0018 45.9738Z" fill="#E65EBE"/>
-<path d="M65.8309 46.5825C65.8309 46.5825 65.7302 73 65.8309 73C65.9315 73 74.8049 59.7913 74.8049 59.7913L65.8309 46.5825Z" fill="#E65EBE"/>
-</g>
-<defs>
-<clipPath id="clip0_252_3217">
-<rect width="75" height="73" fill="white"/>
-</clipPath>
-</defs>
-</svg>
-<span>Spectrum<br>Pro</span></a>
-  <button type="button" class="abrir-menu" aria-expanded="false" aria-controls="menu">Menú</button>
-  <nav id="menu" class="menu" aria-label="Principal">
-    <a href="/nosotros/">Nosotros</a><a href="/formacion/">Formación</a><a href="/arte-y-apoyo/">Arte y Apoyo</a><a href="/productora/">Productora</a><a href="/tienda/">Tienda</a><a href="/contacto/">Contacto</a>
-    <a class="colabora" href="/colabora/">Colabora</a>
-  </nav>
-</div></header>
-<div class="franja" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<main id="contenido">
-<section class="portada">
-  <div class="wrap">
-    <div>
-      <p class="eyebrow">La primera productora audiovisual neurodivergente de Chile</p>
-      <h1><span>Transformando</span><span class="c5">la perspectiva</span><span class="c4">del mundo</span></h1>
-      <div class="bajada" data-texto="inicio_bajada"><p>Somos una productora audiovisual y centro de formación artística que apuesta por el talento neurodivergente para crear proyectos artísticos únicos.</p></div>
-      <div class="acciones">
-        <a class="btn claro" href="/formacion/">Conoce los talleres</a>
-        <a class="btn borde" href="#producciones">Ver producciones</a>
+<body class="resolviendo">
+<a class="saltar" href="#vista">Saltar al contenido</a>
+
+<!-- Pantalla de carga -->
+<div id="arranque" class="arranque" role="status" aria-live="polite">
+  <div class="arranque-card">
+    <img src="assets/logo.svg" alt="" width="64" height="62">
+    <p id="arranque-texto">Preparando la plataforma…</p>
+    <span class="arranque-barra"><span></span></span>
+  </div>
+</div>
+
+<!-- Acceso -->
+<section id="acceso" class="acceso" hidden aria-labelledby="acceso-titulo">
+  <div class="acceso-card">
+    <div class="acceso-marca">
+      <span class="espectro" aria-hidden="true"></span>
+      <img src="assets/logo.svg" alt="" width="88" height="86">
+      <p class="acceso-nombre">SpectrumPro</p>
+      <p class="acceso-lema">Transformando la perspectiva del mundo</p>
+      <p class="acceso-desc">Plataforma interna del equipo: asistencia a talleres, cumpleaños y fichas del alumnado.</p>
+      <address class="acceso-contacto">
+        <span>Doctor Roberto del Río 1137, Providencia</span>
+        <a href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp +56 9 9638 9673</a>
+        <a href="mailto:administracion@spectrumpro.cl">administracion@spectrumpro.cl</a>
+        <span class="acceso-redes"><a href="https://spectrumpro.cl" target="_blank" rel="noopener">spectrumpro.cl</a> · <a href="https://www.instagram.com/spectrumpro.cl" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener">YouTube</a></span>
+      </address>
+    </div>
+    <div class="acceso-form">
+      <!-- Iniciar sesión -->
+      <form id="form-entrar" novalidate>
+        <h1 id="acceso-titulo">Iniciar sesión</h1>
+        <p class="muted">Usa la cuenta que te envió dirección por correo.</p>
+        <label class="campo">Correo electrónico<input id="entrar-email" type="email" autocomplete="username" required></label>
+        <label class="campo">Contraseña
+          <span class="clave"><input id="entrar-clave" type="password" autocomplete="current-password" required>
+          <button type="button" class="ver-clave" data-ver-clave="entrar-clave" aria-label="Mostrar contraseña">Mostrar</button></span>
+        </label>
+        <p id="entrar-error" class="aviso-error" role="alert" hidden></p>
+        <p id="entrar-info" class="aviso-ok" role="status" hidden></p>
+        <button type="submit" class="btn btn-grande">Entrar</button>
+        <button type="button" class="enlace-texto" data-accion="olvide">¿Olvidaste tu contraseña?</button>
+      </form>
+
+      <!-- Recuperar -->
+      <form id="form-recuperar" novalidate hidden>
+        <h1>Recuperar contraseña</h1>
+        <p class="muted">Te enviaremos un enlace para crear una contraseña nueva.</p>
+        <label class="campo">Correo electrónico<input id="recuperar-email" type="email" autocomplete="username" required></label>
+        <p id="recuperar-info" class="aviso-ok" role="status" hidden></p>
+        <button type="submit" class="btn btn-grande">Enviar enlace</button>
+        <button type="button" class="enlace-texto" data-accion="volver-entrar">Volver a iniciar sesión</button>
+      </form>
+
+      <!-- Crear contraseña (invitación o recuperación) -->
+      <form id="form-clave" novalidate hidden>
+        <h1>Crea tu contraseña</h1>
+        <p class="muted">Mínimo 10 caracteres. La usarás para entrar desde cualquier dispositivo.</p>
+        <label class="campo">Contraseña nueva<input id="clave-1" type="password" autocomplete="new-password" minlength="10" required></label>
+        <label class="campo">Repite la contraseña<input id="clave-2" type="password" autocomplete="new-password" minlength="10" required></label>
+        <p id="clave-error" class="aviso-error" role="alert" hidden></p>
+        <button type="submit" class="btn btn-grande">Guardar y entrar</button>
+      </form>
+
+      <!-- Modo demostración (sin Supabase configurado) -->
+      <div id="acceso-demo" hidden>
+        <h1>Modo demostración</h1>
+        <p class="muted">Supabase aún no está configurado. Elige un rol para recorrer la plataforma con datos ficticios guardados en este navegador.</p>
+        <div class="roles-demo">
+          <button type="button" class="rol-demo" data-demo-rol="admin"><b>Dirección</b><span>Ve y edita todo, gestiona cuentas y talleres.</span></button>
+          <button type="button" class="rol-demo" data-demo-rol="terapeuta"><b>Terapeuta</b><span>Ve todo el alumnado y sus datos de salud.</span></button>
+          <button type="button" class="rol-demo" data-demo-rol="tallerista"><b>Tallerista</b><span>Pasa lista solo en sus talleres.</span></button>
+          <button type="button" class="rol-demo" data-demo-rol="equipo"><b>Equipo</b><span>Ve cumpleaños y talleres; no ve fichas.</span></button>
+        </div>
       </div>
     </div>
-    <div class="foto">
-      <img src="/sitio/img/fo-portada.webp" alt="Jóvenes dibujando en un taller de SpectrumPro mientras un compañero los graba con una cámara." width="712" height="532" fetchpriority="high">
-    </div>
   </div>
 </section>
 
-<section class="banda crema">
-  <div class="wrap dos-col">
-    <div>
-      <p class="eyebrow">Quiénes somos</p>
-      <h2 class="titulo-seccion">Un espacio a tu medida</h2>
-      <div class="intro parrafos" data-texto="inicio_comunidad"><p>Buscamos que todas las personas tengan un espacio a su medida, donde puedan desarrollar sus intereses, divertirse y formar comunidad, sin las presiones y dificultades de los espacios neurotípicos.</p></div>
-      <div class="acciones"><a class="btn oscuro" href="/nosotros/">Conoce al equipo</a></div>
-    </div>
-    <a class="video revelar" data-video="inicio_video" href="https://youtu.be/HeqezlV1OBs" target="_blank" rel="noopener">
-      <img data-fija="1" src="/sitio/img/fo-teatro.webp" alt="" loading="lazy">
-      <span class="play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
-      <span class="pie"><b>Mira nuestro reel</b><span>YouTube</span></span>
-    </a>
-  </div>
-</section>
-
-<section class="banda">
-  <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Qué hacemos</p><h2 class="titulo-seccion">Tres caminos, una comunidad</h2></div></div>
-    <div class="areas">
-      <a class="area revelar" href="/formacion/" style="--fondo:#e4e1fb;--i:0">
-        <img src="/sitio/img/ta-dibujo.webp" alt="" loading="lazy">
-        <h3>Centro de Formación</h3>
-        <p>Talleres, mentorías y programas para aprender técnicas audiovisuales y artísticas.</p>
-        <span class="enlace-flecha">Ver talleres →</span>
+<!-- Aplicación -->
+<div class="app" id="app" hidden>
+  <aside class="lateral" aria-label="Menú principal">
+    <span class="espectro" aria-hidden="true"></span>
+    <div class="lateral-cab">
+      <a class="marca" href="#panel" aria-label="SpectrumPro, ir al panel">
+        <img src="assets/logo.svg" alt="" width="40" height="39">
+        <span class="marca-texto"><span class="marca-nombre">SpectrumPro</span><span class="marca-sub">Gestión de alumnado</span></span>
       </a>
-      <a class="area revelar" href="/arte-y-apoyo/" style="--fondo:#d6f5e8;--i:1">
-        <img src="/sitio/img/ta-escena.webp" alt="" loading="lazy">
-        <h3>Arte y Apoyo</h3>
-        <p>Arte terapia y terapia ocupacional para crecer desde la creatividad.</p>
-        <span class="enlace-flecha">Conocer más →</span>
-      </a>
-      <a class="area revelar" href="/productora/" style="--fondo:#fdf5c9;--i:2">
-        <img src="/sitio/img/ta-stopmotion.webp" alt="" loading="lazy">
-        <h3>Productora</h3>
-        <p>Servicios audiovisuales con un equipo de producción completamente inclusivo.</p>
-        <span class="enlace-flecha">Ver servicios →</span>
-      </a>
+      <button type="button" id="plegar" class="icono-btn plegar" aria-expanded="true" aria-label="Plegar menú" title="Plegar menú">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg>
+      </button>
     </div>
-  </div>
-</section>
-
-<section class="banda noche" id="producciones">
-  <div class="wrap">
-    <div class="cab">
-      <div><p class="eyebrow">Nuestras producciones</p><h2 class="titulo-seccion">Hecho por nuestro equipo</h2></div>
-      <a class="enlace-flecha" data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener">Canal de YouTube ↗</a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#panel" data-vista="panel" title="Panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Panel</span></a>
+      <a href="#asistencia" data-vista="asistencia" data-no-equipo title="Asistencia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg><span>Asistencia</span></a>
+      <a href="#cumpleanos" data-vista="cumpleanos" title="Cumpleaños"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 0 0 2-2c0-.4-.1-.7-.3-1L12 0l-1.7 3c-.2.3-.3.6-.3 1a2 2 0 0 0 2 2m6 3h-5V7h-2v2H6a3 3 0 0 0-3 3v1.5c0 1.1.9 2 2 2 .5 0 1-.2 1.4-.6L8.5 13l2.1 2.1c.7.7 2 .7 2.8 0l2.1-2.1 2.1 2.1c.4.4.9.6 1.4.6 1.1 0 2-.9 2-2V12a3 3 0 0 0-3-3m1 8c-.9 0-1.8-.3-2.5-.9l-1.1-1-1 1a3.6 3.6 0 0 1-4.9 0l-1-1-1.1 1A3.7 3.7 0 0 1 5 17v4c0 .6.4 1 1 1h12c.6 0 1-.4 1-1v-4z"/></svg><span>Cumpleaños</span></a>
+      <a href="#alumnos" data-vista="alumnos" data-no-equipo title="Fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6m0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13m8 0h-1c1.2.8 2 2 2 3.5V19h6v-2.5c0-2.3-4.7-3.5-7-3.5"/></svg><span>Fichas</span></a>
+      <a href="#talleres" data-vista="talleres" title="Talleres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V4z"/></svg><span>Talleres</span></a>
+      <a href="#tienda" data-vista="tienda" data-solo="tienda" title="Tienda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6h-2a5 5 0 0 0-10 0H5a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2m-7-3a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3m7 17H5V8h2v2h2V8h6v2h2V8h2z"/></svg><span>Tienda</span></a>
+      <a href="#administracion" data-vista="administracion" data-solo="admin" title="Administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7" transform="translate(-1 0)"/></svg><span>Administración</span></a>
+    </nav>
+    <div class="usuario">
+      <button type="button" class="usuario-btn" data-accion="mi-cumple" title="Mi fecha de nacimiento">
+        <span class="avatar" id="usuario-avatar" aria-hidden="true"></span>
+        <span class="usuario-txt"><b id="usuario-nombre"></b><small id="usuario-rol"></small></span>
+      </button>
+      <button type="button" class="icono-btn" data-accion="salir" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17v-3H3v-4h7V7l5 5zm2-15h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7v-2h7V4h-7z"/></svg>
+      </button>
     </div>
-    <div class="producciones" data-lista="produccion"></div>
-  </div>
-</section>
+  </aside>
 
-<section class="banda crema">
-  <div class="wrap">
-    <div class="cab">
-      <div><p class="eyebrow">Tienda</p><h2 class="titulo-seccion">Lleva puesto el talento</h2><p class="intro">Poleras, polerones, cuadernos, chapitas y más, con el logo y los personajes de SpectrumPro.</p></div>
-      <a class="btn oscuro" href="/tienda/">Ir a la tienda</a>
+  <main class="principal" id="principal">
+    <div id="aviso-demo" class="aviso" hidden>
+      <span>Modo demostración: datos ficticios guardados solo en este navegador. Conecta Supabase para usar datos reales.</span>
+      <button type="button" class="btn btn-sec btn-peq" data-accion="salir">Cambiar de rol</button>
     </div>
-    <div class="vitrina" data-vitrina></div>
-  </div>
-</section>
+    <div id="vista" tabindex="-1"></div>
+  </main>
+</div>
 
-<section class="banda violeta llamado">
-  <div class="wrap">
-    <div><p class="eyebrow">Colabora</p><h2>Cada aporte se convierte en una beca</h2></div>
-    <a class="btn claro" href="/colabora/">Quiero colaborar</a>
-  </div>
-</section>
-</main>
-<footer class="pie-sitio"><div class="wrap">
-  <div>
-    <h2>Transformando la perspectiva del mundo</h2>
-    <p>Productora audiovisual y centro de formación artística que apuesta por el talento neurodivergente.</p>
-  </div>
-  <div>
-    <h3>Contacto</h3>
-    <ul>
-      <li><a data-mapa href="/contacto/" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a></li>
-      <li><a data-correo="texto" href="mailto:administracion@spectrumpro.cl">administracion@spectrumpro.cl</a></li>
-    </ul>
-  </div>
-  <div>
-    <h3>Síguenos</h3>
-    <ul>
-      <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener">Instagram</a></li>
-      <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener">YouTube</a></li>
-      <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener">Patreon</a></li>
-    </ul>
-  </div>
-  <div class="legal"><span>© SpectrumPro</span><span><a href="/tienda/">Tienda</a> · <a href="/colabora/">Colabora</a> · <a href="/plataforma/">Acceso equipo</a></span></div>
-</div></footer>
-<script src="/config.js"></script>
-<script src="/sitio/contenido.js"></script>
-<script src="/sitio/sitio.js"></script>
+<div id="sin-conexion" class="sin-conexion" role="status" hidden>Sin conexión. Los cambios no se guardarán hasta que vuelva internet.</div>
+
+<!-- Diálogos -->
+<dialog id="dlg-ficha" class="dialogo dialogo-ancho" aria-labelledby="ficha-titulo"></dialog>
+
+<dialog id="dlg-form" class="dialogo dialogo-ancho" aria-labelledby="form-titulo">
+  <form id="form-alumno" novalidate>
+    <header class="dlg-cab">
+      <h2 id="form-titulo">Nueva ficha</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <fieldset>
+        <legend>Datos personales</legend>
+        <div class="campos">
+          <label>Nombre *<input id="f-nombre" name="nombre" required autocomplete="off"></label>
+          <label>Apellidos *<input id="f-apellidos" name="apellidos" required autocomplete="off"></label>
+          <label>Nombre con el que prefiere que le llamen<input id="f-apodo" name="apodo" autocomplete="off"></label>
+          <label>Pronombres<input id="f-pronombres" name="pronombres" autocomplete="off" placeholder="él, ella, elle…"></label>
+          <label>Fecha de nacimiento *<input id="f-fechaNac" name="fechaNac" type="date" required><span id="f-edad" class="edad-viva" aria-live="polite"></span></label>
+          <label>RUT<input id="f-rut" name="rut" autocomplete="off" placeholder="12.345.678-9"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Programa y talleres</legend>
+        <div class="campos">
+          <label>Programa *
+            <select id="f-programa" name="programa" required>
+              <option>FormaPro</option><option>Terapia Ocupacional</option><option>Arte Terapia</option><option>Talleres</option><option>Mentorías</option><option>SpectrumOnline</option>
+            </select>
+          </label>
+          <label>Estado
+            <select id="f-estado" name="estado">
+              <option value="activo">Activo</option><option value="pausa">En pausa</option><option value="egresado">Egresado</option><option value="retirado">Retirado</option>
+            </select>
+          </label>
+          <label>Fecha de ingreso<input id="f-fechaIngreso" name="fechaIngreso" type="date"></label>
+          <label>Entrevista de ingreso<input id="f-entrevista" name="entrevista" type="date"></label>
+          <label class="ancho">Beca / arancel diferenciado
+            <select id="f-beca" name="beca">
+              <option value="">Sin beca</option><option>Beca parcial</option><option>Beca completa</option><option>Arancel diferenciado</option>
+            </select>
+          </label>
+        </div>
+        <p class="campo-titulo">Talleres inscritos *</p>
+        <div id="f-talleres" class="checks"></div>
+        <p id="f-aviso-to" class="nota-campo" hidden>Este programa pide al menos 3 módulos, uno de ellos de formación general.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Familia y contacto</legend>
+        <div class="campos">
+          <label>Persona responsable<input id="f-tutorNombre" name="tutorNombre" autocomplete="off"></label>
+          <label>Parentesco<input id="f-tutorRelacion" name="tutorRelacion" autocomplete="off" placeholder="Madre, padre, tutor legal…"></label>
+          <label>Teléfono<input id="f-tutorTelefono" name="tutorTelefono" type="tel" autocomplete="off" placeholder="+56 9 …"></label>
+          <label>Correo electrónico<input id="f-tutorEmail" name="tutorEmail" type="email" autocomplete="off"></label>
+          <label class="ancho">Contacto de emergencia 1<input id="f-emergencia" name="emergencia" autocomplete="off" placeholder="Nombre, parentesco y teléfono"></label>
+          <label class="ancho">Contacto de emergencia 2<input id="f-emergencia2" name="emergencia2" autocomplete="off" placeholder="Nombre, parentesco y teléfono"></label>
+          <label class="ancho">Comuna y dirección<input id="f-direccion" name="direccion" autocomplete="off"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Perfil y apoyos <small class="muted">· visible para talleristas del joven</small></legend>
+        <div class="campos">
+          <label class="ancho">Intereses y talentos<input id="f-intereses" name="intereses" autocomplete="off" placeholder="Animación, dibujo, música…"></label>
+          <label class="ancho">Apoyos y ajustes que le sirven<textarea id="f-apoyos" name="apoyos" rows="2" placeholder="Anticipar cambios, pausas sensoriales, audífonos…"></textarea></label>
+          <label class="ancho">Alergias<input id="f-alergias" name="alergias" autocomplete="off"></label>
+        </div>
+      </fieldset>
+      <fieldset id="f-privado">
+        <legend>Datos privados <small class="muted">· solo dirección y terapeutas</small></legend>
+        <div class="campos">
+          <label class="ancho">Medicación<input id="f-medicacion" name="medicacion" autocomplete="off"></label>
+          <label class="ancho">Observaciones<textarea id="f-observaciones" name="observaciones" rows="3"></textarea></label>
+        </div>
+      </fieldset>
+      <p id="form-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar ficha</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-taller" class="dialogo" aria-labelledby="taller-titulo">
+  <form id="form-taller" novalidate>
+    <header class="dlg-cab">
+      <h2 id="taller-titulo">Nuevo taller</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <div class="campos">
+        <label class="ancho">Nombre *<input id="t-nombre" name="nombre" required autocomplete="off"></label>
+        <label>Área<input id="t-area" name="area" list="t-areas" autocomplete="off"></label>
+        <label>Color<input id="t-color" name="color" type="color" value="#635CC7"></label>
+        <label>Hora de inicio<input id="t-horaInicio" name="horaInicio" type="time"></label>
+        <label>Hora de término<input id="t-horaFin" name="horaFin" type="time"></label>
+        <label class="ancho">A cargo (texto visible)<input id="t-encargado" name="encargado" autocomplete="off"></label>
+      </div>
+      <datalist id="t-areas"><option>Centro de Formación</option><option>Formación general</option><option>Mentorías</option><option>Arte y Apoyo</option><option>Terapia Ocupacional</option><option>SpectrumOnline</option></datalist>
+      <div><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
+      <div><p class="campo-titulo">Cuentas que pueden pasar lista</p><div id="t-equipo" class="checks"></div></div>
+      <label class="check-suelto"><input type="checkbox" id="t-activo" name="activo" checked> Taller activo</label>
+      <p id="taller-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" id="t-eliminar" hidden>Eliminar taller</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar taller</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-usuario" class="dialogo" aria-labelledby="usuario-titulo">
+  <form id="form-usuario" novalidate>
+    <header class="dlg-cab">
+      <h2 id="usuario-titulo">Invitar persona</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <div class="campos">
+        <label class="ancho">Nombre *<input id="u-nombre" name="nombre" required autocomplete="off"></label>
+        <label class="ancho">Correo electrónico *<input id="u-email" name="email" type="email" required autocomplete="off"></label>
+        <label class="ancho">Fecha de nacimiento <small class="muted">· para el cumpleaños; opcional. Si no sabes el año, pon 1904</small><input id="u-fechaNac" name="fechaNac" type="date"></label>
+        <label class="ancho">Rol *
+          <select id="u-rol" name="rol">
+            <option value="tallerista">Tallerista: pasa lista en sus talleres</option>
+            <option value="terapeuta">Terapeuta: ve todo el alumnado y sus datos de salud</option>
+            <option value="equipo">Equipo: ve cumpleaños y talleres; no ve fichas ni pasa lista</option>
+            <option value="admin">Dirección: acceso total y gestión de cuentas</option>
+          </select>
+        </label>
+      </div>
+      <div id="u-talleres-box"><p class="campo-titulo">Talleres a su cargo</p><div id="u-talleres" class="checks"></div></div>
+      <label class="check-suelto" id="u-activo-box"><input type="checkbox" id="u-activo" name="activo" checked> Cuenta activa</label>
+      <p class="nota-suave" id="u-nota">Recibirá un correo para crear su contraseña.</p>
+      <p id="usuario-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" id="u-eliminar" hidden>Eliminar cuenta</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn" id="u-guardar">Enviar invitación</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-producto" class="dialogo" aria-labelledby="producto-titulo">
+  <form id="form-producto" novalidate>
+    <header class="dlg-cab">
+      <h2 id="producto-titulo">Nuevo producto</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <div class="foto-producto">
+        <div class="foto-marco"><img id="p-foto-vista" alt="" hidden><span id="p-foto-vacia">Sin foto</span></div>
+        <div class="foto-acciones">
+          <label class="btn btn-sec btn-peq">Elegir foto<input id="p-foto" type="file" accept="image/jpeg,image/png,image/webp" class="solo-lector"></label>
+          <p class="nota-suave">JPG, PNG o WebP. Se reduce sola antes de subirla. Mejor cuadrada y con fondo blanco.</p>
+        </div>
+      </div>
+      <div class="campos">
+        <label class="ancho">Nombre *<input id="p-nombre" name="nombre" required maxlength="80" autocomplete="off"></label>
+        <label>Tipo
+          <select id="p-categoria" name="categoria">
+            <option value="ropa">Ropa</option>
+            <option value="accesorios">Accesorios</option>
+            <option value="papeleria">Papelería</option>
+          </select>
+        </label>
+        <label>Precio en pesos <small class="muted">· vacío = «Consultar precio»</small><input id="p-precio" name="precio" type="number" min="0" max="10000000" step="10" inputmode="numeric" placeholder="Ej: 12000"></label>
+        <label class="ancho">Tallas, colores u opciones<input id="p-variantes" name="variantes" maxlength="160" autocomplete="off" placeholder="Ej: Tallas S, M, L y XL · Negra o roja"></label>
+        <label class="ancho">Descripción corta<textarea id="p-descripcion" name="descripcion" rows="2" maxlength="300" placeholder="Qué es, material o tamaño"></textarea></label>
+      </div>
+      <label class="check-suelto"><input type="checkbox" id="p-visible" name="visible" checked> Mostrar en la tienda</label>
+      <label class="check-suelto"><input type="checkbox" id="p-agotado" name="agotado"> Agotado (se muestra, pero con aviso)</label>
+      <p id="producto-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" id="p-eliminar" hidden>Eliminar producto</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar producto</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-mi-cumple" class="dialogo dialogo-peq" aria-labelledby="mi-cumple-titulo">
+  <form id="form-mi-cumple" novalidate>
+    <header class="dlg-cab">
+      <h2 id="mi-cumple-titulo">Mi cumpleaños</h2>
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <label>Fecha de nacimiento<input id="mi-fechaNac" name="fechaNac" type="date"></label>
+      <p class="nota-suave">El equipo verá tu nombre y el día de tu cumpleaños en Cumpleaños → Equipo. Si no quieres que se sepa tu edad, pon el año 1904. Déjala vacía para no aparecer.</p>
+      <p id="mi-cumple-error" class="aviso-error" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-pie">
+      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-confirmar" class="dialogo dialogo-peq" aria-labelledby="conf-titulo">
+  <div class="dlg-cuerpo"><h2 id="conf-titulo"></h2><p id="conf-texto"></p></div>
+  <footer class="dlg-pie">
+    <button type="button" class="btn btn-sec" id="conf-no">Cancelar</button>
+    <button type="button" class="btn btn-peligro" id="conf-si">Confirmar</button>
+  </footer>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="cargando" class="cargando" hidden><span class="giro" aria-hidden="true"></span><span class="sr">Cargando…</span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
