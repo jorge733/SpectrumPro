@@ -125,6 +125,9 @@ h2{font-size:clamp(30px,4.4vw,48px)}
 .num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--night-ink);user-select:all}
 footer{background:var(--night);color:var(--night-muted);font-size:14px;border-top:1px solid rgb(255 255 255 / .12)}
 footer .wrap{padding-block:24px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* Incrustada en otro sitio (?embed=1): ese sitio ya tiene su cabecera y su pie. */
+.embebida body>header,.embebida body>footer{display:none}
+.embebida body{overflow:hidden}
 @media (max-width:980px){.grilla{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:760px){
   .hero .wrap{grid-template-columns:1fr;gap:28px;padding-block:24px 48px}
@@ -256,6 +259,10 @@ footer .wrap{padding-block:24px;display:flex;justify-content:space-between;gap:1
 
 <footer><div class="wrap"><span>Spectrum Productos · SpectrumPro</span><span><a href="https://spectrumpro.cl" target="_blank" rel="noopener">spectrumpro.cl</a><span id="ig" hidden> · <a id="ig-link" href="#" target="_blank" rel="noopener"></a></span></span></div></footer>
 
+<script>
+/* Se activa antes de pintar, para que no se vea la cabecera ni un instante. */
+if(new URLSearchParams(location.search).has('embed')&&window.self!==window.top)document.documentElement.classList.add('embebida');
+</script>
 <script src="../config.js"></script>
 <script>
 'use strict';
@@ -345,6 +352,24 @@ async function cargar(){
   }finally{clearTimeout(t);}
 }
 cargar().then(pintar).catch(()=>pintar(RESPALDO));
+
+/* Incrustada: le cuenta su altura a la página de afuera y le pide hacer scroll a las secciones. */
+if(document.documentElement.classList.contains('embebida')){
+  const avisar=m=>window.parent.postMessage(m,'*');
+  let ultimo=0;
+  const medir=()=>{const alto=Math.ceil(document.documentElement.scrollHeight);if(alto!==ultimo){ultimo=alto;avisar({tipo:'spectrum-tienda-alto',alto});}};
+  new ResizeObserver(medir).observe(document.body);
+  window.addEventListener('load',medir);
+  medir();
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]');
+    if(!a)return;
+    const destino=document.querySelector(a.getAttribute('href'));
+    if(!destino)return;
+    e.preventDefault();
+    avisar({tipo:'spectrum-tienda-ir',y:Math.round(destino.getBoundingClientRect().top+window.scrollY)});
+  });
+}
 
 (()=>{
   const els=document.querySelectorAll('.revelar');

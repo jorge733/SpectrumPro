@@ -140,6 +140,8 @@ Para activarla:
 1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124060000_tienda.sql`. Crea las tablas `tienda_productos` y `tienda_ajustes`, el bucket público de fotos `tienda` y carga los 8 productos actuales.
 2. Listo: la tienda lee de Supabase. Mientras no se ejecute la migración, muestra la lista de respaldo que trae la página (sin precios).
 
+**Incrustarla en spectrumpro.cl (WordPress):** pega el contenido de `tienda/wordpress.html` en un widget **HTML** de Elementor, en una página con plantilla de ancho completo. Ese código carga `/tienda/?embed=1`, que oculta la cabecera y el pie propios de la tienda, ajusta el alto solo y hace scroll en la página de WordPress al tocar «Ver productos» o «Cómo pedir».
+
 El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo pueden hacer solo dirección y el rol Equipo (después de ejecutar `20261124070000_tienda_equipo.sql`), y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
 
 ## Estructura
