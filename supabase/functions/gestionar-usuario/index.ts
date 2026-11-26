@@ -6,7 +6,7 @@
 // Usa la service role key, que solo existe en el servidor de Supabase.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const ROLES = ["admin", "terapeuta", "tallerista"];
+const ROLES = ["admin", "terapeuta", "tallerista", "equipo"];
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

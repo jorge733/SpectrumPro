@@ -1,9 +1,9 @@
 'use strict';
-/* SpectrumPro · Gestión de alumnado
+/* SpectrumPro · Plataforma del equipo
    Interfaz. Los datos llegan de window.SPDatos (Supabase o demostración). */
 
 const D = window.SPDatos;
-const { iso, hoy, sumarDias } = window.SPFechas;
+const { iso, hoy, sumarDias, tocaEl } = window.SPFechas;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -14,7 +14,7 @@ const ESTADOS = {
   J: { label: 'Justificada', chip: 'chip-info' },
 };
 const ESTADO_ALUMNO = { activo: 'Activo', pausa: 'En pausa', egresado: 'Egresado', retirado: 'Retirado' };
-const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista' };
+const ROLES = { admin: 'Dirección', terapeuta: 'Terapeuta', tallerista: 'Tallerista', equipo: 'Equipo' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -41,12 +41,32 @@ function proximoCumple(fechaNac, ref = hoy()) {
   if (n < ref) n = new Date(ref.getFullYear() + 1, b.getMonth(), b.getDate());
   return { fecha: n, dias: Math.round((n - ref) / 864e5), cumple: n.getFullYear() - b.getFullYear() };
 }
+// Año 1904 = año de nacimiento desconocido: se muestra el día, no la edad.
+const sinAnio = fechaNac => String(fechaNac || '').startsWith('1904-');
+const cumpleTxt = x => sinAnio(x.a.fechaNac) ? '' : ` · cumple ${x.cumple}`;
 const nombreVisible = a => `${a.apodo || a.nombre} ${(a.apellidos || '').split(' ')[0]}`;
 const nombreCompleto = a => `${a.nombre} ${a.apellidos}`;
 const iniciales = s => String(s || '').split(/[\s@._-]+/).filter(p => /^\p{L}/u.test(p)).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
 const tono = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const avatar = (a, extra = '') => `<span class="avatar ${extra}" style="--h:${tono(a.id)}" aria-hidden="true">${esc(iniciales(`${a.apodo || a.nombre} ${a.apellidos || ''}`))}</span>`;
 const horario = t => t.horaInicio ? `${t.horaInicio}${t.horaFin ? ' – ' + t.horaFin : ''}` : 'Sin horario';
+// «lun 14, mié 16 y vie 18 de diciembre · lun 4 de enero de 2027»
+const listaY = xs => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} y ${xs.at(-1)}` : xs.join('');
+function fechasTxt(fechas) {
+  const grupos = [];
+  for (const f of [...fechas].sort()) {
+    const d = deISO(f), clave = f.slice(0, 7);
+    if (grupos.at(-1)?.clave !== clave) grupos.push({ clave, d, dias: [] });
+    grupos.at(-1).dias.push(`${DIAS_CORTOS[d.getDay()].toLowerCase()} ${d.getDate()}`);
+  }
+  return grupos.map(g => `${listaY(g.dias)} de ${MESES[g.d.getMonth()]}${g.d.getFullYear() !== hoy().getFullYear() ? ' de ' + g.d.getFullYear() : ''}`).join(' · ');
+}
+const sesionesTxt = n => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`;
+const esOnline = t => t?.modalidad === 'online';
+const enlaceValido = u => /^https:\/\/[^\s"'<>]+$/i.test(u || '');
+const botonUnirse = t => esOnline(t) && enlaceValido(t.enlace) && t.activo
+  ? `<a class="btn btn-peq" href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">Unirse</a>` : '';
+const chipOnline = t => esOnline(t) ? ' <span class="chip chip-online">Online</span>' : '';
 const punto = t => `<span class="punto" style="--c:${color(t.color)}"></span>`;
 
 /* ---------- estado ---------- */
@@ -54,14 +74,16 @@ const S = {
   perfil: null,
   talleres: [],
   alumnos: [],
-  cumple: [],
+  cumple: [],         // jóvenes vigentes
+  cumpleEquipo: [],   // profesores y resto del equipo con fecha de nacimiento
   asistencia: {},     // { 'AAAA-MM-DD': { tallerId: { alumnoId: 'P'|'R'|'A'|'J' } } }
   usuarios: [],
   auditoria: null,
+  tienda: null,       // { productos, ajustes } · se carga al abrir la sección Tienda
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
-  busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
+  tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
   expDesde: iso(sumarDias(hoy(), -30)), expHasta: iso(hoy()),
 };
 
@@ -71,6 +93,10 @@ const puede = {
   editarFichas: () => ['admin', 'terapeuta'].includes(rol()),
   eliminarFichas: () => rol() === 'admin',
   admin: () => rol() === 'admin',
+  // La tienda la editan dirección y el rol Equipo.
+  tienda: () => ['admin', 'equipo'].includes(rol()),
+  // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
+  esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
 };
 const taller = id => S.talleres.find(t => t.id === id);
@@ -236,10 +262,10 @@ async function iniciarSesion() {
 async function cargarTodo() {
   textoArranque('Cargando talleres, fichas y asistencia…');
   const desde = iso(sumarDias(hoy(), -DIAS_HISTORIA));
-  const [talleres, alumnos, asistencia, cumple, usuarios] = await Promise.all([
-    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), puede.admin() ? D.usuarios() : Promise.resolve([]),
+  const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
+    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
   ]);
-  Object.assign(S, { talleres, alumnos, cumple, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null });
   mostrarApp();
 }
 
@@ -256,6 +282,8 @@ function mostrarApp() {
   $('#usuario-nombre').textContent = p.nombre || p.email;
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
+  $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
+  $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
 
@@ -339,11 +367,19 @@ $('#plegar').addEventListener('click', () => aplicarPlegado(!document.body.class
    Vistas
    ===================================================================== */
 function vistaPanel(el) {
+  if (puede.esEquipo()) return vistaPanelEquipo(el);
   const t = hoy(), f = iso(t);
   const vig = vigentes();
-  const sesionesHoy = misTalleres().filter(x => x.dias.includes(t.getDay()));
+  const sesionesHoy = misTalleres().filter(x => tocaEl(x, t));
   const r30 = resumen(registros({ desde: hace30() }));
-  const proximos = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proximos = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const proxJovenes = proximos(S.cumple), proxEquipo = proximos(S.cumpleEquipo);
+  const listaProximos = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
+            ${avatar(x.a)}
+            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
+            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+          </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
   const cumpleMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
   const alerta = ordenarAlumnos(vig)
     .map(a => ({ a, r: resumen(registros({ alumno: a.id, desde: hace30() })) }))
@@ -382,21 +418,19 @@ function vistaPanel(el) {
           const pct = ins ? Math.min(100, Math.round(reg / ins * 100)) : 0;
           return `<div class="sesion">
             ${punto(s)}
-            <div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
+            <div class="txt"><b>${esc(s.nombre)}${chipOnline(s)}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
               <div class="barra" role="img" aria-label="${reg} de ${ins} con asistencia registrada"><span style="width:${pct}%"></span></div></div>
-            ${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}
+            <div class="sesion-acc">${botonUnirse(s)}${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}</div>
           </div>`;
         }).join('') : '<p class="vacio">Hoy no tienes talleres programados.</p>'}
       </section>
 
       <section class="tarjeta">
         <h2>Próximos cumpleaños <small>30 días</small></h2>
-        ${proximos.length ? `<ul class="lista">${proximos.slice(0, 6).map(x => `
-          <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${alumno(x.a.id) ? `data-ficha="${x.a.id}"` : ''}>
-            ${avatar(x.a)}
-            <div class="txt"><b>${esc(nombreVisible(x.a))}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]} · cumple ${x.cumple}</small></div>
-            <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
-          </li>`).join('')}</ul>` : '<p class="vacio">Nadie cumple años en los próximos 30 días.</p>'}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${listaProximos(proxJovenes, 'Ningún joven cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${listaProximos(proxEquipo, 'Nadie del equipo cumple años en los próximos 30 días.')}
       </section>
 
       <section class="tarjeta">
@@ -419,10 +453,48 @@ function vistaPanel(el) {
     </div>`;
 }
 
+// Panel del rol «equipo»: sin datos del alumnado ni asistencia.
+function vistaPanelEquipo(el) {
+  const t = hoy();
+  const hoyTalleres = S.talleres.filter(x => x.activo && tocaEl(x, t))
+    .sort((a, b) => (a.horaInicio || '99').localeCompare(b.horaInicio || '99'));
+  const prox = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
+  const lista = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
+    <li>${avatar(x.a)}
+      <div class="txt"><b>${esc(x.a.apodo !== undefined ? nombreVisible(x.a) : x.a.nombre)}</b><small>${x.fecha.getDate()} de ${MESES[x.fecha.getMonth()]}${cumpleTxt(x)}</small></div>
+      <span class="dias">${x.dias === 0 ? '¡Hoy!' : x.dias}<small>${x.dias === 0 ? '' : x.dias === 1 ? 'día' : 'días'}</small></span>
+    </li>`).join('')}</ul>` : `<p class="vacio">${vacio}</p>`;
+  const delMes = arr => arr.filter(a => deISO(a.fechaNac).getMonth() === t.getMonth()).length;
+  const saludo = (S.perfil.nombre || '').split(' ')[0];
+  el.innerHTML = `
+    <header class="cabecera">
+      <div><p class="eyebrow">${esc(fechaLarga(t))}</p><h1>Hola${saludo ? ', ' + esc(saludo) : ''}</h1><p>Cumpleaños y talleres de SpectrumPro.</p></div>
+      ${S.perfil.fechaNac ? '' : '<button type="button" class="btn" data-accion="mi-cumple">Añadir mi cumpleaños</button>'}
+    </header>
+    <section class="kpis" aria-label="Indicadores">
+      <div class="kpi"><span class="kpi-valor">${hoyTalleres.length}</span><span class="kpi-etq">Talleres hoy</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumpleEquipo)}</span><span class="kpi-etq">Cumpleaños del equipo en ${MESES[t.getMonth()]}</span></div>
+      <div class="kpi"><span class="kpi-valor">${delMes(S.cumple)}</span><span class="kpi-etq">Cumpleaños de jóvenes en ${MESES[t.getMonth()]}</span></div>
+    </section>
+    <div class="rejilla">
+      <section class="tarjeta">
+        <h2>Talleres de hoy <small>${DIAS[t.getDay()]}</small></h2>
+        ${hoyTalleres.length ? hoyTalleres.map(s => `<div class="sesion">${punto(s)}<div class="txt"><b>${esc(s.nombre)}${chipOnline(s)}</b><small>${esc(horario(s))}${s.encargado ? ' · ' + esc(s.encargado) : ''}</small></div>${botonUnirse(s)}</div>`).join('') : '<p class="vacio">Hoy no hay talleres programados.</p>'}
+      </section>
+      <section class="tarjeta">
+        <h2>Próximos cumpleaños <small>30 días</small></h2>
+        <h3 class="subtitulo-lista">Equipo</h3>
+        ${lista(prox(S.cumpleEquipo), 'Nadie del equipo cumple años en los próximos 30 días.')}
+        <h3 class="subtitulo-lista">Jóvenes</h3>
+        ${lista(prox(S.cumple), 'Ningún joven cumple años en los próximos 30 días.')}
+      </section>
+    </div>`;
+}
+
 function vistaAsistencia(el) {
   const propios = misTalleres();
   const d = deISO(ui.fecha);
-  const delDia = propios.filter(x => x.dias.includes(d.getDay()));
+  const delDia = propios.filter(x => tocaEl(x, d));
   if (!ui.taller || !propios.some(t => t.id === ui.taller)) ui.taller = (delDia[0] || propios[0])?.id || null;
   if (!ui.tallerMes || !propios.some(t => t.id === ui.tallerMes)) ui.tallerMes = ui.taller;
 
@@ -447,8 +519,8 @@ function inscritosActivos(tid) {
 function pasarLista(el) {
   const propios = misTalleres();
   const d = deISO(ui.fecha);
-  const delDia = propios.filter(x => x.dias.includes(d.getDay()));
-  const otros = propios.filter(x => !x.dias.includes(d.getDay()));
+  const delDia = propios.filter(x => tocaEl(x, d));
+  const otros = propios.filter(x => !tocaEl(x, d));
   const tal = taller(ui.taller);
   const inscritos = tal ? inscritosActivos(tal.id) : [];
   const reg = (tal && S.asistencia[ui.fecha]?.[tal.id]) || {};
@@ -530,7 +602,7 @@ function resumenMensual(el) {
   if (tal) for (let d = new Date(y, m - 1, 1); d.getMonth() === m - 1; d = sumarDias(d, 1)) {
     const f = iso(d);
     if (f > limite) break;
-    if (tal.dias.includes(d.getDay()) || S.asistencia[f]?.[tal.id]) fechas.push(d);
+    if (tocaEl(tal, d) || S.asistencia[f]?.[tal.id]) fechas.push(d);
   }
   const ins = tal ? ordenarAlumnos(S.alumnos.filter(a => a.talleres.includes(tal.id) && (a.estado === 'activo' || fechas.some(d => S.asistencia[iso(d)]?.[tal.id]?.[a.id])))) : [];
   el.innerHTML = `
@@ -562,35 +634,51 @@ function resumenMensual(el) {
 
 function vistaCumpleanos(el) {
   const t = hoy();
-  const lista = S.cumple.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
+  const esEquipo = ui.tabCumple === 'equipo';
+  const fuente = esEquipo ? S.cumpleEquipo : S.cumple;
+  const lista = fuente.map(a => ({ a, ...proximoCumple(a.fechaNac, t) }));
   const deHoy = lista.filter(x => x.dias === 0);
   const prox = lista.filter(x => x.dias > 0 && x.dias <= 30).sort((x, y) => x.dias - y.dias);
   const meses = Array.from({ length: 12 }, (_, i) => (t.getMonth() + i) % 12);
   const abrible = id => alumno(id) ? `data-ficha="${id}"` : '';
+  const nombreLargo = a => esEquipo ? a.nombre : nombreCompleto(a);
+  const nombreCorto = a => esEquipo ? a.nombre : nombreVisible(a);
+  const vacioEquipo = puede.admin()
+    ? 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí, o tú desde Administración → Cuentas del equipo.'
+    : 'Aún no hay fechas de nacimiento del equipo. Cada persona puede añadir la suya aquí.';
 
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${S.cumple.length} jóvenes vigentes</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div><p class="eyebrow">${esEquipo ? `${S.cumpleEquipo.length} ${S.cumpleEquipo.length === 1 ? 'persona del equipo' : 'personas del equipo'} con fecha` : `${S.cumple.length} jóvenes vigentes`}</p><h1>Cumpleaños</h1><p>Ordenados desde este mes.</p></div>
+      <div class="pestanas" role="group" aria-label="Cumpleaños de">
+        <button type="button" data-tab-cumple="jovenes" aria-pressed="${!esEquipo}">Jóvenes <small>${S.cumple.length}</small></button>
+        <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Equipo <small>${S.cumpleEquipo.length}</small></button>
+      </div>
     </header>
-    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreCompleto(x.a))} cumple ${x.cumple} años</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
+    ${esEquipo ? `<section class="tarjeta mi-cumple">
+      <div class="txt"><b>Tu cumpleaños</b><br><small class="muted">${S.perfil.fechaNac ? esc(fechaLarga(proximoCumple(S.perfil.fechaNac, t).fecha).replace(/^\S+ /, '')) : 'Aún no has puesto tu fecha de nacimiento.'}</small></div>
+      <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
+    </section>` : ''}
+    ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
+    ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} ${sinAnio(x.a.fechaNac) ? 'está de cumpleaños' : `cumple ${x.cumple} años`}</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
     <section class="tarjeta">
       <h2>Próximos 30 días <small>${prox.length} cumpleaños</small></h2>
       ${prox.length ? `<ul class="lista">${prox.map(x => `
         <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)}>
           ${avatar(x.a)}
-          <div class="txt"><b>${esc(nombreCompleto(x.a))}</b><small>${esc(fechaLarga(x.fecha))} · cumple ${x.cumple}</small></div>
+          <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))}${cumpleTxt(x)}</small></div>
           <span class="dias">${x.dias}<small>${x.dias === 1 ? 'día' : 'días'}</small></span>
         </li>`).join('')}</ul>` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
     </section>
     <section class="meses" aria-label="Cumpleaños por mes">
       ${meses.map((m, i) => {
-        const delMes = S.cumple.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
+        const delMes = fuente.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
         return `<div class="mes ${i === 0 ? 'actual' : ''}">
           <h3>${MESES[m]} <small>${delMes.length || ''}</small></h3>
-          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreVisible(a))}</span><span class="e">${proximoCumple(a.fechaNac, t).cumple} años</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
+          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${sinAnio(a.fechaNac) ? '' : proximoCumple(a.fechaNac, t).cumple + ' años'}</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
         </div>`;
       }).join('')}
-    </section>`;
+    </section>`}`;
 }
 
 function filtrarFichas() {
@@ -629,34 +717,53 @@ function pintarFichas() {
   }).join('')}</div>` : `<div class="vacio-grande">${S.alumnos.length ? 'No hay fichas que coincidan con la búsqueda.' : puede.editarFichas() ? 'Aún no hay fichas. Crea la primera con «Nueva ficha».' : 'Aún no hay jóvenes inscritos en tus talleres.'}</div>`;
 }
 
-function vistaTalleres(el) {
-  const lista = puede.verTodo() ? S.talleres : misTalleres();
+const TEMPORADAS = {
+  semestral: { titulo: 'Talleres semestrales', tuyos: 'Tus talleres semestrales', desc: 'Talleres del semestre' },
+  verano: { titulo: 'Talleres de verano', tuyos: 'Tus talleres de verano', desc: 'Talleres de la temporada de verano' },
+  online: { titulo: 'Talleres online', tuyos: 'Tus talleres online', desc: 'Talleres por videollamada' },
+};
+const vistaTalleres = el => vistaTemporada(el, 'semestral');
+const vistaVerano = el => vistaTemporada(el, 'verano');
+// «Talleres online» junta los talleres online de cualquier temporada; las otras dos secciones muestran solo los presenciales.
+const vistaOnline = el => vistaTemporada(el, 'online');
+function vistaTemporada(el, temporada) {
+  const txt = TEMPORADAS[temporada];
+  const eq = puede.esEquipo();
+  const online = temporada === 'online';
+  const lista = (puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres())
+    .filter(t => online ? esOnline(t) : !esOnline(t) && (t.temporada || 'semestral') === temporada);
+  if (temporada === 'verano') lista.sort((a, b) => (a.fechas[0] || '9').localeCompare(b.fechas[0] || '9') || a.orden - b.orden);
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? 'Talleres' : 'Tus talleres'}</h1><p>Horario semanal y asistencia de los últimos 30 días.</p></div>
-      ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${temporada === 'verano' ? 'fechas, horario' : online ? 'horario, enlace' : 'horario semanal'}${eq ? ' y quién está a cargo.' : ' y asistencia de los últimos 30 días.'}</p></div>
+      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" ${online ? 'data-modalidad="online"' : `data-temporada="${temporada}"`}>+ Nuevo taller${temporada === 'verano' ? ' de verano' : online ? ' online' : ''}</button>` : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
       const r = resumen(registros({ taller: t.id, desde: hace30() }));
       const equipo = S.usuarios.filter(u => t.equipo.includes(u.id));
       return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}">
-        <h2>${esc(t.nombre)}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+        <h2>${esc(t.nombre)}${online && t.temporada === 'verano' ? ' <span class="chip chip-neutro">Verano</span>' : ''}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+        ${t.objetivo ? `<p class="objetivo">${esc(t.objetivo)}</p>` : ''}
         <dl>
           <dt>Área</dt><dd>${esc(t.area) || '—'}</dd>
-          <dt>Días</dt><dd>${t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—'}</dd>
-          <dt>Horario</dt><dd class="num">${esc(horario(t))}</dd>
+          ${t.fechas.length ? `<dt>Fechas</dt><dd>${esc(fechasTxt(t.fechas))} <span class="muted">(${sesionesTxt(t.fechas.length)})</span></dd>`
+            : `<dt>Días</dt><dd>${t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—'}</dd>`}
+          <dt>Horario</dt><dd class="num">${esc(horario(t))}${t.nota ? `<br><span class="muted">${esc(t.nota)}</span>` : ''}</dd>
+          ${t.edad ? `<dt>Edad</dt><dd>${esc(t.edad)}</dd>` : ''}
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
+          ${online ? `<dt>Enlace</dt><dd class="enlace">${enlaceValido(t.enlace) ? `<a href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">${esc(t.enlace.replace(/^https:\/\//i, ''))}</a>` : '<span class="muted">Sin enlace</span>'}</dd>` : ''}
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
-          <dt>Inscritos</dt><dd class="num">${ins.length}</dd>
+          ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
+          <dt>Programa</dt><dd>${t.programaPdf ? `<button type="button" class="btn btn-sec btn-peq" data-ver-programa="${t.id}">Ver PDF</button><span class="nombre-pdf">${esc(t.programaNombre)}</span>` : '<span class="muted">Sin programa</span>'}</dd>
         </dl>
-        <div class="acciones">${chipPct(r.pct)}
+        <div class="acciones">${eq ? '' : chipPct(r.pct)}${botonUnirse(t)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
           <button type="button" class="btn btn-sec btn-peq" data-ver-mes="${t.id}">Ver mes</button>` : ''}
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>` : '<div class="vacio-grande">No tienes talleres asignados.</div>'}`;
+    }).join('')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : online ? 'Aún no hay talleres online.' + (puede.admin() ? ' Crea el primero con «Nuevo taller online».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
 }
 
 /* ---------- Administración ---------- */
@@ -689,20 +796,212 @@ function adminUsuarios(el) {
   el.innerHTML = `
     <section class="tarjeta">
       <h2><span>Cuentas del equipo</span><button type="button" class="btn btn-peq" data-accion="invitar">+ Invitar persona</button></h2>
-      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud.</p>
+      <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud. El rol Equipo ve cumpleaños y talleres, sin fichas ni asistencia.</p>
       ${pendientes.length ? `<h3 class="sub">Esperando acceso</h3><ul class="lista">${pendientes.map(fila).join('')}</ul>` : ''}
       <h3 class="sub">Con acceso</h3>
       <ul class="lista">${activos.map(fila).join('')}</ul>
     </section>`;
 }
 
+/* ---------- Tienda ---------- */
+const CATEGORIAS = { ropa: 'Ropa', accesorios: 'Accesorios', papeleria: 'Papelería' };
+const pesos = n => n == null || n === '' ? '' : '$' + Number(n).toLocaleString('es-CL');
+const productosOrdenados = () => [...S.tienda.productos].sort((a, b) => (a.orden - b.orden) || a.nombre.localeCompare(b.nombre, 'es'));
+const producto = id => S.tienda?.productos.find(p => p.id === id);
+
+async function vistaTienda(el) {
+  if (!puede.tienda()) { location.hash = 'panel'; return; }
+  const cab = `
+    <header class="cabecera">
+      <div><p class="eyebrow">Dirección y equipo</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
+      <div class="controles">
+        <a class="btn btn-sec" href="tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
+        ${S.tienda ? '<button type="button" class="btn" data-accion="nuevo-producto">+ Nuevo producto</button>' : ''}
+      </div>
+    </header>`;
+  if (!S.tienda) {
+    el.innerHTML = cab + '<section class="tarjeta"><p class="vacio">Cargando la tienda…</p></section>';
+    try { S.tienda = await D.tienda(); }
+    catch (e) {
+      if (vistaActual() !== 'tienda') return;
+      el.innerHTML = cab + `<section class="tarjeta"><p class="aviso-error">${esc(e.message)}</p></section>`;
+      return;
+    }
+    if (vistaActual() === 'tienda') render();
+    return;
+  }
+  const lista = productosOrdenados();
+  const a = S.tienda.ajustes;
+  const visibles = lista.filter(p => p.visible).length;
+  el.innerHTML = cab + `
+    <section class="tarjeta">
+      <h2><span>Productos</span><small>${visibles} de ${lista.length} visibles</small></h2>
+      <p class="nota-suave">Toca un producto para editarlo. Con las flechas cambias el orden en que aparecen.</p>
+      ${lista.length ? `<ul class="lista productos">${lista.map((p, i) => `
+        <li class="fila-click ${p.visible ? '' : 'oculto'}" data-producto="${p.id}">
+          ${p.imagen ? `<img class="miniatura" src="${esc(p.imagen)}" alt="" loading="lazy">` : '<span class="miniatura vacia">Sin foto</span>'}
+          <div class="txt"><b>${esc(p.nombre)}</b><small>${esc(CATEGORIAS[p.categoria] || '')}${p.precio != null ? ' · ' + esc(pesos(p.precio)) : ''}${p.variantes ? ' · ' + esc(p.variantes) : ''}</small></div>
+          <span class="chips">${p.visible ? '' : '<span class="chip chip-neutro">Oculto</span>'}${p.agotado ? '<span class="chip chip-warn">Agotado</span>' : ''}${p.precio == null ? '<span class="chip chip-info">Sin precio</span>' : ''}</span>
+          <span class="mover">
+            <button type="button" data-mover-producto="${p.id}" data-dir="-1" aria-label="Subir ${esc(p.nombre)}" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" data-mover-producto="${p.id}" data-dir="1" aria-label="Bajar ${esc(p.nombre)}" ${i === lista.length - 1 ? 'disabled' : ''}>↓</button>
+          </span>
+        </li>`).join('')}</ul>` : '<p class="vacio">Aún no hay productos. Crea el primero con «Nuevo producto».</p>'}
+    </section>
+    <section class="tarjeta">
+      <h2><span>Contacto y compra</span></h2>
+      <form id="form-tienda" class="form-tienda" novalidate>
+        <div class="campos">
+          <label>WhatsApp para pedidos * <small class="muted">· solo números, con 56</small><input id="ti-whatsapp" name="whatsapp" type="tel" inputmode="numeric" value="${esc(a.whatsapp)}" placeholder="56912345678" autocomplete="off"></label>
+          <label>Instagram <small class="muted">· usuario, sin @</small><input id="ti-instagram" name="instagram" value="${esc(a.instagram)}" placeholder="spectrumpro" autocomplete="off"></label>
+          <label class="ancho">Forma de pago<input id="ti-pago" name="pago" maxlength="200" value="${esc(a.pago)}" placeholder="Ej: Transferencia bancaria o efectivo al retirar" autocomplete="off"></label>
+          <label class="ancho">Entrega<input id="ti-entrega" name="entrega" maxlength="200" value="${esc(a.entrega)}" placeholder="Ej: Retiro en la sede de Providencia o envío por pagar" autocomplete="off"></label>
+        </div>
+        <p id="tienda-error" class="aviso-error" role="alert" hidden></p>
+        <div class="dlg-pie"><button type="submit" class="btn">Guardar contacto y compra</button></div>
+      </form>
+    </section>`;
+}
+
+// Reduce la foto a máx. 1000 px y la pasa a JPEG con fondo blanco (las PNG transparentes quedan bien).
+function reducirFoto(archivo, max = 1000) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      const g = c.getContext('2d');
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la foto.')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la foto. Prueba con un JPG o PNG.')); };
+    img.src = url;
+  });
+}
+
+let editandoProducto = null, fotoNueva = null;
+function verFotoProducto(src) {
+  const img = $('#p-foto-vista');
+  img.hidden = !src; $('#p-foto-vacia').hidden = !!src;
+  if (src) img.src = src; else img.removeAttribute('src');
+}
+function abrirProducto(id = null) {
+  editandoProducto = id; fotoNueva = null;
+  const p = id ? producto(id) : null;
+  $('#form-producto').reset();
+  $('#producto-error').hidden = true;
+  $('#producto-titulo').textContent = p ? `Editar ${p.nombre}` : 'Nuevo producto';
+  $('#p-nombre').value = p?.nombre || '';
+  $('#p-categoria').value = p?.categoria || 'ropa';
+  $('#p-precio').value = p?.precio ?? '';
+  $('#p-variantes').value = p?.variantes || '';
+  $('#p-descripcion').value = p?.descripcion || '';
+  $('#p-visible').checked = p ? p.visible : true;
+  $('#p-agotado').checked = !!p?.agotado;
+  $('#p-eliminar').hidden = !p;
+  verFotoProducto(p?.imagen || '');
+  $('#dlg-producto').showModal();
+  $('#p-nombre').focus();
+}
+$('#p-foto').addEventListener('change', async ev => {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const err = $('#producto-error'); err.hidden = true;
+  try {
+    fotoNueva = await reducirFoto(f);
+    verFotoProducto(URL.createObjectURL(fotoNueva));
+  } catch (e) { fotoNueva = null; err.textContent = e.message; err.hidden = false; }
+});
+$('#form-producto').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const previo = editandoProducto ? producto(editandoProducto) : null;
+  const precioTxt = $('#p-precio').value.trim();
+  const p = {
+    id: editandoProducto || undefined,
+    nombre: $('#p-nombre').value.trim(), categoria: $('#p-categoria').value,
+    precio: precioTxt === '' ? null : Math.round(Number(precioTxt)),
+    variantes: $('#p-variantes').value.trim(), descripcion: $('#p-descripcion').value.trim(),
+    visible: $('#p-visible').checked, agotado: $('#p-agotado').checked,
+    imagen: previo?.imagen || '',
+    orden: previo ? previo.orden : Math.max(0, ...S.tienda.productos.map(x => x.orden || 0)) + 1,
+  };
+  const err = $('#producto-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  if (!p.nombre) return mostrar('Escribe el nombre del producto.');
+  if (p.precio != null && (!Number.isFinite(p.precio) || p.precio < 0 || p.precio > 10000000)) return mostrar('Revisa el precio: escribe solo el número, sin puntos ni signo $.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true, fotoNueva ? 'Subiendo foto…' : 'Guardando…');
+  try {
+    await conCarga(async () => {
+      if (fotoNueva) p.imagen = await D.subirFotoProducto(fotoNueva);
+      await D.guardarProducto(p);
+      if (fotoNueva && previo?.imagen && previo.imagen !== p.imagen) await D.borrarFotoProducto(previo.imagen).catch(() => { });
+    });
+    S.tienda = await D.tienda();
+    $('#dlg-producto').close();
+    toast(previo ? 'Producto actualizado' : 'Producto creado');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+$('#p-eliminar').addEventListener('click', async () => {
+  const p = producto(editandoProducto);
+  $('#dlg-producto').close();
+  if (!await confirmar(`¿Eliminar ${p.nombre}?`, 'Desaparece de la tienda y no se puede deshacer. Si solo no hay stock, mejor márcalo como «Agotado» o desmarca «Mostrar en la tienda».', 'Eliminar producto')) return;
+  try {
+    await intentar(() => D.eliminarProducto(p.id), 'Producto eliminado');
+    D.borrarFotoProducto(p.imagen).catch(() => { });
+    S.tienda.productos = S.tienda.productos.filter(x => x.id !== p.id);
+    render();
+  } catch { /* ya avisado */ }
+});
+async function moverProducto(id, dir) {
+  const lista = productosOrdenados();
+  const i = lista.findIndex(p => p.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= lista.length) return;
+  [lista[i], lista[j]] = [lista[j], lista[i]];
+  lista.forEach((p, k) => { p.orden = k + 1; });
+  render();
+  try { await D.ordenarProductos(lista.map(p => p.id)); }
+  catch (e) { toast(e.message, 'error'); S.tienda = await D.tienda().catch(() => S.tienda); render(); }
+}
+document.addEventListener('submit', async ev => {
+  if (ev.target.id !== 'form-tienda') return;
+  ev.preventDefault();
+  const a = {
+    whatsapp: $('#ti-whatsapp').value.replace(/\D/g, ''),
+    instagram: $('#ti-instagram').value.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, ''),
+    pago: $('#ti-pago').value.trim(), entrega: $('#ti-entrega').value.trim(),
+  };
+  const err = $('#tienda-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  err.hidden = true;
+  if (!/^[0-9]{8,15}$/.test(a.whatsapp)) return mostrar('Escribe el WhatsApp con código de país y solo números, por ejemplo 56912345678.');
+  if (a.whatsapp.length === 9 && a.whatsapp.startsWith('9')) return mostrar('Agrega el código de Chile al comienzo: 56' + a.whatsapp + '.');
+  if (!/^[A-Za-z0-9._]{0,30}$/.test(a.instagram)) return mostrar('El usuario de Instagram solo puede tener letras, números, puntos y guiones bajos.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true);
+  try {
+    await conCarga(() => D.guardarAjustesTienda(a));
+    S.tienda.ajustes = { ...S.tienda.ajustes, ...a };
+    toast('Contacto y compra guardados');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+
 const ACCIONES = { insert: 'creó', update: 'editó', delete: 'eliminó', upsert: 'registró', login: 'entró' };
-const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma' };
+const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda' };
 function detalleAuditoria(r) {
   const d = r.detalle || {};
   const partes = [];
   if (d.alumno) partes.push(d.alumno);
   if (d.taller) partes.push(d.taller);
+  if (d.producto) partes.push(d.producto);
   if (d.email) partes.push(d.email);
   if (d.fecha) partes.push(`${fechaCorta(d.fecha)} · ${d.estado}${d.registros > 1 ? ` · ${d.registros} jóvenes` : ''}`);
   if (d.rol && r.tabla !== 'sesion') partes.push(ROLES[d.rol] || d.rol);
@@ -798,7 +1097,8 @@ async function abrirFicha(id) {
             ${fila('Responsable', a.tutorNombre ? `${esc(a.tutorNombre)}${a.tutorRelacion ? ' · ' + esc(a.tutorRelacion) : ''}` : '')}
             ${fila('Teléfono', copiable(a.tutorTelefono))}
             ${fila('Correo', copiable(a.tutorEmail))}
-            ${fila('Emergencia', esc(a.emergencia))}
+            ${fila(a.emergencia2 ? 'Emergencia 1' : 'Emergencia', esc(a.emergencia))}
+            ${fila('Emergencia 2', esc(a.emergencia2))}
           </dl>
         </section>
         <section>
@@ -810,7 +1110,7 @@ async function abrirFicha(id) {
             ${fila('Entrevista', esc(fechaCorta(a.entrevista)))}
             ${fila('Beca', esc(a.beca))}
           </dl>
-          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)} · ${t.dias.map(d => DIAS_CORTOS[d]).join('/')}</span>` : ''; }).join('')}</div>
+          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)} · ${t.fechas.length ? sesionesTxt(t.fechas.length) : t.dias.map(d => DIAS_CORTOS[d]).join('/')}</span>` : ''; }).join('')}</div>
           ${toCorto ? `<p class="nota-campo">Terapia Ocupacional pide al menos 3 módulos. Tiene ${a.talleres.length}.</p>` : ''}
         </section>
         <section>
@@ -853,7 +1153,7 @@ async function abrirFicha(id) {
 let editando = null;
 // Un alumno puede estar en varios programas: se guardan en el mismo campo de texto separados por coma.
 function programasDe(a) { return String(a?.programa || '').split(',').map(p => p.trim()).filter(Boolean); }
-const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'direccion', 'intereses', 'apoyos', 'alergias'];
+const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'emergencia2', 'direccion', 'intereses', 'apoyos', 'alergias'];
 async function abrirFormulario(id = null) {
   editando = id;
   const a = id ? alumno(id) : null;
@@ -861,13 +1161,15 @@ async function abrirFormulario(id = null) {
   form.reset();
   $('#form-titulo').textContent = a ? `Editar ficha de ${nombreVisible(a)}` : 'Nueva ficha';
   $('#form-error').hidden = true;
-  $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en la sección Talleres.</p>';
+  $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en Talleres semestrales o Talleres de verano.</p>';
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
   const progs = a ? programasDe(a) : ['FormaPro'];
   for (const c of $$('#f-programas input')) c.checked = progs.includes(c.value);
   if (!a) { $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
   $('#f-privado').hidden = !puede.verTodo();
+  $('#f-fechaNac').max = iso(hoy());
+  mostrarEdad();
   avisoTO();
   if ($('#dlg-ficha').open) $('#dlg-ficha').close();
   $('#dlg-form').showModal();
@@ -877,8 +1179,31 @@ async function abrirFormulario(id = null) {
     catch (e) { toast(`No se cargaron los datos privados. ${e.message}`, 'error'); }
   }
 }
+// Edad al momento, mientras se escribe la fecha de nacimiento.
+function mostrarEdad() {
+  const v = $('#f-fechaNac').value, out = $('#f-edad');
+  out.classList.remove('error');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < '1900-01-02') { out.textContent = ''; return; }
+  if (v > iso(hoy())) { out.textContent = 'La fecha no puede ser futura'; out.classList.add('error'); return; }
+  const n = edad(v);
+  out.textContent = n === 1 ? '1 año' : `${n} años`;
+}
+$('#f-fechaNac').addEventListener('input', mostrarEdad);
+$('#f-fechaNac').addEventListener('change', mostrarEdad);
+// Requisito publicado en spectrumpro.cl para FormaPro y Terapia Ocupacional:
+// al menos 3 módulos, uno de ellos de formación general
+// (Referentes artístico-culturales, Habilidades para la vida o Arte Terapéutico).
+const esFormacionGeneral = t => t.area === 'Formación general' || /referentes|habilidades para la vida|arte terap/i.test(t.nombre);
 function avisoTO() {
-  $('#f-aviso-to').hidden = !($('#f-programas input[value="Terapia Ocupacional"]').checked && $$('#f-talleres input:checked').length < 3);
+  const progs = $$('#f-programas input:checked').map(i => i.value).filter(p => ['FormaPro', 'Terapia Ocupacional'].includes(p));
+  const prog = progs.join(' y ');
+  const aviso = $('#f-aviso-to');
+  const elegidos = $$('#f-talleres input:checked').map(i => taller(i.value)).filter(Boolean);
+  const faltan = [];
+  if (elegidos.length < 3) faltan.push('al menos 3 módulos');
+  if (S.talleres.some(esFormacionGeneral) && !elegidos.some(esFormacionGeneral)) faltan.push('uno de formación general');
+  aviso.hidden = !(progs.length && faltan.length);
+  aviso.textContent = `${prog} pide ${faltan.join(' y ')} (Referentes culturales, Habilidades para la vida o Arte Terapia). También pide una entrevista previa.`;
 }
 $('#form-alumno').addEventListener('submit', async ev => {
   ev.preventDefault();
@@ -918,24 +1243,82 @@ $('#form-alumno').addEventListener('submit', async ev => {
   finally { botonOcupado(btn, false); }
 });
 
+/* ---------- programa del taller (PDF) ---------- */
+async function verPrograma(id) {
+  const t = taller(id);
+  if (!t?.programaPdf) return;
+  // La ventana se abre antes de pedir el enlace para que el navegador no la bloquee.
+  const ventana = window.open('', '_blank');
+  try {
+    const url = await conCarga(() => D.urlPrograma(t));
+    if (ventana) ventana.location.href = url; else location.href = url;
+  } catch (e) {
+    ventana?.close();
+    toast(e.message, 'error');
+  }
+}
+
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
-function abrirTaller(id = null) {
+let fechasTaller = [];
+// Los talleres de verano se programan por fechas exactas; los semestrales, por días de la semana.
+const mostrarCamposTemporada = () => {
+  const verano = $('#t-temporada').value === 'verano';
+  $('#t-fechas-box').hidden = !verano;
+  $('#t-dias-box').hidden = verano;
+};
+function pintarFechasTaller() {
+  fechasTaller.sort();
+  $('#t-fechas').innerHTML = fechasTaller.length
+    ? fechasTaller.map(f => { const d = deISO(f); return `<span class="tag">${DIAS_CORTOS[d.getDay()]} ${esc(fechaCorta(f))}<button type="button" data-quitar-fecha="${f}" aria-label="Quitar ${esc(fechaCorta(f))}">×</button></span>`; }).join('')
+    : '<p class="nota-suave">Aún no hay fechas. Elige una y presiona «Agregar fecha».</p>';
+}
+$('#t-temporada').addEventListener('change', mostrarCamposTemporada);
+const mostrarEnlace = () => { $('#t-enlace-box').hidden = $('#t-modalidad').value !== 'online'; };
+$('#t-modalidad').addEventListener('change', mostrarEnlace);
+$('#t-fecha-agregar').addEventListener('click', () => {
+  const f = $('#t-fecha-nueva').value;
+  if (!f) { $('#t-fecha-nueva').focus(); return; }
+  if (!fechasTaller.includes(f)) fechasTaller.push(f);
+  $('#t-fecha-nueva').value = '';
+  pintarFechasTaller();
+  $('#t-fecha-nueva').focus();
+});
+$('#t-fechas').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-quitar-fecha]');
+  if (!b) return;
+  fechasTaller = fechasTaller.filter(f => f !== b.dataset.quitarFecha);
+  pintarFechasTaller();
+});
+function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial') {
   editandoTaller = id;
   const t = id ? taller(id) : null;
   $('#form-taller').reset();
   $('#taller-titulo').textContent = t ? `Editar ${t.nombre}` : 'Nuevo taller';
   $('#taller-error').hidden = true;
   $('#t-nombre').value = t?.nombre || '';
+  $('#t-temporada').value = t?.temporada || temporada;
+  $('#t-modalidad').value = t ? (esOnline(t) ? 'online' : 'presencial') : modalidad;
+  $('#t-enlace').value = t?.enlace || '';
+  mostrarEnlace();
   $('#t-area').value = t?.area || '';
   $('#t-color').value = color(t?.color);
   $('#t-horaInicio').value = t?.horaInicio || '';
   $('#t-horaFin').value = t?.horaFin || '';
   $('#t-encargado').value = t?.encargado || '';
   $('#t-activo').checked = t ? t.activo : true;
+  $('#t-edad').value = t?.edad || '';
+  $('#t-nota').value = t?.nota || '';
+  $('#t-objetivo').value = t?.objetivo || '';
+  fechasTaller = [...(t?.fechas || [])];
+  pintarFechasTaller();
+  mostrarCamposTemporada();
   $('#t-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<label><input type="checkbox" name="dias" value="${d}" ${t?.dias.includes(d) ? 'checked' : ''}>${DIAS_CORTOS[d]}</label>`).join('');
   const equipo = S.usuarios.filter(u => u.rol === 'tallerista');
   $('#t-equipo').innerHTML = equipo.length ? equipo.map(u => `<label><input type="checkbox" name="equipo" value="${u.id}" ${t?.equipo.includes(u.id) ? 'checked' : ''}>${esc(u.nombre || u.email)}${u.activo ? '' : ' <span class="muted">(inactiva)</span>'}</label>`).join('') : '<p class="nota-suave">Aún no hay talleristas. Invítalas desde Administración. Dirección y terapeutas pueden pasar lista en todos los talleres.</p>';
+  $('#t-programa-actual').hidden = !t?.programaPdf;
+  $('#t-programa-actual').textContent = t?.programaPdf ? `Programa actual: ${t.programaNombre || 'programa.pdf'}. Elige otro archivo para reemplazarlo.` : '';
+  $('#t-programa-quitar-box').hidden = !t?.programaPdf;
   $('#t-eliminar').hidden = !t;
   $('#dlg-taller').showModal();
   $('#t-nombre').focus();
@@ -946,23 +1329,44 @@ $('#form-taller').addEventListener('submit', async ev => {
   const t = {
     id: editandoTaller, nombre: String(fd.get('nombre')).trim(), area: String(fd.get('area')).trim(), color: fd.get('color'),
     horaInicio: fd.get('horaInicio'), horaFin: fd.get('horaFin'), encargado: String(fd.get('encargado')).trim(),
-    activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'),
+    activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'), temporada: fd.get('temporada'),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
+    edad: String(fd.get('edad')).trim(), nota: String(fd.get('nota')).trim(), objetivo: String(fd.get('objetivo')).trim(),
+    modalidad: fd.get('modalidad') === 'online' ? 'online' : 'presencial', enlace: String(fd.get('enlace') || '').trim(),
+    fechas: fd.get('temporada') === 'verano' ? [...fechasTaller].sort() : [],
   };
+  // Con fechas exactas, los días de la semana salen de esas fechas.
+  if (t.fechas.length) t.dias = [...new Set(t.fechas.map(f => deISO(f).getDay()))].sort();
   const err = $('#taller-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (!t.nombre) return mostrar('Escribe el nombre del taller.');
+  if (t.temporada === 'verano' && !t.fechas.length) return mostrar('Agrega al menos una fecha de sesión.');
   if (!t.dias.length) return mostrar('Elige al menos un día de la semana.');
   if (t.horaInicio && t.horaFin && t.horaFin <= t.horaInicio) return mostrar('La hora de término debe ser posterior a la de inicio.');
+  const pdf = $('#t-programa').files[0] || null;
+  const quitarPdf = !pdf && $('#t-programa-quitar').checked;
+  if (pdf && pdf.type !== 'application/pdf' && !/\.pdf$/i.test(pdf.name)) return mostrar('El programa debe ser un archivo PDF.');
+  if (pdf && pdf.size > 10 * 1024 * 1024) return mostrar('El PDF es demasiado grande (máximo 10 MB).');
+  if (t.modalidad !== 'online') t.enlace = '';
+  else if (t.enlace && !enlaceValido(t.enlace)) return mostrar('El enlace debe ser una dirección completa que empiece con https://');
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
-    await conCarga(() => D.guardarTaller(t));
+    await conCarga(async () => {
+      const id = await D.guardarTaller(t);
+      editandoTaller = id;
+      if (pdf) await D.subirPrograma(id, pdf);
+      else if (quitarPdf) await D.quitarPrograma(id);
+    });
     S.talleres = await D.talleres();
     $('#dlg-taller').close();
-    toast(editandoTaller ? 'Taller actualizado' : 'Taller creado');
+    toast(t.id ? 'Taller actualizado' : 'Taller creado');
     render();
-  } catch (e) { mostrar(e.message); }
+  } catch (e) {
+    mostrar(e.message);
+    // Si el taller se creó pero falló el PDF, se recarga para que el reintento lo actualice en vez de duplicarlo.
+    if (editandoTaller && !taller(editandoTaller)) { try { S.talleres = await D.talleres(); render(); } catch { /* sin conexión */ } }
+  }
   finally { botonOcupado(btn, false); }
 });
 $('#t-eliminar').addEventListener('click', async () => {
@@ -991,6 +1395,8 @@ function abrirUsuario(id = null) {
   $('#u-email').value = u?.email || '';
   $('#u-email').disabled = !!u;
   $('#u-rol').value = u?.rol || 'tallerista';
+  $('#u-fechaNac').value = u?.fechaNac || '';
+  $('#u-fechaNac').max = iso(hoy());
   $('#u-activo').checked = u ? (u.rol ? u.activo : true) : true;
   $('#u-activo-box').hidden = !u;
   $('#u-nota').hidden = !!u;
@@ -1006,18 +1412,19 @@ $('#u-rol').addEventListener('change', mostrarTalleresUsuario);
 $('#form-usuario').addEventListener('submit', async ev => {
   ev.preventDefault();
   const fd = new FormData(ev.target);
-  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres') };
+  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres'), fechaNac: String(fd.get('fechaNac') || '') };
   if (datos.rol !== 'tallerista') datos.talleres = [];
   const err = $('#usuario-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (!datos.nombre) return mostrar('Escribe el nombre.');
   if (!editandoUsuario && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email)) return mostrar('Escribe un correo válido.');
+  if (datos.fechaNac && datos.fechaNac > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
   if (editandoUsuario === S.perfil.id && (datos.rol !== 'admin' || !datos.activo)) return mostrar('No puedes quitarte tu propio acceso de dirección. Pide a otra persona de dirección que lo haga.');
   const btn = ev.submitter;
   botonOcupado(btn, true, editandoUsuario ? 'Guardando…' : 'Enviando…');
   try {
     await conCarga(() => editandoUsuario ? D.actualizarUsuario(editandoUsuario, datos) : D.invitar(datos));
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     $('#dlg-usuario').close();
     toast(editandoUsuario ? 'Cuenta actualizada' : `Invitación enviada a ${datos.email}`);
     render();
@@ -1030,14 +1437,41 @@ $('#u-eliminar').addEventListener('click', async () => {
   if (!await confirmar(`¿Eliminar la cuenta de ${u.nombre || u.email}?`, 'La persona ya no podrá entrar. La asistencia que registró se conserva.', 'Eliminar cuenta')) return;
   try {
     await intentar(() => D.eliminarUsuario(u.id), 'Cuenta eliminada');
-    [S.usuarios, S.talleres] = await Promise.all([D.usuarios(), D.talleres()]);
+    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
     render();
   } catch { /* ya avisado */ }
 });
 
+/* ---------- mi fecha de nacimiento ---------- */
+function abrirMiCumple() {
+  $('#mi-cumple-error').hidden = true;
+  $('#mi-fechaNac').value = S.perfil.fechaNac || '';
+  $('#mi-fechaNac').max = iso(hoy());
+  $('#dlg-mi-cumple').showModal();
+  $('#mi-fechaNac').focus();
+}
+$('#form-mi-cumple').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const fecha = $('#mi-fechaNac').value;
+  const err = $('#mi-cumple-error');
+  const mostrar = m => { err.textContent = m; err.hidden = false; };
+  if (fecha && fecha > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
+  const btn = ev.submitter;
+  botonOcupado(btn, true);
+  try {
+    await conCarga(() => D.guardarMiFechaNac(fecha));
+    S.perfil.fechaNac = fecha;
+    [S.cumpleEquipo, S.usuarios] = await Promise.all([D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([])]);
+    $('#dlg-mi-cumple').close();
+    toast(fecha ? 'Fecha de nacimiento guardada' : 'Fecha de nacimiento borrada');
+    render();
+  } catch (e) { mostrar(e.message); }
+  finally { botonOcupado(btn, false); }
+});
+
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programas', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programas', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia 1', 'emergencia'], ['Emergencia 2', 'emergencia2'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');
@@ -1059,11 +1493,14 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, online: vistaOnline, tienda: vistaTienda, administracion: vistaAdministracion };
+// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección).
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
-  if (v === 'administracion' && !puede.admin()) return 'panel';
+  if ((v === 'administracion' || v === 'posts') && !puede.admin()) return 'panel';
+  if (v === 'tienda' && !puede.tienda()) return 'panel';
+  if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
 let vistaPintada = null;
@@ -1143,8 +1580,12 @@ document.addEventListener('click', async ev => {
     return;
   }
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
+  if ((x = el('[data-ver-programa]'))) { verPrograma(x.dataset.verPrograma); return; }
+  if ((x = el('[data-mover-producto]'))) { moverProducto(x.dataset.moverProducto, Number(x.dataset.dir)); return; }
+  if ((x = el('[data-producto]'))) { abrirProducto(x.dataset.producto); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
+  if ((x = el('[data-tab-cumple]'))) { ui.tabCumple = x.dataset.tabCumple; render(); return; }
   if ((x = el('[data-modo]'))) { ui.modoAsis = x.dataset.modo; render(); return; }
   if ((x = el('[data-taller]'))) { ui.taller = x.dataset.taller; render(); return; }
   if ((x = el('.seg button'))) { marcar(x.closest('.seg').dataset.alumno, x.dataset.e, x.closest('.seg')); return; }
@@ -1165,12 +1606,14 @@ document.addEventListener('click', async ev => {
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
       await D.salir();
-      S.perfil = null;
+      S.perfil = null; S.tienda = null;
       mostrarAcceso('entrar');
     }
+    if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
-    if (acc === 'nuevo-taller') abrirTaller();
+    if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.temporada, x.dataset.modalidad);
     if (acc === 'invitar') abrirUsuario();
+    if (acc === 'nuevo-producto') abrirProducto();
     if (acc === 'exportar-fichas') exportarFichas();
     if (acc === 'exportar-asistencia') exportarAsistencia();
     if (acc === 'restablecer-demo' && await confirmar('¿Restablecer la demostración?', 'Se borran los cambios hechos en este navegador y se cargan de nuevo los datos ficticios.', 'Restablecer')) {
