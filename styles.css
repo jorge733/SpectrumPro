@@ -327,12 +327,12 @@ table.matriz { border-collapse: separate; border-spacing: 3px; font-size: .82rem
 /* ---------- diálogos ---------- */
 .dialogo {
   border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--ink);
-  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); box-shadow: 0 20px 60px rgb(0 0 0 / .25);
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); box-shadow: 0 20px 60px rgb(0 0 0 / .25);
 }
 .dialogo-ancho { width: min(820px, calc(100vw - 32px)); }
 .dialogo-peq { width: min(420px, calc(100vw - 32px)); }
 .dialogo::backdrop { background: rgb(20 18 31 / .45); }
-.dialogo form { display: flex; flex-direction: column; max-height: calc(100vh - 34px); }
+.dialogo form { display: flex; flex-direction: column; max-height: calc(100vh - 34px); max-height: calc(100dvh - 34px); }
 .dlg-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
 .dlg-cuerpo { padding: 20px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
 .dlg-pie { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--line); flex-wrap: wrap; }
@@ -363,6 +363,23 @@ legend { font-family: var(--f-display); font-weight: 600; padding: 0; margin-bot
 #dlg-ficha[open] { display: flex; flex-direction: column; overflow: hidden; }
 #dlg-ficha .ficha-cab, #dlg-ficha .dlg-pie { flex-shrink: 0; }
 #dlg-ficha .dlg-cuerpo { flex: 1 1 auto; min-height: 0; }
+/* En el celular, la ficha y el formulario ocupan toda la pantalla visible
+   (100dvh descuenta la barra del navegador; 100vh no, y cortaba arriba y abajo). */
+@media (max-width: 600px) {
+  .dialogo.dialogo-ancho { width: 100%; max-width: 100%; height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; }
+  .dialogo.dialogo-ancho form { height: 100%; max-height: none; }
+  .dialogo.dialogo-ancho form .dlg-cuerpo { flex: 1 1 auto; min-height: 0; }
+  .dialogo-ancho .dlg-cab { padding: max(14px, env(safe-area-inset-top)) 16px 14px; }
+  .dialogo-ancho .dlg-cuerpo { padding: 18px 16px; }
+  .dialogo-ancho .dlg-pie { padding: 12px 16px max(12px, env(safe-area-inset-bottom)); }
+  .dialogo-ancho .dlg-pie .btn { flex: 1 1 0; }
+  .ficha-cab { gap: 12px; align-items: flex-start; padding: max(16px, env(safe-area-inset-top)) 52px 16px 16px; }
+  .ficha-cab .avatar-xl { width: 52px; height: 52px; font-size: 1.1rem; flex: none; }
+  .ficha-cab h2 { font-size: 1.2rem; line-height: 1.2; }
+  .ficha-cab .chip { font-size: .78rem; }
+  .ficha-cab .cerrar { top: max(8px, env(safe-area-inset-top)); right: 6px; padding: 8px 12px; }
+  .ficha-cuerpo { padding: 18px 16px; }
+}
 .ficha-cuerpo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; padding: 22px; }
 .ficha-cuerpo section { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .ficha-cuerpo section.ancho { grid-column: 1 / -1; }
