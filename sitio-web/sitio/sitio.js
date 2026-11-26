@@ -8,7 +8,7 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const parrafos = s => String(s || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => `<p>${esc(x)}</p>`).join('');
   const COLORES = ['var(--c5)', 'var(--c4)', 'var(--c3)', 'var(--c2)', 'var(--c1)', 'var(--c6)'];
-  const SUAVES = ['#e4e1fb', '#d9f1fb', '#d6f5e8', '#fdf5c9', '#fde0e3', '#fbe0f3'];
+  const SUAVES = ['var(--p5)', 'var(--p4)', 'var(--p3)', 'var(--p2)', 'var(--p1)', 'var(--p6)'];
   const ICONO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   const ICONO_WA = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
   const ytId = u => (String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/) || [])[1];
@@ -18,8 +18,8 @@
 
   /* ---------- Plantillas por tipo ---------- */
   const PLANTILLAS = {
-    valor: (x, i) => `<article class="valor revelar" style="--k:${SUAVES[i % SUAVES.length]};--i:${i}"><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></article>`,
-    equipo: (x, i) => `<article class="persona revelar" style="--i:${i % 4}">
+    valor: (x, i) => `<article class="valor revelar" style="--kc:${COLORES[i % COLORES.length]};--i:${i}"><span class="punto" aria-hidden="true"></span><div><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></div></article>`,
+    equipo: (x, i) => `<article class="persona revelar" style="--i:${i % 4};--kc:${COLORES[i % COLORES.length]}">
         <div class="foto">${x.imagen ? `<img src="${esc(x.imagen)}" alt="Retrato de ${esc(x.titulo)}" loading="lazy" width="480" height="480">` : ''}</div>
         <h3>${esc(x.titulo)}</h3>${x.subtitulo ? `<span class="cargo">${esc(x.subtitulo)}</span>` : ''}
         ${x.texto ? `<details><summary>Conocer más</summary>${parrafos(x.texto)}${x.nota ? `<p class="correo">${esc(x.nota)}</p>` : ''}</details>` : ''}
@@ -128,11 +128,12 @@
   /* ---------- Menú en celular ---------- */
   const boton = document.querySelector('.abrir-menu'), menu = document.getElementById('menu');
   if (boton && menu) {
-    const cerrar = () => { menu.classList.remove('abierto'); boton.setAttribute('aria-expanded', 'false'); boton.textContent = 'Menú'; };
+    const rotulo = boton.querySelector('span') || boton;
+    const cerrar = () => { menu.classList.remove('abierto'); boton.setAttribute('aria-expanded', 'false'); rotulo.textContent = 'Menú'; };
     boton.addEventListener('click', () => {
       const abierto = menu.classList.toggle('abierto');
       boton.setAttribute('aria-expanded', String(abierto));
-      boton.textContent = abierto ? 'Cerrar' : 'Menú';
+      rotulo.textContent = abierto ? 'Cerrar' : 'Menú';
     });
     menu.addEventListener('click', e => { if (e.target.closest('a')) cerrar(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
