@@ -44,7 +44,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 En **Authentication**:
 
 1. **Sign In / Providers → Email**: desactiva **Allow new users to sign up**. Así solo entran personas invitadas por dirección. Aunque alguien lograra registrarse, su cuenta nace sin rol y no ve nada.
-2. **URL Configuration**: en **Site URL** pon la dirección donde publicarás la plataforma (por ejemplo `https://alumnado.spectrumpro.cl`) y agrégala también en **Redirect URLs**.
+2. **URL Configuration**: en **Site URL** pon `https://gestionspectrumpro.cl` y agrega `https://gestionspectrumpro.cl/**` en **Redirect URLs** (así funcionan los enlaces de invitación y de recuperación de contraseña).
 3. **Emails** (opcional): traduce al español los correos de invitación y de recuperación de contraseña.
 
 ### 3. Crear la primera cuenta de dirección
@@ -95,7 +95,7 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 ### 6. Publicar la plataforma
 
-Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings → Pages* elige la rama y la carpeta raíz. Para un dominio propio como `alumnado.spectrumpro.cl`, agrega el registro DNS que indica GitHub.
+Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings → Pages* elige la rama y la carpeta raíz. La plataforma se publica en **https://gestionspectrumpro.cl** (el archivo `CNAME` ya lo declara). En *Settings → Pages → Custom domain* escribe `gestionspectrumpro.cl`, marca **Enforce HTTPS** y, en el DNS del dominio, crea registros `A` hacia `185.199.108.153`, `185.199.109.153`, `185.199.110.153` y `185.199.111.153` (y opcionalmente un `CNAME` de `www` hacia `<usuario>.github.io`). La encuesta queda en https://gestionspectrumpro.cl/encuesta.html.
 
 ## Encuesta de la Muestra Audiovisual
 
