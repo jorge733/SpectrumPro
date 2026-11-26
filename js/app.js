@@ -629,12 +629,19 @@ function pintarFichas() {
   }).join('')}</div>` : `<div class="vacio-grande">${S.alumnos.length ? 'No hay fichas que coincidan con la búsqueda.' : puede.editarFichas() ? 'Aún no hay fichas. Crea la primera con «Nueva ficha».' : 'Aún no hay jóvenes inscritos en tus talleres.'}</div>`;
 }
 
-function vistaTalleres(el) {
-  const lista = puede.verTodo() ? S.talleres : misTalleres();
+const TEMPORADAS = {
+  semestral: { titulo: 'Talleres semestrales', tuyos: 'Tus talleres semestrales', desc: 'Talleres del semestre: horario semanal y asistencia de los últimos 30 días.' },
+  verano: { titulo: 'Talleres de verano', tuyos: 'Tus talleres de verano', desc: 'Talleres de la temporada de verano: horario semanal y asistencia de los últimos 30 días.' },
+};
+const vistaTalleres = el => vistaTemporada(el, 'semestral');
+const vistaVerano = el => vistaTemporada(el, 'verano');
+function vistaTemporada(el, temporada) {
+  const txt = TEMPORADAS[temporada];
+  const lista = (puede.verTodo() ? S.talleres : misTalleres()).filter(t => (t.temporada || 'semestral') === temporada);
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? 'Talleres' : 'Tus talleres'}</h1><p>Horario semanal y asistencia de los últimos 30 días.</p></div>
-      ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}</p></div>
+      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" data-temporada="${temporada}">+ Nuevo taller${temporada === 'verano' ? ' de verano' : ''}</button>` : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
@@ -656,7 +663,7 @@ function vistaTalleres(el) {
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>` : '<div class="vacio-grande">No tienes talleres asignados.</div>'}`;
+    }).join('')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
 }
 
 /* ---------- Administración ---------- */
@@ -859,7 +866,7 @@ async function abrirFormulario(id = null) {
   form.reset();
   $('#form-titulo').textContent = a ? `Editar ficha de ${nombreVisible(a)}` : 'Nueva ficha';
   $('#form-error').hidden = true;
-  $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en la sección Talleres.</p>';
+  $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en Talleres semestrales o Talleres de verano.</p>';
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
   if (!a) { $('#f-programa').value = 'FormaPro'; $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
@@ -914,13 +921,14 @@ $('#form-alumno').addEventListener('submit', async ev => {
 
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
-function abrirTaller(id = null) {
+function abrirTaller(id = null, temporada = 'semestral') {
   editandoTaller = id;
   const t = id ? taller(id) : null;
   $('#form-taller').reset();
   $('#taller-titulo').textContent = t ? `Editar ${t.nombre}` : 'Nuevo taller';
   $('#taller-error').hidden = true;
   $('#t-nombre').value = t?.nombre || '';
+  $('#t-temporada').value = t?.temporada || temporada;
   $('#t-area').value = t?.area || '';
   $('#t-color').value = color(t?.color);
   $('#t-horaInicio').value = t?.horaInicio || '';
@@ -940,7 +948,7 @@ $('#form-taller').addEventListener('submit', async ev => {
   const t = {
     id: editandoTaller, nombre: String(fd.get('nombre')).trim(), area: String(fd.get('area')).trim(), color: fd.get('color'),
     horaInicio: fd.get('horaInicio'), horaFin: fd.get('horaFin'), encargado: String(fd.get('encargado')).trim(),
-    activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'),
+    activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'), temporada: fd.get('temporada'),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
   };
   const err = $('#taller-error');
@@ -1053,7 +1061,7 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, administracion: vistaAdministracion };
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
@@ -1163,7 +1171,7 @@ document.addEventListener('click', async ev => {
       mostrarAcceso('entrar');
     }
     if (acc === 'nueva-ficha') abrirFormulario();
-    if (acc === 'nuevo-taller') abrirTaller();
+    if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.temporada);
     if (acc === 'invitar') abrirUsuario();
     if (acc === 'exportar-fichas') exportarFichas();
     if (acc === 'exportar-asistencia') exportarAsistencia();

@@ -12,7 +12,8 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Asistencia** | Pasar lista por sesión de taller (Presente, Retraso, Ausente, Justificada) y resumen mensual por taller |
 | **Cumpleaños** | Cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses |
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
-| **Talleres** | Horario semanal, equipo a cargo e inscritos. Dirección crea y edita talleres |
+| **Talleres semestrales** | Horario semanal, equipo a cargo e inscritos de los talleres del semestre. Dirección crea y edita talleres |
+| **Talleres de verano** | Lo mismo para los talleres de la temporada de verano |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
 ### Roles
@@ -35,6 +36,7 @@ Abre `index.html` en el navegador. Si `config.js` no tiene datos de Supabase, la
 
 1. Crea un proyecto en [supabase.com](https://supabase.com). Elige la región São Paulo (`sa-east-1`), que es la más cercana a Chile.
 2. En **SQL Editor**, ejecuta completo el archivo `supabase/migrations/20261120000000_spectrumpro.sql`. Crea las tablas, los permisos por rol y la auditoría.
+   Después ejecuta, en orden, los demás archivos de esa carpeta (`…_talleres_unicos.sql` y `…_talleres_temporada.sql`, que agrega la separación entre talleres semestrales y de verano).
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
 ### 2. Configurar el acceso
