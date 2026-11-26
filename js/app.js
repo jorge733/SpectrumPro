@@ -1219,7 +1219,7 @@ async function abrirFicha(id) {
             ${fila('Entrevista', esc(fechaCorta(a.entrevista)))}
             ${fila('Beca', esc(a.beca))}
           </dl>
-          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)} · ${t.fechas.length ? sesionesTxt(t.fechas.length) : t.dias.map(d => DIAS_CORTOS[d]).join('/')}</span>` : ''; }).join('')}</div>
+          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)}${(() => { const c = t.fechas.length ? sesionesTxt(t.fechas.length) : t.dias.map(d => DIAS_CORTOS[d]).join('/'); return c ? ' · ' + c : ''; })()}</span>` : ''; }).join('')}</div>
           ${toCorto ? `<p class="nota-campo">Terapia Ocupacional pide al menos 3 módulos. Tiene ${a.talleres.length}.</p>` : ''}
         </section>
         <section>

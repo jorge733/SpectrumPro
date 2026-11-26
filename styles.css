@@ -357,11 +357,15 @@ legend { font-family: var(--f-display); font-weight: 600; padding: 0; margin-bot
 .ficha-cab .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .ficha-cab h2 { font-size: 1.4rem; }
 .ficha-cab .cerrar { position: absolute; top: 12px; right: 12px; }
+/* La ficha mantiene fijos encabezado y pie; solo el cuerpo hace scroll. */
+#dlg-ficha[open] { display: flex; flex-direction: column; overflow: hidden; }
+#dlg-ficha .ficha-cab, #dlg-ficha .dlg-pie { flex-shrink: 0; }
+#dlg-ficha .dlg-cuerpo { flex: 1 1 auto; min-height: 0; }
 .ficha-cuerpo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; padding: 22px; }
 .ficha-cuerpo section { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .ficha-cuerpo section.ancho { grid-column: 1 / -1; }
 .ficha-cuerpo h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-family: var(--f-texto); font-weight: 600; }
-.dato { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; font-size: .9rem; }
+.dato { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 9px 18px; font-size: .9rem; align-items: baseline; }
 .dato dt { color: var(--muted); }
 .dato dd { margin: 0; overflow-wrap: anywhere; }
 .copiable { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -517,7 +521,9 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
 @media (max-width: 600px) {
   h1 { font-size: 1.45rem; }
   .campos, .ficha-cuerpo, .contacto-emerg { grid-template-columns: minmax(0, 1fr); }
-  .dato { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .dato { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .dato dt { font-size: .8rem; }
+  .dato dd + dt { margin-top: 10px; }
   .seg .lbl-largo { display: none; }
   .seg .lbl-corto { display: inline; }
   .pase .seg { width: 100%; padding-left: 52px; }
