@@ -229,6 +229,12 @@
       <datalist id="t-areas"><option>Centro de Formación</option><option>Arte y Apoyo</option><option>Terapia Ocupacional</option><option>SpectrumOnline</option></datalist>
       <div><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
       <div><p class="campo-titulo">Cuentas que pueden pasar lista</p><div id="t-equipo" class="checks"></div></div>
+      <div class="programa-campo">
+        <p class="campo-titulo"><label for="t-programa">Programa del taller (PDF, hasta 10 MB)</label></p>
+        <p id="t-programa-actual" class="nota-suave" hidden></p>
+        <input id="t-programa" name="programa" type="file" accept="application/pdf,.pdf">
+        <label class="check-suelto" id="t-programa-quitar-box" hidden><input type="checkbox" id="t-programa-quitar"> Quitar el programa actual</label>
+      </div>
       <label class="check-suelto"><input type="checkbox" id="t-activo" name="activo" checked> Taller activo</label>
       <p id="taller-error" class="aviso-error" role="alert" hidden></p>
     </div>

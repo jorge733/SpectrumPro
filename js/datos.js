@@ -40,6 +40,7 @@
   const filaATaller = (f, equipo) => ({
     id: f.id, nombre: f.nombre, area: f.area, dias: f.dias || [], horaInicio: hora(f.hora_inicio), horaFin: hora(f.hora_fin),
     encargado: f.encargado, color: f.color, activo: f.activo, orden: f.orden,
+    programaPdf: f.programa_pdf || null, programaNombre: f.programa_nombre || '',
     equipo: equipo.filter(e => e.taller_id === f.id).map(e => e.perfil_id),
   });
   const tallerAFila = t => ({
@@ -57,6 +58,9 @@
     if (/Failed to fetch|NetworkError|network/i.test(m)) return new Error('No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.');
     if (/Password should be|weak password/i.test(m)) return new Error('La contraseña es muy débil. Usa al menos 10 caracteres.');
     if (/talleres_nombre_unico/i.test(m)) return new Error('Ya existe un taller con ese nombre.');
+    if (/maximum allowed size|Payload too large|exceeded the maximum/i.test(m)) return new Error('El PDF es demasiado grande (máximo 10 MB).');
+    if (/mime type|invalid_mime/i.test(m)) return new Error('El programa debe ser un archivo PDF.');
+    if (/Bucket not found/i.test(m)) return new Error('Falta crear el espacio de archivos «programas» en Supabase (ver README).');
     if (/duplicate key/i.test(m)) return new Error('Ese registro ya existe.');
     return new Error(m || 'Ocurrió un error inesperado.');
   }
@@ -115,7 +119,29 @@
         await sincronizar('taller_equipo', 'taller_id', id, 'perfil_id', t.equipo || []);
         return id;
       },
-      async eliminarTaller(id) { ok(await sb.from('talleres').delete().eq('id', id)); },
+      async eliminarTaller(id) {
+        const f = ok(await sb.from('talleres').select('programa_pdf').eq('id', id).maybeSingle());
+        ok(await sb.from('talleres').delete().eq('id', id));
+        if (f?.programa_pdf) await sb.storage.from('programas').remove([f.programa_pdf]);
+      },
+      // Programa del taller (PDF en el bucket privado "programas").
+      async subirPrograma(tallerId, archivo) {
+        const anterior = ok(await sb.from('talleres').select('programa_pdf').eq('id', tallerId).single()).programa_pdf;
+        const ruta = `${tallerId}/${Date.now()}.pdf`;
+        ok(await sb.storage.from('programas').upload(ruta, archivo, { contentType: 'application/pdf', upsert: false }));
+        const r = await sb.from('talleres').update({ programa_pdf: ruta, programa_nombre: archivo.name }).eq('id', tallerId);
+        if (r.error) { await sb.storage.from('programas').remove([ruta]); throw traducir(r.error); }
+        if (anterior && anterior !== ruta) await sb.storage.from('programas').remove([anterior]);
+      },
+      async quitarPrograma(tallerId) {
+        const anterior = ok(await sb.from('talleres').select('programa_pdf').eq('id', tallerId).single()).programa_pdf;
+        ok(await sb.from('talleres').update({ programa_pdf: null, programa_nombre: '' }).eq('id', tallerId));
+        if (anterior) await sb.storage.from('programas').remove([anterior]);
+      },
+      async urlPrograma(t) {
+        if (!t.programaPdf) throw new Error('Este taller no tiene programa.');
+        return ok(await sb.storage.from('programas').createSignedUrl(t.programaPdf, 600)).signedUrl;
+      },
       async alumnos() {
         const filas = await todo(() => sb.from('alumnos').select('*, inscripciones(taller_id)').order('apellidos').order('id'));
         return filas.map(filaAAlumno);
@@ -185,6 +211,14 @@
      ===================================================================== */
   const CLAVE_DEMO = 'spectrumpro:demo:v2';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
+  const CLAVE_PROGRAMA = id => `spectrumpro:demo:programa:${id}`;
+  const LIMITE_DEMO = 3 * 1024 * 1024; // localStorage tiene poco espacio
+  const leerArchivo = archivo => new Promise((ok, mal) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result);
+    r.onerror = () => mal(new Error('No se pudo leer el archivo.'));
+    r.readAsDataURL(archivo);
+  });
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
   const espera = (ms = 120) => new Promise(r => setTimeout(r, ms));
@@ -318,7 +352,7 @@
         await espera();
         const id = t.id || nuevoId();
         const i = db.talleres.findIndex(x => x.id === id);
-        const fila = { ...copia(t), id, equipo: t.equipo || [] };
+        const fila = { programaPdf: null, programaNombre: '', ...(i >= 0 ? db.talleres[i] : {}), ...copia(t), id, equipo: t.equipo || [] };
         if (i >= 0) db.talleres[i] = fila; else db.talleres.push(fila);
         auditar(i >= 0 ? 'update' : 'insert', 'talleres', { taller: t.nombre });
         guardar(); return id;
@@ -329,8 +363,33 @@
         db.talleres = db.talleres.filter(x => x.id !== id);
         db.alumnos.forEach(a => { a.talleres = a.talleres.filter(x => x !== id); });
         db.asistencia = db.asistencia.filter(r => r.tallerId !== id);
+        escribir(CLAVE_PROGRAMA(id), null);
         auditar('delete', 'talleres', { taller: t?.nombre });
         guardar();
+      },
+      async subirPrograma(tallerId, archivo) {
+        if (!esAdmin()) prohibido();
+        if (archivo.size > LIMITE_DEMO) throw new Error('En modo demostración el PDF puede pesar hasta 3 MB.');
+        const t = db.talleres.find(x => x.id === tallerId);
+        const datos = await leerArchivo(archivo);
+        try { localStorage.setItem(CLAVE_PROGRAMA(tallerId), datos); }
+        catch { throw new Error('No queda espacio en este navegador para guardar el PDF de demostración.'); }
+        Object.assign(t, { programaPdf: CLAVE_PROGRAMA(tallerId), programaNombre: archivo.name });
+        auditar('update', 'talleres', { taller: t.nombre, campos: ['programa_pdf'] });
+        guardar();
+      },
+      async quitarPrograma(tallerId) {
+        if (!esAdmin()) prohibido();
+        const t = db.talleres.find(x => x.id === tallerId);
+        escribir(CLAVE_PROGRAMA(tallerId), null);
+        Object.assign(t, { programaPdf: null, programaNombre: '' });
+        auditar('update', 'talleres', { taller: t.nombre, campos: ['programa_pdf'] });
+        guardar();
+      },
+      async urlPrograma(t) {
+        const datos = leer(CLAVE_PROGRAMA(t.id));
+        if (!datos) throw new Error('Este taller no tiene programa.');
+        return URL.createObjectURL(await (await fetch(datos)).blob());
       },
       async alumnos() { await espera(); return copia(db.alumnos.filter(puedeVer)); },
       async guardarAlumno(a) {
@@ -416,7 +475,7 @@
         guardar();
       },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
-      async restablecer() { db = crearDemo(); guardar(); },
+      async restablecer() { db.talleres.forEach(t => escribir(CLAVE_PROGRAMA(t.id), null)); db = crearDemo(); guardar(); },
     };
   }
 

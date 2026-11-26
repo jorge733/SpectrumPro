@@ -649,6 +649,7 @@ function vistaTalleres(el) {
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
           <dt>Inscritos</dt><dd class="num">${ins.length}</dd>
+          <dt>Programa</dt><dd>${t.programaPdf ? `<button type="button" class="btn btn-sec btn-peq" data-ver-programa="${t.id}">Ver PDF</button><span class="nombre-pdf">${esc(t.programaNombre)}</span>` : '<span class="muted">Sin programa</span>'}</dd>
         </dl>
         <div class="acciones">${chipPct(r.pct)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
@@ -912,6 +913,21 @@ $('#form-alumno').addEventListener('submit', async ev => {
   finally { botonOcupado(btn, false); }
 });
 
+/* ---------- programa del taller (PDF) ---------- */
+async function verPrograma(id) {
+  const t = taller(id);
+  if (!t?.programaPdf) return;
+  // La ventana se abre antes de pedir el enlace para que el navegador no la bloquee.
+  const ventana = window.open('', '_blank');
+  try {
+    const url = await conCarga(() => D.urlPrograma(t));
+    if (ventana) ventana.location.href = url; else location.href = url;
+  } catch (e) {
+    ventana?.close();
+    toast(e.message, 'error');
+  }
+}
+
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
 function abrirTaller(id = null) {
@@ -930,6 +946,9 @@ function abrirTaller(id = null) {
   $('#t-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<label><input type="checkbox" name="dias" value="${d}" ${t?.dias.includes(d) ? 'checked' : ''}>${DIAS_CORTOS[d]}</label>`).join('');
   const equipo = S.usuarios.filter(u => u.rol === 'tallerista');
   $('#t-equipo').innerHTML = equipo.length ? equipo.map(u => `<label><input type="checkbox" name="equipo" value="${u.id}" ${t?.equipo.includes(u.id) ? 'checked' : ''}>${esc(u.nombre || u.email)}${u.activo ? '' : ' <span class="muted">(inactiva)</span>'}</label>`).join('') : '<p class="nota-suave">Aún no hay talleristas. Invítalas desde Administración. Dirección y terapeutas pueden pasar lista en todos los talleres.</p>';
+  $('#t-programa-actual').hidden = !t?.programaPdf;
+  $('#t-programa-actual').textContent = t?.programaPdf ? `Programa actual: ${t.programaNombre || 'programa.pdf'}. Elige otro archivo para reemplazarlo.` : '';
+  $('#t-programa-quitar-box').hidden = !t?.programaPdf;
   $('#t-eliminar').hidden = !t;
   $('#dlg-taller').showModal();
   $('#t-nombre').focus();
@@ -948,15 +967,28 @@ $('#form-taller').addEventListener('submit', async ev => {
   if (!t.nombre) return mostrar('Escribe el nombre del taller.');
   if (!t.dias.length) return mostrar('Elige al menos un día de la semana.');
   if (t.horaInicio && t.horaFin && t.horaFin <= t.horaInicio) return mostrar('La hora de término debe ser posterior a la de inicio.');
+  const pdf = $('#t-programa').files[0] || null;
+  const quitarPdf = !pdf && $('#t-programa-quitar').checked;
+  if (pdf && pdf.type !== 'application/pdf' && !/\.pdf$/i.test(pdf.name)) return mostrar('El programa debe ser un archivo PDF.');
+  if (pdf && pdf.size > 10 * 1024 * 1024) return mostrar('El PDF es demasiado grande (máximo 10 MB).');
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
-    await conCarga(() => D.guardarTaller(t));
+    await conCarga(async () => {
+      const id = await D.guardarTaller(t);
+      editandoTaller = id;
+      if (pdf) await D.subirPrograma(id, pdf);
+      else if (quitarPdf) await D.quitarPrograma(id);
+    });
     S.talleres = await D.talleres();
     $('#dlg-taller').close();
-    toast(editandoTaller ? 'Taller actualizado' : 'Taller creado');
+    toast(t.id ? 'Taller actualizado' : 'Taller creado');
     render();
-  } catch (e) { mostrar(e.message); }
+  } catch (e) {
+    mostrar(e.message);
+    // Si el taller se creó pero falló el PDF, se recarga para que el reintento lo actualice en vez de duplicarlo.
+    if (editandoTaller && !taller(editandoTaller)) { try { S.talleres = await D.talleres(); render(); } catch { /* sin conexión */ } }
+  }
   finally { botonOcupado(btn, false); }
 });
 $('#t-eliminar').addEventListener('click', async () => {
@@ -1137,6 +1169,7 @@ document.addEventListener('click', async ev => {
     return;
   }
   if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
+  if ((x = el('[data-ver-programa]'))) { verPrograma(x.dataset.verPrograma); return; }
   if ((x = el('[data-usuario]'))) { abrirUsuario(x.dataset.usuario); return; }
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
   if ((x = el('[data-modo]'))) { ui.modoAsis = x.dataset.modo; render(); return; }
