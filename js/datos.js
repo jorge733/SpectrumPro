@@ -118,6 +118,38 @@
         return id;
       },
       async eliminarTaller(id) { ok(await sb.from('talleres').delete().eq('id', id)); },
+
+      /* Estudio de posts (solo dirección). Las fotos van al bucket privado «posts»;
+         en «datos» se guarda su referencia como «sb:<ruta>». */
+      async posts() {
+        return ok(await sb.from('posts').select('id, titulo, formato, miniatura, actualizado').order('actualizado', { ascending: false }));
+      },
+      async post(id) { return ok(await sb.from('posts').select('*').eq('id', id).single()); },
+      async guardarPost(p) {
+        ok(await sb.from('posts').upsert({ id: p.id, titulo: p.titulo, formato: p.formato, datos: p.datos, miniatura: p.miniatura }));
+      },
+      async eliminarPost(id) {
+        const archivos = ok(await sb.storage.from('posts').list(id, { limit: 1000 })) || [];
+        if (archivos.length) ok(await sb.storage.from('posts').remove(archivos.map(f => `${id}/${f.name}`)));
+        ok(await sb.from('posts').delete().eq('id', id));
+      },
+      async subirFotoPost(postId, blob) {
+        const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+        const ruta = `${postId}/${crypto.randomUUID()}.${ext}`;
+        ok(await sb.storage.from('posts').upload(ruta, blob, { contentType: blob.type || 'image/jpeg', upsert: false }));
+        return 'sb:' + ruta;
+      },
+      async fotoPost(ref) {
+        if (!String(ref).startsWith('sb:')) return ref;
+        return URL.createObjectURL(ok(await sb.storage.from('posts').download(ref.slice(3))));
+      },
+      async limpiarFotosPost(postId, refs) {
+        const usadas = new Set(refs.filter(r => String(r).startsWith('sb:')).map(r => r.slice(3)));
+        const archivos = ok(await sb.storage.from('posts').list(postId, { limit: 1000 })) || [];
+        const sobran = archivos.map(f => `${postId}/${f.name}`).filter(r => !usadas.has(r));
+        if (sobran.length) ok(await sb.storage.from('posts').remove(sobran));
+      },
+
       async alumnos() {
         const filas = await todo(() => sb.from('alumnos').select('*, inscripciones(taller_id)').order('apellidos').order('id'));
         return filas.map(filaAAlumno);
@@ -201,6 +233,8 @@
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
   const espera = (ms = 120) => new Promise(r => setTimeout(r, ms));
+  const CLAVE_POSTS = 'spectrumpro:demo:posts';
+  const leerPosts = () => { try { return JSON.parse(leer(CLAVE_POSTS)) || []; } catch { return []; } };
   const nuevoId = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
 
   function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -458,6 +492,35 @@
       },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
       async restablecer() { db = crearDemo(); guardar(); },
+
+      /* Estudio de posts: en la demostración las fotos se guardan dentro del post como data URL. */
+      async posts() {
+        if (!esAdmin()) prohibido(); await espera();
+        return leerPosts().map(({ datos, ...p }) => p).sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+      },
+      async post(id) {
+        if (!esAdmin()) prohibido(); await espera();
+        const p = leerPosts().find(x => x.id === id);
+        if (!p) throw new Error('Ese post ya no existe.');
+        return p;
+      },
+      async guardarPost(p) {
+        if (!esAdmin()) prohibido(); await espera();
+        const lista = leerPosts().filter(x => x.id !== p.id);
+        lista.push({ ...copia(p), actualizado: new Date().toISOString() });
+        try { localStorage.setItem(CLAVE_POSTS, JSON.stringify(lista)); }
+        catch { throw new Error('El navegador no tiene espacio para guardar más posts de demostración. Borra alguno o usa fotos más livianas.'); }
+      },
+      async eliminarPost(id) {
+        if (!esAdmin()) prohibido(); await espera();
+        escribir(CLAVE_POSTS, JSON.stringify(leerPosts().filter(x => x.id !== id)));
+      },
+      async subirFotoPost(postId, blob) {
+        if (!esAdmin()) prohibido();
+        return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+      },
+      async fotoPost(ref) { return ref; },
+      async limpiarFotosPost() { },
     };
   }
 

@@ -13,6 +13,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Cumpleaños** | Separados en **Jóvenes** y **Profesores**: cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses. Cada profesor añade su propia fecha (en la pestaña Profesores o pulsando su nombre en el menú); dirección también puede ponerla al editar una cuenta |
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
 | **Talleres** | Horario semanal, equipo a cargo e inscritos. Dirección crea y edita talleres |
+| **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
 ### Roles
@@ -154,3 +155,29 @@ El porcentaje de asistencia cuenta Presente y Retraso como asistencia. Las ausen
 - Calendario de feriados y sesiones canceladas.
 - Adjuntar documentos a la ficha (Supabase Storage).
 - Vista para familias.
+
+## Estudio de posts
+
+Sección **Posts** del menú, visible solo para dirección. Arma posts de Instagram con la gráfica tomada de la plantilla de Canva «Plantillas posteos (Post de Instagram 4:5)»: tipografía **Montserrat Bold**, el logo SPEC TRUM PRO (a color, blanco o negro) y la paleta de la marca:
+
+| Color | Hex |
+| --- | --- |
+| Amarillo | `#f8dd40` |
+| Rosado | `#e55dbe` |
+| Celeste | `#30b4e7` |
+| Verde | `#11b351` |
+| Rojo | `#f6364b` |
+| Morado | `#8d5dc5` |
+| Grafito (etiquetas oscuras) | `#21221c` |
+
+**Plantillas:** Título grande · Foto con etiquetas (1 a 3 fotos) · Foto con ficha (talleres, horarios) · Foto arriba y bloque de color · Presentación del equipo · Frases y testimonios · Texto arriba y foto abajo · Foto con titulares.
+
+- Cada post tiene de 1 a 20 **láminas** (carrusel) y cada lámina usa la plantilla que se elija.
+- **Formatos:** vertical 4:5 (1080×1350), cuadrado (1080×1080) e historia o portada de reel (1080×1920).
+- Las fotos se suben desde el computador o el celular y se ajustan con zoom y posición.
+- **Descargar** baja la lámina en PNG a tamaño real; con varias láminas también se baja todo en ZIP. En el celular aparece **Compartir…** para mandarlas directo a Instagram.
+- **Guardar** deja el post en la pestaña **Guardados** para editarlo o reutilizarlo después.
+
+### Activarlo en Supabase
+
+En **SQL Editor**, ejecuta `supabase/migrations/20261126000000_estudio_posts.sql`. Crea la tabla `posts` y el bucket privado `posts` de Storage para las fotos, ambos accesibles solo para dirección (políticas RLS con `es_admin()`).

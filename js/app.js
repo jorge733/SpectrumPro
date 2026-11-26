@@ -1177,10 +1177,11 @@ function exportarAsistencia() {
    Enrutado y eventos
    ===================================================================== */
 const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, administracion: vistaAdministracion };
+// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección).
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
-  if (v === 'administracion' && !puede.admin()) return 'panel';
+  if ((v === 'administracion' || v === 'posts') && !puede.admin()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
