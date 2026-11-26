@@ -26,6 +26,7 @@
     <img src="assets/logo.svg" alt="" width="64" height="62">
     <p id="arranque-texto">Preparando la plataforma…</p>
     <span class="arranque-barra"><span></span></span>
+    <button type="button" id="arranque-reintentar" class="btn btn-sec" onclick="location.reload()" hidden>Reintentar</button>
   </div>
 </div>
 
@@ -310,7 +311,7 @@
 </dialog>
 
 <div id="toasts" class="toasts" aria-live="polite"></div>
-<div id="cargando" class="cargando" hidden><span class="giro" aria-hidden="true"></span><span class="sr">Cargando…</span></div>
+<div id="cargando" class="cargando" role="status" hidden><span class="giro" aria-hidden="true"></span><span id="cargando-texto">Guardando…</span></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="config.js"></script>

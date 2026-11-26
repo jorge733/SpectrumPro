@@ -67,6 +67,7 @@ const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
   tabCumple: 'jovenes', busqueda: '', filtroTaller: '', filtroPrograma: '', filtroEstado: 'activo', tabAdmin: 'usuarios',
   expDesde: iso(sumarDias(hoy(), -30)), expHasta: iso(hoy()),
+  q: {},              // texto de cada buscador: { clave: 'texto' }
 };
 
 const rol = () => S.perfil?.rol;
@@ -182,10 +183,31 @@ function confirmar(titulo, texto, etiqueta = 'Confirmar') {
     dlg.oncancel = () => fin(false);
   });
 }
-let cargas = 0;
-async function conCarga(tarea) {
-  cargas++; $('#cargando').hidden = false;
-  try { return await tarea(); } finally { if (--cargas === 0) $('#cargando').hidden = true; }
+// Indicador de «trabajando» arriba a la derecha. Aparece solo si la tarea tarda más de
+// 150 ms, para que las respuestas rápidas no parpadeen.
+let cargas = 0, esperaCarga = null;
+async function conCarga(tarea, texto = 'Guardando…') {
+  if (cargas++ === 0) {
+    $('#cargando-texto').textContent = texto;
+    esperaCarga = setTimeout(() => { $('#cargando').hidden = false; }, 150);
+  }
+  try { return await tarea(); }
+  finally { if (--cargas === 0) { clearTimeout(esperaCarga); $('#cargando').hidden = true; } }
+}
+// Pantalla de carga completa (la misma del arranque) para esperas largas.
+let esperaLenta = null;
+function pantallaCarga(texto) {
+  if (texto === false) { clearTimeout(esperaLenta); $('#arranque').hidden = true; return; }
+  textoArranque(texto);
+  $('#arranque-reintentar').hidden = true;
+  $('#arranque').hidden = false;
+  clearTimeout(esperaLenta);
+  // Si tarda demasiado (mala conexión), se ofrece recargar.
+  esperaLenta = setTimeout(() => {
+    if ($('#arranque').hidden) return;
+    textoArranque('Está tardando más de lo normal. Revisa tu conexión o vuelve a intentarlo.');
+    $('#arranque-reintentar').hidden = false;
+  }, 15000);
 }
 async function intentar(tarea, okMsg) {
   try { const r = await conCarga(tarea); if (okMsg) toast(okMsg); return r; }
@@ -202,6 +224,57 @@ function descargar(nombre, contenido, tipo) {
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+/* ---------- buscadores ----------
+   Un buscador filtra, sin volver a pintar, los elementos [data-q] que hay dentro de
+   las zonas [data-filtrable="clave"]. Los [data-grupo] se ocultan si quedan vacíos y
+   cada zona puede tener un .sin-resultados que aparece cuando nada coincide. */
+const ICONO_LUPA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9"/></svg>';
+function buscador(clave, placeholder, { id = '', valor = ui.q[clave] || '', clase = '' } = {}) {
+  return `<div class="buscador ${clase}" role="search">
+    ${ICONO_LUPA}
+    <input type="search" ${id ? `id="${id}"` : ''} data-buscador="${clave}" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}" value="${esc(valor)}" autocomplete="off" spellcheck="false" enterkeyhint="search">
+    <span class="buscador-cuenta" data-cuenta="${clave}" aria-live="polite"></span>
+    <button type="button" class="buscador-limpiar" data-limpiar="${clave}" aria-label="Borrar búsqueda" title="Borrar búsqueda" ${valor ? '' : 'hidden'}>×</button>
+  </div>`;
+}
+const qAttr = (...partes) => `data-q="${esc(sinTildes(partes.flat().filter(Boolean).join(' ')))}"`;
+const sinResultados = (texto = 'Nada coincide con la búsqueda.') => `<p class="vacio sin-resultados" hidden>${esc(texto)}</p>`;
+function aplicarBusqueda(clave, raiz = document) {
+  const palabras = sinTildes((ui.q[clave] || '').trim()).split(/\s+/).filter(Boolean);
+  let vis = 0, total = 0;
+  for (const zona of $$(`[data-filtrable="${clave}"]`, raiz)) {
+    let visZona = 0;
+    const items = $$('[data-q]', zona);
+    for (const it of items) {
+      const ok = palabras.every(p => it.dataset.q.includes(p));
+      it.hidden = !ok;
+      if (ok) visZona++;
+    }
+    $$('[data-grupo]', zona).forEach(g => { g.hidden = palabras.length > 0 && !$$('[data-q]', g).some(i => !i.hidden); });
+    const sr = $('.sin-resultados', zona);
+    if (sr) sr.hidden = !(palabras.length && items.length && !visZona);
+    vis += visZona; total += items.length;
+  }
+  $$(`[data-cuenta="${clave}"]`, raiz).forEach(c => { c.textContent = palabras.length ? `${vis} de ${total}` : ''; });
+  $$(`[data-limpiar="${clave}"]`, raiz).forEach(b => { b.hidden = !ui.q[clave]; });
+}
+const aplicarBuscadores = raiz => $$('[data-buscador]', raiz).forEach(i => { if (i.id !== 'buscar') aplicarBusqueda(i.dataset.buscador, raiz); });
+// Lista de casillas larga (talleres, equipo): se le pone un buscador encima si tiene muchas opciones.
+function filtroChecks(caja, clave, placeholder, minimo = 8) {
+  ui.q[clave] = '';
+  caja.previousElementSibling?.classList.contains('buscador') && caja.previousElementSibling.remove();
+  const labels = $$('label', caja);
+  if (labels.length < minimo) { caja.removeAttribute('data-filtrable'); return; }
+  labels.forEach(l => { l.dataset.q = sinTildes(l.textContent); });
+  caja.dataset.filtrable = clave;
+  caja.insertAdjacentHTML('beforeend', sinResultados('Ninguna opción coincide.'));
+  caja.insertAdjacentHTML('beforebegin', buscador(clave, placeholder, { clase: 'buscador-peq' }));
+}
+
+/* ---------- esqueletos de carga ---------- */
+const esqueletoLineas = (n = 3) => `<div class="esqueleto-grupo" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="esqueleto" style="width:${[92, 74, 84, 60, 88][i % 5]}%"></span>`).join('')}</div>`;
+const esqueletoTabla = (filas = 6, cols = 4) => `<div class="tabla-scroll" aria-hidden="true"><table class="tabla"><tbody>${Array.from({ length: filas }, () => `<tr>${Array.from({ length: cols }, (_, c) => `<td><span class="esqueleto" style="width:${[70, 60, 85, 95][c % 4]}%"></span></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
 const csv = filas => '﻿' + filas.map(f => f.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
 
 /* =====================================================================
@@ -212,7 +285,7 @@ let necesitaClave = /type=(invite|recovery)/.test(location.hash);
 
 function mostrarAcceso(panel = 'entrar', mensaje = '') {
   document.body.classList.remove('resolviendo');
-  $('#arranque').hidden = true;
+  pantallaCarga(false);
   $('#app').hidden = true;
   $('#acceso').hidden = false;
   const demo = D.modo === 'demo';
@@ -227,7 +300,7 @@ function mostrarAcceso(panel = 'entrar', mensaje = '') {
 }
 
 async function iniciarSesion() {
-  textoArranque('Verificando tu cuenta…');
+  pantallaCarga('Verificando tu cuenta…');
   const perfil = await D.perfil();
   if (!perfil || !perfil.activo || !perfil.rol) {
     await D.salir();
@@ -239,12 +312,20 @@ async function iniciarSesion() {
   await cargarTodo();
 }
 
-async function cargarTodo() {
-  textoArranque('Cargando talleres, fichas y asistencia…');
+async function cargarTodo(texto = 'Cargando talleres, fichas y asistencia…') {
+  pantallaCarga(texto);
   const desde = iso(sumarDias(hoy(), -DIAS_HISTORIA));
-  const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = await Promise.all([
-    D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
-  ]);
+  let datos;
+  try {
+    datos = await Promise.all([
+      D.talleres(), D.alumnos(), D.asistencia(desde), D.cumpleanos(), D.cumpleanosEquipo().catch(() => []), puede.admin() ? D.usuarios() : Promise.resolve([]),
+    ]);
+  } catch (e) {
+    // Si ya se veía la plataforma (p. ej. al restablecer la demo), se vuelve a ella.
+    if (!$('#app').hidden) pantallaCarga(false);
+    throw e;
+  }
+  const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = datos;
   Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null });
   mostrarApp();
 }
@@ -252,7 +333,7 @@ async function cargarTodo() {
 function mostrarApp() {
   document.body.classList.remove('resolviendo');
   document.body.dataset.rol = rol();
-  $('#arranque').hidden = true;
+  pantallaCarga(false);
   $('#acceso').hidden = true;
   $('#app').hidden = false;
   $('#aviso-demo').hidden = D.modo !== 'demo';
@@ -270,7 +351,8 @@ async function arrancar() {
   aplicarPlegado();
   const cfg = window.SPECTRUMPRO_CONFIG || {};
   if (cfg.supabaseUrl && D.modo === 'demo') {
-    textoArranque('No se pudo cargar la conexión con Supabase. Revisa tu internet y recarga la página.');
+    textoArranque('No se pudo cargar la conexión con Supabase. Revisa tu internet y vuelve a intentarlo.');
+    $('#arranque-reintentar').hidden = false;
     return;
   }
   D.alCambiarSesion((evento) => {
@@ -278,7 +360,7 @@ async function arrancar() {
     if (evento === 'SIGNED_OUT' && S.perfil) { S.perfil = null; mostrarAcceso('entrar', 'Tu sesión terminó. Vuelve a entrar.'); }
   });
   try {
-    textoArranque('Conectando…');
+    pantallaCarga('Conectando…');
     const sesion = await D.sesion();
     if (!sesion) return mostrarAcceso();
     await iniciarSesion();
@@ -296,7 +378,7 @@ $('#form-entrar').addEventListener('submit', async ev => {
   const btn = ev.submitter || $('#form-entrar button[type=submit]');
   botonOcupado(btn, true, 'Entrando…');
   try { await D.entrar(email, clave); $('#entrar-clave').value = ''; await iniciarSesion(); }
-  catch (e) { err.textContent = e.message; err.hidden = false; }
+  catch (e) { pantallaCarga(false); err.textContent = e.message; err.hidden = false; }
   finally { botonOcupado(btn, false); }
 });
 $('#form-recuperar').addEventListener('submit', async ev => {
@@ -304,10 +386,13 @@ $('#form-recuperar').addEventListener('submit', async ev => {
   const email = $('#recuperar-email').value.trim();
   const info = $('#recuperar-info');
   if (!email) { info.textContent = 'Escribe tu correo.'; info.hidden = false; return; }
+  const btn = ev.submitter || $('#form-recuperar button[type=submit]');
+  botonOcupado(btn, true, 'Enviando…');
   try {
     await D.recuperar(email);
     info.textContent = `Si ${email} corresponde a una cuenta, en unos minutos llegará un enlace para crear una contraseña nueva. Revisa también la carpeta de spam.`;
   } catch (e) { info.textContent = e.message; }
+  finally { botonOcupado(btn, false); }
   info.hidden = false;
 });
 $('#form-clave').addEventListener('submit', async ev => {
@@ -324,7 +409,7 @@ $('#form-clave').addEventListener('submit', async ev => {
     history.replaceState(null, '', location.pathname + '#panel');
     toast('Contraseña guardada');
     await iniciarSesion();
-  } catch (e) { err.textContent = e.message; err.hidden = false; }
+  } catch (e) { pantallaCarga(false); err.textContent = e.message; err.hidden = false; }
   finally { botonOcupado(btn, false); }
 });
 
@@ -526,14 +611,15 @@ function pasarLista(el) {
         <button type="button" class="btn btn-sec btn-peq" id="todos-presentes" ${futuro || !inscritos.length ? 'disabled' : ''}>Marcar pendientes como presentes</button>
       </div>
       ${futuro ? '<p class="nota-campo">Esta fecha es futura. Solo puedes registrar asistencia de hoy o días anteriores.</p>' : ''}
-      ${inscritos.length ? `<ul class="lista pase">${inscritos.map(a => `
-        <li>
+      ${inscritos.length >= 6 ? buscador('lista', 'Buscar joven en la lista', { clase: 'buscador-lista' }) : ''}
+      ${inscritos.length ? `<div data-filtrable="lista"><ul class="lista pase">${inscritos.map(a => `
+        <li ${qAttr(a.nombre, a.apellidos, a.apodo)}>
           ${avatar(a)}
           <div class="txt"><b class="fila-click" data-ficha="${a.id}">${esc(nombreVisible(a))}</b><small>${esc(a.programa)}${a.pronombres ? ' · ' + esc(a.pronombres) : ''}${a.alergias ? ' · <span class="txt-alerta">Alergia: ' + esc(a.alergias) + '</span>' : ''}</small></div>
           <div class="seg" role="group" aria-label="Asistencia de ${esc(nombreVisible(a))}" data-alumno="${a.id}">
             ${Object.entries(ESTADOS).map(([k, v]) => `<button type="button" data-e="${k}" aria-pressed="${reg[a.id] === k}" title="${v.label}" ${futuro ? 'disabled' : ''}><span class="lbl-corto">${k}</span><span class="lbl-largo">${v.label}</span></button>`).join('')}
           </div>
-        </li>`).join('')}</ul>` : '<p class="vacio">No hay jóvenes activos inscritos en este taller.</p>'}
+        </li>`).join('')}</ul>${sinResultados('Nadie de la lista coincide con la búsqueda.')}</div>` : '<p class="vacio">No hay jóvenes activos inscritos en este taller.</p>'}
     </section>` : ''}`;
   pintarResumenLista();
 }
@@ -564,12 +650,14 @@ async function marcar(aid, e, seg) {
   fijarLocal(fecha, tid, [aid], nuevo);   // optimista: la pantalla responde al instante
   pintarSeg(seg, nuevo);
   pintarResumenLista();
+  const fila = seg.closest('li');
+  fila?.classList.add('guardando'); seg.setAttribute('aria-busy', 'true');
   try { await D.marcar(fecha, tid, [aid], nuevo); }
   catch (err) {
     fijarLocal(fecha, tid, [aid], antes);
     pintarSeg(seg, antes); pintarResumenLista();
     toast(`No se guardó la asistencia. ${err.message}`, 'error');
-  }
+  } finally { fila?.classList.remove('guardando'); seg.removeAttribute('aria-busy'); }
 }
 const pintarSeg = (seg, actual) => $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.e === actual)));
 
@@ -585,12 +673,13 @@ function resumenMensual(el) {
   }
   const ins = tal ? ordenarAlumnos(S.alumnos.filter(a => a.talleres.includes(tal.id) && (a.estado === 'activo' || fechas.some(d => S.asistencia[iso(d)]?.[tal.id]?.[a.id])))) : [];
   el.innerHTML = `
-    <section class="tarjeta pila">
+    <section class="tarjeta pila" data-filtrable="mes">
       <div class="controles">
         <label class="campo-inline" for="mes-mes">Mes<input type="month" id="mes-mes" value="${ui.mes}"></label>
         <label class="campo-inline" for="mes-taller">Taller
           <select id="mes-taller">${misTalleres().map(o => `<option value="${o.id}" ${o.id === ui.tallerMes ? 'selected' : ''}>${esc(o.nombre)}</option>`).join('')}</select>
         </label>
+        ${fechas.length && ins.length >= 6 ? buscador('mes', 'Buscar joven', { clase: 'buscador-inline' }) : ''}
         <div class="leyenda" style="margin-left:auto">${Object.entries(ESTADOS).map(([k, v]) => `<span class="chip ${v.chip}">${k} · ${v.label}</span>`).join('')}</div>
       </div>
       ${!fechas.length ? '<p class="vacio">No hay sesiones en este mes.</p>' : `
@@ -604,10 +693,10 @@ function resumenMensual(el) {
               if (e) { n++; if (e === 'P' || e === 'R') p++; }
               return `<td class="c ${e ? 'c-' + e : ''}" title="${e ? ESTADOS[e].label : 'Sin registro'}">${e || '·'}</td>`;
             }).join('');
-            return `<tr><td class="nom fila-click" data-ficha="${a.id}">${esc(nombreVisible(a))}</td>${celdas}<td class="pct">${n ? Math.round(p / n * 100) + '%' : '—'}</td></tr>`;
+            return `<tr ${qAttr(a.nombre, a.apellidos, a.apodo)}><td class="nom fila-click" data-ficha="${a.id}">${esc(nombreVisible(a))}</td>${celdas}<td class="pct">${n ? Math.round(p / n * 100) + '%' : '—'}</td></tr>`;
           }).join('')}</tbody>
         </table>
-      </div>`}
+      </div>${sinResultados('Nadie coincide con la búsqueda.')}`}
     </section>`;
 }
 
@@ -639,31 +728,33 @@ function vistaCumpleanos(el) {
       <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
     </section>` : ''}
     ${esEquipo && !fuente.length ? `<section class="tarjeta"><p class="vacio">${vacioEquipo}</p></section>` : `
+    ${fuente.length > 4 ? `<div class="controles">${buscador('cumple', esEquipo ? 'Buscar persona del equipo' : 'Buscar joven o mes', { clase: 'buscador-ancho' })}</div>` : ''}
     ${deHoy.map(x => `<div class="hoy-cumple">${avatar(x.a, 'avatar-xl')}<div><p class="eyebrow">Hoy, ${esc(fechaLarga(t))}</p><b>${esc(nombreLargo(x.a))} ${sinAnio(x.a.fechaNac) ? 'está de cumpleaños' : `cumple ${x.cumple} años`}</b></div>${alumno(x.a.id) ? `<button type="button" class="btn btn-sec btn-peq" data-ficha="${x.a.id}" style="margin-left:auto">Ver ficha</button>` : ''}</div>`).join('')}
-    <section class="tarjeta">
+    <section class="tarjeta" data-filtrable="cumple">
       <h2>Próximos 30 días <small>${prox.length} cumpleaños</small></h2>
       ${prox.length ? `<ul class="lista">${prox.map(x => `
-        <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)}>
+        <li class="${alumno(x.a.id) ? 'fila-click' : ''}" ${abrible(x.a.id)} ${qAttr(nombreLargo(x.a), x.a.apodo, MESES[x.fecha.getMonth()])}>
           ${avatar(x.a)}
           <div class="txt"><b>${esc(nombreLargo(x.a))}</b><small>${esc(fechaLarga(x.fecha))}${cumpleTxt(x)}</small></div>
           <span class="dias">${x.dias}<small>${x.dias === 1 ? 'día' : 'días'}</small></span>
-        </li>`).join('')}</ul>` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
+        </li>`).join('')}</ul>${sinResultados('Nadie coincide en los próximos 30 días.')}` : '<p class="vacio">No hay cumpleaños en los próximos 30 días.</p>'}
     </section>
-    <section class="meses" aria-label="Cumpleaños por mes">
+    <section class="meses" aria-label="Cumpleaños por mes" data-filtrable="cumple">
       ${meses.map((m, i) => {
         const delMes = fuente.filter(a => deISO(a.fechaNac).getMonth() === m).sort((a, b) => deISO(a.fechaNac).getDate() - deISO(b.fechaNac).getDate());
-        return `<div class="mes ${i === 0 ? 'actual' : ''}">
+        return `<div class="mes ${i === 0 ? 'actual' : ''}" data-grupo>
           <h3>${MESES[m]} <small>${delMes.length || ''}</small></h3>
-          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}"><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${sinAnio(a.fechaNac) ? '' : proximoCumple(a.fechaNac, t).cumple + ' años'}</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
+          ${delMes.length ? `<ul>${delMes.map(a => `<li ${abrible(a.id)} class="${alumno(a.id) ? 'clic' : ''}" ${qAttr(nombreLargo(a), a.apodo, MESES[m])}><span class="d">${deISO(a.fechaNac).getDate()}</span><span class="n">${esc(nombreCorto(a))}</span><span class="e">${sinAnio(a.fechaNac) ? '' : proximoCumple(a.fechaNac, t).cumple + ' años'}</span></li>`).join('')}</ul>` : '<p class="vacio" style="padding:0">Sin cumpleaños</p>'}
         </div>`;
       }).join('')}
+      ${sinResultados('Nadie coincide con la búsqueda en el calendario.')}
     </section>`}`;
 }
 
 function filtrarFichas() {
   const q = sinTildes(ui.busqueda.trim());
   return ordenarAlumnos(S.alumnos).filter(a =>
-    (!q || sinTildes(`${a.nombre} ${a.apellidos} ${a.apodo} ${a.tutorNombre} ${a.rut}`).includes(q)) &&
+    (!q || q.split(/\s+/).every(p => sinTildes(`${a.nombre} ${a.apellidos} ${a.apodo} ${a.tutorNombre} ${a.rut} ${a.rut?.replace(/\D/g, '')} ${a.programa} ${a.talleres.map(id => taller(id)?.nombre).join(' ')}`).includes(p))) &&
     (!ui.filtroTaller || a.talleres.includes(ui.filtroTaller)) &&
     (!ui.filtroPrograma || a.programa === ui.filtroPrograma) &&
     (!ui.filtroEstado || a.estado === ui.filtroEstado));
@@ -676,7 +767,7 @@ function vistaAlumnos(el) {
       ${puede.editarFichas() ? '<button type="button" class="btn" data-accion="nueva-ficha">+ Nueva ficha</button>' : ''}
     </header>
     <div class="controles">
-      <input type="search" id="buscar" placeholder="Buscar por nombre, RUT o responsable" value="${esc(ui.busqueda)}" aria-label="Buscar" style="flex:1 1 240px">
+      ${buscador('fichas', 'Buscar por nombre, RUT, responsable o taller', { id: 'buscar', valor: ui.busqueda, clase: 'buscador-ancho' })}
       <select id="filtro-estado" aria-label="Filtrar por estado"><option value="">Todos los estados</option>${Object.entries(ESTADO_ALUMNO).map(([k, v]) => `<option value="${k}" ${k === ui.filtroEstado ? 'selected' : ''}>${v}</option>`).join('')}</select>
       <select id="filtro-programa" aria-label="Filtrar por programa"><option value="">Todos los programas</option>${programas.map(p => `<option ${p === ui.filtroPrograma ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>
       <select id="filtro-taller" aria-label="Filtrar por taller"><option value="">Todos los talleres</option>${S.talleres.map(t => `<option value="${t.id}" ${t.id === ui.filtroTaller ? 'selected' : ''}>${esc(t.nombre)}</option>`).join('')}</select>
@@ -686,6 +777,9 @@ function vistaAlumnos(el) {
 }
 function pintarFichas() {
   const lista = filtrarFichas();
+  const filtrando = ui.busqueda.trim() || ui.filtroTaller || ui.filtroPrograma || ui.filtroEstado;
+  $$('[data-cuenta="fichas"]').forEach(c => { c.textContent = filtrando ? `${lista.length} de ${S.alumnos.length}` : ''; });
+  $$('[data-limpiar="fichas"]').forEach(b => { b.hidden = !ui.busqueda; });
   $('#lista-fichas').innerHTML = lista.length ? `<div class="fichas">${lista.map(a => {
     const r = resumen(registros({ alumno: a.id, desde: hace30() }));
     return `<button type="button" class="ficha-card" data-ficha="${a.id}">
@@ -704,11 +798,12 @@ function vistaTalleres(el) {
       <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? 'Talleres' : 'Tus talleres'}</h1><p>${eq ? 'Horario semanal y quién está a cargo.' : 'Horario semanal y asistencia de los últimos 30 días.'}</p></div>
       ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
     </header>
-    ${lista.length ? `<div class="talleres">${lista.map(t => {
+    ${lista.length > 3 ? `<div class="controles">${buscador('talleres', 'Buscar taller, área, día o persona a cargo', { clase: 'buscador-ancho' })}</div>` : ''}
+    ${lista.length ? `<div data-filtrable="talleres"><div class="talleres">${lista.map(t => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
       const r = resumen(registros({ taller: t.id, desde: hace30() }));
       const equipo = S.usuarios.filter(u => t.equipo.includes(u.id));
-      return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}">
+      return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}" ${qAttr(t.nombre, t.area, t.encargado, t.dias.map(d => DIAS[d]), equipo.map(u => u.nombre || u.email), t.activo ? '' : 'inactivo')}>
         <h2>${esc(t.nombre)}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
         <dl>
           <dt>Área</dt><dd>${esc(t.area) || '—'}</dd>
@@ -724,7 +819,7 @@ function vistaTalleres(el) {
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>` : '<div class="vacio-grande">No tienes talleres asignados.</div>'}`;
+    }).join('')}</div>${sinResultados('Ningún taller coincide con la búsqueda.')}</div>` : '<div class="vacio-grande">No tienes talleres asignados.</div>'}`;
 }
 
 /* ---------- Administración ---------- */
@@ -749,7 +844,7 @@ function adminUsuarios(el) {
   const pendientes = S.usuarios.filter(u => !u.rol || !u.activo);
   const activos = S.usuarios.filter(u => u.rol && u.activo);
   const fila = u => `
-    <li class="fila-click" data-usuario="${u.id}">
+    <li class="fila-click" data-usuario="${u.id}" ${qAttr(u.nombre, u.email, u.rol && u.activo ? ROLES[u.rol] : 'sin acceso', u.talleres.map(id => taller(id)?.nombre))}>
       <span class="avatar" style="--h:${tono(u.id)}" aria-hidden="true">${esc(iniciales(u.nombre || u.email))}</span>
       <div class="txt"><b>${esc(u.nombre || u.email)}${u.id === S.perfil.id ? ' <span class="muted">(tú)</span>' : ''}</b><small>${esc(u.email)}${u.rol === 'tallerista' ? ' · ' + (u.talleres.map(id => esc(taller(id)?.nombre || '')).join(', ') || 'sin talleres') : ''}</small></div>
       ${u.rol && u.activo ? `<span class="chip chip-rol-${u.rol}">${ROLES[u.rol]}</span>` : '<span class="chip chip-warn">Sin acceso</span>'}
@@ -758,9 +853,13 @@ function adminUsuarios(el) {
     <section class="tarjeta">
       <h2><span>Cuentas del equipo</span><button type="button" class="btn btn-peq" data-accion="invitar">+ Invitar persona</button></h2>
       <p class="nota-suave">Cada persona recibe un correo para crear su contraseña. Los talleristas solo ven a quienes están inscritos en sus talleres y pasan lista en ellos. Las terapeutas ven todo el alumnado y sus datos de salud. El rol Equipo ve cumpleaños y talleres, sin fichas ni asistencia.</p>
-      ${pendientes.length ? `<h3 class="sub">Esperando acceso</h3><ul class="lista">${pendientes.map(fila).join('')}</ul>` : ''}
-      <h3 class="sub">Con acceso</h3>
-      <ul class="lista">${activos.map(fila).join('')}</ul>
+      ${S.usuarios.length > 4 ? buscador('usuarios', 'Buscar por nombre, correo, rol o taller') : ''}
+      <div data-filtrable="usuarios">
+        ${pendientes.length ? `<div data-grupo><h3 class="sub">Esperando acceso</h3><ul class="lista">${pendientes.map(fila).join('')}</ul></div>` : ''}
+        <div data-grupo><h3 class="sub">Con acceso</h3>
+        <ul class="lista">${activos.map(fila).join('')}</ul></div>
+        ${sinResultados('Ninguna cuenta coincide con la búsqueda.')}
+      </div>
     </section>`;
 }
 
@@ -780,7 +879,11 @@ function detalleAuditoria(r) {
   return partes.join(' · ');
 }
 async function adminAuditoria(el) {
-  el.innerHTML = '<section class="tarjeta"><p class="vacio">Cargando auditoría…</p></section>';
+  el.innerHTML = `<section class="tarjeta" aria-busy="true">
+      <h2><span>Últimos 200 cambios</span></h2>
+      <p class="nota-suave"><span class="giro giro-peq" aria-hidden="true"></span> Cargando auditoría…</p>
+      ${esqueletoTabla(8, 4)}
+    </section>`;
   try { S.auditoria = await D.auditoria(200); }
   catch (e) { el.innerHTML = `<section class="tarjeta"><p class="aviso-error">${esc(e.message)}</p></section>`; return; }
   if (ui.tabAdmin !== 'auditoria') return;
@@ -788,11 +891,13 @@ async function adminAuditoria(el) {
     <section class="tarjeta">
       <h2><span>Últimos 200 cambios</span><button type="button" class="btn btn-sec btn-peq" data-tab-admin="auditoria">Actualizar</button></h2>
       <p class="nota-suave">La base de datos registra cada cambio automáticamente. Nadie puede editar ni borrar este historial desde la plataforma.</p>
-      ${S.auditoria.length ? `<div class="tabla-scroll"><table class="tabla">
+      ${S.auditoria.length ? `${buscador('auditoria', 'Buscar por persona, acción, joven, taller o fecha')}
+      <div data-filtrable="auditoria"><div class="tabla-scroll"><table class="tabla">
         <thead><tr><th scope="col">Cuándo</th><th scope="col">Quién</th><th scope="col">Qué</th><th scope="col">Detalle</th></tr></thead>
-        <tbody>${S.auditoria.map(r => `<tr><td class="num nowrap">${esc(fechaHora(r.creado))}</td><td>${esc(r.actor_nombre)}</td><td>${esc(ACCIONES[r.accion] || r.accion)} ${esc(TABLAS[r.tabla] || r.tabla)}</td><td class="muted">${esc(detalleAuditoria(r))}</td></tr>`).join('')}</tbody>
-      </table></div>` : '<p class="vacio">Aún no hay cambios registrados.</p>'}
+        <tbody>${S.auditoria.map(r => `<tr ${qAttr(fechaHora(r.creado), r.actor_nombre, ACCIONES[r.accion] || r.accion, TABLAS[r.tabla] || r.tabla, detalleAuditoria(r))}><td class="num nowrap">${esc(fechaHora(r.creado))}</td><td>${esc(r.actor_nombre)}</td><td>${esc(ACCIONES[r.accion] || r.accion)} ${esc(TABLAS[r.tabla] || r.tabla)}</td><td class="muted">${esc(detalleAuditoria(r))}</td></tr>`).join('')}</tbody>
+      </table></div>${sinResultados('Ningún cambio coincide con la búsqueda.')}</div>` : '<p class="vacio">Aún no hay cambios registrados.</p>'}
     </section>`;
+  aplicarBusqueda('auditoria', el);
 }
 
 function adminDatos(el) {
@@ -892,7 +997,7 @@ async function abrirFicha(id) {
         </section>
         ${puede.verTodo() ? `<section class="ancho privado">
           <h3>Datos privados <small>· solo dirección y terapeutas</small></h3>
-          <dl class="dato" id="ficha-privado"><dt>Cargando…</dt><dd></dd></dl>
+          <dl class="dato" id="ficha-privado" aria-busy="true"><dt>Medicación</dt><dd><span class="esqueleto" style="width:60%"></span></dd><dt>Observaciones</dt><dd>${esqueletoLineas(2)}</dd></dl>
         </section>` : ''}
         <section class="ancho">
           <h3>Asistencia</h3>
@@ -913,13 +1018,14 @@ async function abrirFicha(id) {
     try {
       const p = await D.privado(id);
       const box = $('#ficha-privado');
-      if (box) box.innerHTML = fila('Medicación', esc(p.medicacion)) + fila('Observaciones', esc(p.observaciones));
-    } catch (e) { const box = $('#ficha-privado'); if (box) box.innerHTML = `<dt>Error</dt><dd>${esc(e.message)}</dd>`; }
+      if (box) { box.innerHTML = fila('Medicación', esc(p.medicacion)) + fila('Observaciones', esc(p.observaciones)); box.removeAttribute('aria-busy'); }
+    } catch (e) { const box = $('#ficha-privado'); if (box) { box.innerHTML = `<dt>Error</dt><dd>${esc(e.message)}</dd>`; box.removeAttribute('aria-busy'); } }
   }
 }
 
 /* ---------- formulario de ficha ---------- */
 let editando = null;
+let privadoCargado = false;   // evita borrar medicación y observaciones si se guarda antes de que lleguen
 const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'emergencia2', 'direccion', 'intereses', 'apoyos', 'alergias'];
 async function abrirFormulario(id = null) {
   editando = id;
@@ -929,19 +1035,33 @@ async function abrirFormulario(id = null) {
   $('#form-titulo').textContent = a ? `Editar ficha de ${nombreVisible(a)}` : 'Nueva ficha';
   $('#form-error').hidden = true;
   $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en la sección Talleres.</p>';
+  filtroChecks($('#f-talleres'), 'f-talleres', 'Buscar taller');
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
   if (!a) { $('#f-programa').value = 'FormaPro'; $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
   $('#f-privado').hidden = !puede.verTodo();
+  privadoCargado = !a;
+  const camposPrivados = [$('#f-medicacion'), $('#f-observaciones')];
+  const esperandoPrivado = !!a && puede.verTodo();
+  camposPrivados.forEach(c => { c.disabled = esperandoPrivado; c.placeholder = esperandoPrivado ? 'Cargando…' : ''; });
+  $('#f-privado').classList.toggle('cargando-campos', esperandoPrivado);
   $('#f-fechaNac').max = iso(hoy());
   mostrarEdad();
   avisoTO();
   if ($('#dlg-ficha').open) $('#dlg-ficha').close();
   $('#dlg-form').showModal();
   $('#f-nombre').focus();
-  if (a && puede.verTodo()) {
-    try { const p = await D.privado(a.id); $('#f-medicacion').value = p.medicacion; $('#f-observaciones').value = p.observaciones; }
-    catch (e) { toast(`No se cargaron los datos privados. ${e.message}`, 'error'); }
+  if (esperandoPrivado) {
+    try {
+      const p = await D.privado(a.id);
+      if (editando !== a.id) return;
+      $('#f-medicacion').value = p.medicacion; $('#f-observaciones').value = p.observaciones;
+      privadoCargado = true;
+      camposPrivados.forEach(c => { c.disabled = false; c.placeholder = ''; });
+    } catch (e) {
+      toast(`No se cargaron los datos privados; no se modificarán al guardar. ${e.message}`, 'error');
+      camposPrivados.forEach(c => { c.placeholder = 'No se pudieron cargar'; });
+    } finally { if (editando === a.id) $('#f-privado').classList.remove('cargando-campos'); }
   }
 }
 // Edad al momento, mientras se escribe la fecha de nacimiento.
@@ -990,13 +1110,13 @@ $('#form-alumno').addEventListener('submit', async ev => {
   try {
     const id = await conCarga(async () => {
       const id = await D.guardarAlumno({ ...datos, id: editando });
-      if (puede.verTodo()) await D.guardarPrivado(id, { medicacion: fd.get('medicacion'), observaciones: fd.get('observaciones') });
+      if (puede.verTodo() && privadoCargado) await D.guardarPrivado(id, { medicacion: fd.get('medicacion'), observaciones: fd.get('observaciones') });
+      S.cumple = await D.cumpleanos();
       return id;
     });
     const fila = { ...datos, id };
     const i = S.alumnos.findIndex(x => x.id === id);
     if (i >= 0) S.alumnos[i] = fila; else S.alumnos.push(fila);
-    S.cumple = await D.cumpleanos();
     $('#dlg-form').close();
     toast(editando ? 'Ficha actualizada' : 'Ficha creada');
     render();
@@ -1023,6 +1143,7 @@ function abrirTaller(id = null) {
   $('#t-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<label><input type="checkbox" name="dias" value="${d}" ${t?.dias.includes(d) ? 'checked' : ''}>${DIAS_CORTOS[d]}</label>`).join('');
   const equipo = S.usuarios.filter(u => u.rol === 'tallerista');
   $('#t-equipo').innerHTML = equipo.length ? equipo.map(u => `<label><input type="checkbox" name="equipo" value="${u.id}" ${t?.equipo.includes(u.id) ? 'checked' : ''}>${esc(u.nombre || u.email)}${u.activo ? '' : ' <span class="muted">(inactiva)</span>'}</label>`).join('') : '<p class="nota-suave">Aún no hay talleristas. Invítalas desde Administración. Dirección y terapeutas pueden pasar lista en todos los talleres.</p>';
+  filtroChecks($('#t-equipo'), 't-equipo', 'Buscar tallerista');
   $('#t-eliminar').hidden = !t;
   $('#dlg-taller').showModal();
   $('#t-nombre').focus();
@@ -1044,8 +1165,7 @@ $('#form-taller').addEventListener('submit', async ev => {
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
-    await conCarga(() => D.guardarTaller(t));
-    S.talleres = await D.talleres();
+    await conCarga(async () => { await D.guardarTaller(t); S.talleres = await D.talleres(); });
     $('#dlg-taller').close();
     toast(editandoTaller ? 'Taller actualizado' : 'Taller creado');
     render();
@@ -1086,6 +1206,7 @@ function abrirUsuario(id = null) {
   $('#u-guardar').textContent = u ? 'Guardar cambios' : 'Enviar invitación';
   $('#u-eliminar').hidden = !u || u.id === S.perfil.id;
   $('#u-talleres').innerHTML = S.talleres.filter(t => t.activo).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${u?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('');
+  filtroChecks($('#u-talleres'), 'u-talleres', 'Buscar taller');
   mostrarTalleresUsuario();
   $('#dlg-usuario').showModal();
   $('#u-nombre').focus();
@@ -1106,8 +1227,10 @@ $('#form-usuario').addEventListener('submit', async ev => {
   const btn = ev.submitter;
   botonOcupado(btn, true, editandoUsuario ? 'Guardando…' : 'Enviando…');
   try {
-    await conCarga(() => editandoUsuario ? D.actualizarUsuario(editandoUsuario, datos) : D.invitar(datos));
-    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
+    await conCarga(async () => {
+      await (editandoUsuario ? D.actualizarUsuario(editandoUsuario, datos) : D.invitar(datos));
+      [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
+    }, editandoUsuario ? 'Guardando…' : 'Enviando invitación…');
     $('#dlg-usuario').close();
     toast(editandoUsuario ? 'Cuenta actualizada' : `Invitación enviada a ${datos.email}`);
     render();
@@ -1119,8 +1242,10 @@ $('#u-eliminar').addEventListener('click', async () => {
   $('#dlg-usuario').close();
   if (!await confirmar(`¿Eliminar la cuenta de ${u.nombre || u.email}?`, 'La persona ya no podrá entrar. La asistencia que registró se conserva.', 'Eliminar cuenta')) return;
   try {
-    await intentar(() => D.eliminarUsuario(u.id), 'Cuenta eliminada');
-    [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
+    await intentar(async () => {
+      await D.eliminarUsuario(u.id);
+      [S.usuarios, S.talleres, S.cumpleEquipo] = await Promise.all([D.usuarios(), D.talleres(), D.cumpleanosEquipo()]);
+    }, 'Cuenta eliminada');
     render();
   } catch { /* ya avisado */ }
 });
@@ -1142,9 +1267,11 @@ $('#form-mi-cumple').addEventListener('submit', async ev => {
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
-    await conCarga(() => D.guardarMiFechaNac(fecha));
-    S.perfil.fechaNac = fecha;
-    [S.cumpleEquipo, S.usuarios] = await Promise.all([D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([])]);
+    await conCarga(async () => {
+      await D.guardarMiFechaNac(fecha);
+      S.perfil.fechaNac = fecha;
+      [S.cumpleEquipo, S.usuarios] = await Promise.all([D.cumpleanosEquipo(), puede.admin() ? D.usuarios() : Promise.resolve([])]);
+    });
     $('#dlg-mi-cumple').close();
     toast(fecha ? 'Fecha de nacimiento guardada' : 'Fecha de nacimiento borrada');
     render();
@@ -1191,6 +1318,7 @@ function render() {
   $$('.nav a').forEach(a => a.dataset.vista === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
   const caja = $('#vista');
   VISTAS[v](caja);
+  aplicarBuscadores(caja);
   // Solo se anima al cambiar de sección: render() también corre en cada clic (p. ej. al pasar lista).
   if (v !== vistaPintada) {
     vistaPintada = v;
@@ -1221,8 +1349,18 @@ document.addEventListener('click', async ev => {
     return;
   }
   if ((x = el('[data-demo-rol]'))) {
+    $$('[data-demo-rol]').forEach(b => { b.disabled = true; });
+    x.setAttribute('aria-busy', 'true');
     try { await D.entrarDemo(x.dataset.demoRol); if (!location.hash) location.hash = 'panel'; await iniciarSesion(); }
-    catch (e) { toast(e.message, 'error'); }
+    catch (e) { pantallaCarga(false); toast(e.message, 'error'); }
+    finally { $$('[data-demo-rol]').forEach(b => { b.disabled = false; b.removeAttribute('aria-busy'); }); }
+    return;
+  }
+  if ((x = el('[data-limpiar]'))) {
+    const inp = $('input[type=search]', x.closest('.buscador'));
+    inp.value = '';
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.focus();
     return;
   }
   if ((x = el('[data-copiar]'))) {
@@ -1265,17 +1403,18 @@ document.addEventListener('click', async ev => {
   if ((x = el('[data-tab-admin]'))) { ui.tabAdmin = x.dataset.tabAdmin; render(); return; }
   if ((x = el('[data-tab-cumple]'))) { ui.tabCumple = x.dataset.tabCumple; render(); return; }
   if ((x = el('[data-modo]'))) { ui.modoAsis = x.dataset.modo; render(); return; }
-  if ((x = el('[data-taller]'))) { ui.taller = x.dataset.taller; render(); return; }
+  if ((x = el('[data-taller]'))) { ui.taller = x.dataset.taller; ui.q.lista = ''; render(); return; }
   if ((x = el('.seg button'))) { marcar(x.closest('.seg').dataset.alumno, x.dataset.e, x.closest('.seg')); return; }
   if (t.id === 'todos-presentes') {
     const { fecha, taller: tid } = ui;
     const reg = S.asistencia[fecha]?.[tid] || {};
     const pend = inscritosActivos(tid).filter(a => !reg[a.id]).map(a => a.id);
     if (!pend.length) { toast('No había pendientes'); return; }
+    botonOcupado(t, true, 'Marcando…');
     try {
       await intentar(() => D.marcar(fecha, tid, pend, 'P'), `${pend.length} marcados como presentes`);
       fijarLocal(fecha, tid, pend, 'P'); render();
-    } catch { /* ya avisado */ }
+    } catch { botonOcupado(t, false); }
     return;
   }
   if ((x = el('[data-accion]'))) {
@@ -1283,7 +1422,7 @@ document.addEventListener('click', async ev => {
     if (acc === 'olvide') { $('#recuperar-email').value = $('#entrar-email').value; $('#recuperar-info').hidden = true; mostrarAcceso('recuperar'); }
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
-      await D.salir();
+      try { await conCarga(() => D.salir(), 'Cerrando sesión…'); } catch { /* se sale igual */ }
       S.perfil = null;
       mostrarAcceso('entrar');
     }
@@ -1294,15 +1433,16 @@ document.addEventListener('click', async ev => {
     if (acc === 'exportar-fichas') exportarFichas();
     if (acc === 'exportar-asistencia') exportarAsistencia();
     if (acc === 'restablecer-demo' && await confirmar('¿Restablecer la demostración?', 'Se borran los cambios hechos en este navegador y se cargan de nuevo los datos ficticios.', 'Restablecer')) {
-      await D.restablecer(); await cargarTodo(); toast('Demostración restablecida');
+      try { await D.restablecer(); await cargarTodo('Restableciendo la demostración…'); toast('Demostración restablecida'); }
+      catch (e) { toast(e.message || String(e), 'error'); }
     }
   }
 });
 
 document.addEventListener('change', ev => {
   const t = ev.target;
-  if (t.id === 'asis-fecha' && t.value) { ui.fecha = t.value; ui.taller = null; render(); }
-  if (t.id === 'asis-otro' && t.value) { ui.taller = t.value; render(); }
+  if (t.id === 'asis-fecha' && t.value) { ui.fecha = t.value; ui.taller = null; ui.q.lista = ''; render(); }
+  if (t.id === 'asis-otro' && t.value) { ui.taller = t.value; ui.q.lista = ''; render(); }
   if (t.id === 'mes-mes' && t.value) { ui.mes = t.value; render(); }
   if (t.id === 'mes-taller') { ui.tallerMes = t.value; render(); }
   if (t.id === 'filtro-taller') { ui.filtroTaller = t.value; pintarFichas(); }
@@ -1313,7 +1453,28 @@ document.addEventListener('change', ev => {
   if (t.closest('#form-alumno')) avisoTO();
 });
 document.addEventListener('input', ev => {
-  if (ev.target.id === 'buscar') { ui.busqueda = ev.target.value; pintarFichas(); }
+  const t = ev.target;
+  if (t.id === 'buscar') { ui.busqueda = t.value; pintarFichas(); return; }
+  if (t.matches('[data-buscador]')) {
+    ui.q[t.dataset.buscador] = t.value;
+    aplicarBusqueda(t.dataset.buscador, t.closest('dialog') || document);
+  }
+});
+document.addEventListener('keydown', ev => {
+  const t = ev.target;
+  // Enter en un buscador dentro de un formulario no debe enviarlo.
+  if (ev.key === 'Enter' && t.matches?.('input[type=search]') && t.form) { ev.preventDefault(); return; }
+  // Escape en un buscador con texto lo vacía (y no cierra el diálogo).
+  if (ev.key === 'Escape' && t.matches?.('input[type=search]') && t.value) {
+    ev.preventDefault(); ev.stopPropagation();
+    t.value = ''; t.dispatchEvent(new Event('input', { bubbles: true }));
+    return;
+  }
+  // «/» lleva al buscador de la sección (como en Gmail o GitHub).
+  if (ev.key === '/' && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !t.closest?.('input, textarea, select, [contenteditable]') && !$('dialog[open]')) {
+    const b = $$('#vista input[type=search]').find(i => i.offsetParent);
+    if (b) { ev.preventDefault(); b.focus(); b.select(); }
+  }
 });
 
 /* ---------- conexión y PWA ---------- */
