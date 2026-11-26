@@ -69,6 +69,11 @@ En **Authentication**:
 1. **Sign In / Providers → Email**: desactiva **Allow new users to sign up**. Así solo entran personas invitadas por dirección. Aunque alguien lograra registrarse, su cuenta nace sin rol y no ve nada.
 2. **URL Configuration**: en **Site URL** pon `https://gestionspectrumpro.cl` y agrega `https://gestionspectrumpro.cl/**` en **Redirect URLs** (así funcionan los enlaces de invitación y de recuperación de contraseña).
 3. **Emails** (opcional): traduce al español los correos de invitación y de recuperación de contraseña.
+4. **Emails → SMTP Settings**: activa **Enable custom SMTP** para que los correos salgan por Resend desde el dominio propio (el servicio de correo incluido en Supabase solo envía unos pocos por hora):
+   - **Sender email**: `no-responder@gestionspectrumpro.cl` · **Sender name**: `SpectrumPro`
+   - **Host**: `smtp.resend.com` · **Port**: `465` · **Username**: `resend`
+   - **Password**: una API key de Resend con permiso *Sending access* limitado al dominio `gestionspectrumpro.cl` (verificado en Resend, región São Paulo).
+   Después, en **Rate Limits**, sube el límite de correos por hora (por ejemplo a 100).
 
 ### 3. Crear la primera cuenta de dirección
 
