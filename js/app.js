@@ -1,5 +1,5 @@
 'use strict';
-/* SpectrumPro · Gestión de alumnado
+/* SpectrumPro · Plataforma del equipo
    Interfaz. Los datos llegan de window.SPDatos (Supabase o demostración). */
 
 const D = window.SPDatos;

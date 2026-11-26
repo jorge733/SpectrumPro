@@ -1,4 +1,4 @@
-# SpectrumPro · Gestión de alumnado
+# SpectrumPro · Plataforma del equipo
 
 Plataforma interna de [SpectrumPro](https://spectrumpro.cl/) para registrar la **asistencia** a los talleres, ver los **cumpleaños** y mantener la **ficha** de cada joven.
 
