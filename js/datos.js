@@ -39,12 +39,13 @@
   const hora = t => (t || '').slice(0, 5);
   const filaATaller = (f, equipo) => ({
     id: f.id, nombre: f.nombre, area: f.area, dias: f.dias || [], horaInicio: hora(f.hora_inicio), horaFin: hora(f.hora_fin),
-    encargado: f.encargado, color: f.color, activo: f.activo, orden: f.orden,
+    encargado: f.encargado, color: f.color, activo: f.activo, orden: f.orden, temporada: f.temporada || 'semestral',
     equipo: equipo.filter(e => e.taller_id === f.id).map(e => e.perfil_id),
   });
   const tallerAFila = t => ({
     nombre: t.nombre, area: t.area || '', dias: t.dias, hora_inicio: t.horaInicio || null, hora_fin: t.horaFin || null,
     encargado: t.encargado || '', color: t.color || '#635CC7', activo: !!t.activo, orden: t.orden ?? 0,
+    temporada: t.temporada === 'verano' ? 'verano' : 'semestral',
   });
 
   const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'precio', 'variantes', 'imagen', 'visible', 'agotado', 'orden'];
@@ -316,8 +317,10 @@
       ['m-vj', 'Mentoría de Creación de Videojuegos y Animación 3D', 'Mentorías', [], '', '', 'Bruno Díaz', '#00BC70', []],
       ['m-ed', 'Mentoría de Edición de Videos e Introducción a IA', 'Mentorías', [], '', '', 'Gonzalo Pavez', '#31B4E7', []],
       ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', []],
-    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo], i) =>
-      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo }));
+      ['v-comic', 'Cómic de Verano', 'Centro de Formación', [1, 3, 5], '10:00', '12:00', 'Naru Torres', '#F28C28', [], 'verano'],
+      ['v-cine', 'Cine al Aire Libre', 'Arte y Apoyo', [2, 4], '10:30', '12:30', 'Vicente Bernal', '#1F8FD1', ['u-talle'], 'verano'],
+    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo, temporada = 'semestral'], i) =>
+      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo, temporada }));
 
     // [nombre, apellidos, apodo, pronombres, programa, talleres, cumpleaños (días desde hoy | [meses, día]), edad, beca]
     const filas = [
@@ -447,7 +450,8 @@
         auditar('update', 'perfiles', { campos: ['fecha_nac'] });
         guardar();
       },
-      async talleres() { await espera(); return copia(db.talleres); },
+      async talleres() { await espera(); return copia(db.talleres).map(t => ({ ...t, temporada: t.temporada || 'semestral' })); },
+
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();
         await espera();

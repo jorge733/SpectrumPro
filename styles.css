@@ -97,6 +97,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav a svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
 .nav a:hover { background: var(--surface-2); color: var(--ink); }
 .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.nav a .corto { display: none; }
 
 .lateral-cab { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .icono-btn {
@@ -479,6 +480,8 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
   }
   .nav a { flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .66rem; flex: 1; text-align: center; min-width: 0; }
   .nav a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .nav a .largo { display: none; }
+  .nav a .corto { display: inline; }
   .lateral { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .lateral .espectro { flex-basis: calc(100% + 2 * max(16px, env(safe-area-inset-left, 0px))); }
   .plegar { display: none; }

@@ -12,7 +12,8 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Asistencia** | Pasar lista por sesión de taller (Presente, Retraso, Ausente, Justificada) y resumen mensual por taller |
 | **Cumpleaños** | Separados en **Jóvenes** y **Profesores**: cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses. Cada profesor añade su propia fecha (en la pestaña Profesores o pulsando su nombre en el menú); dirección también puede ponerla al editar una cuenta |
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
-| **Talleres** | Horario semanal, equipo a cargo e inscritos. Dirección crea y edita talleres |
+| **Talleres semestrales** | Horario semanal, equipo a cargo e inscritos de los talleres del semestre. Dirección crea y edita talleres |
+| **Talleres de verano** | Lo mismo para los talleres de la temporada de verano |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
@@ -59,6 +60,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261124060000_tienda.sql` | Tienda: productos, contacto y bucket de fotos |
    | `20261124070000_tienda_equipo.sql` | El rol Equipo también edita la tienda |
    | `20261125000000_ficha_cualitativa.sql` | Ficha cualitativa del participante (formulario web) |
+   | `20261126010000_talleres_temporada.sql` | Separa los talleres en semestrales y de verano |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
