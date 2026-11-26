@@ -74,7 +74,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- estructura ---------- */
 .app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .lateral {
-  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  position: sticky; top: 0; height: 100vh; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;
   display: flex; flex-direction: column; gap: 24px;
   padding: 0 16px 20px; background: var(--surface); border-right: 1px solid var(--line);
 }
@@ -82,7 +82,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: block; height: 6px; margin: 0 -16px;
   background: linear-gradient(90deg, var(--sp-violeta) 0 16.6%, var(--sp-azul) 0 33.3%, var(--sp-verde) 0 50%, var(--sp-amarillo) 0 66.6%, var(--sp-rojo) 0 83.3%, var(--sp-rosa) 0);
 }
-.marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); padding: 4px 8px; }
+.lateral::-webkit-scrollbar { display: none; }
+.marca { display: flex; align-items: center; gap: 12px; min-width: 0; text-decoration: none; color: var(--ink); padding: 4px 8px; }
 .marca img { flex: none; }
 .marca-texto { display: flex; flex-direction: column; min-width: 0; }
 .marca-nombre { font-family: var(--f-marca); font-size: .78rem; letter-spacing: -.02em; }
@@ -174,7 +175,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .controles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .campo-inline { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--muted); font-weight: 500; }
-input[type="text"], input[type="search"], input[type="date"], input[type="month"], input[type="tel"], input[type="email"], input:not([type]), select, textarea {
+input[type="text"], input[type="search"], input[type="date"], input[type="month"], input[type="tel"], input[type="email"], input[type="number"], input:not([type]), select, textarea {
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 0; width: 100%;
 }
 .controles input, .controles select { width: auto; }
@@ -636,4 +637,25 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
   .ep-lienzo-caja { max-width: 100%; }
   .ep-lienzo-caja.ep-historia { max-width: 80%; }
   .ep-ajustes { grid-template-columns: minmax(0, 1fr); }
+}
+/* ---------- tienda ---------- */
+.solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+label.btn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.foto-producto { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.foto-marco { flex: none; width: 112px; height: 112px; border-radius: 12px; border: 1px solid var(--line); background: #ffffff; overflow: hidden; display: grid; place-items: center; color: #615d78; font-size: .8rem; }
+.foto-marco img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 52%; }
+.foto-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.productos > li { align-items: center; }
+.productos .miniatura { flex: none; width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; object-fit: cover; object-position: 50% 52%; }
+.productos .miniatura.vacia { display: grid; place-items: center; color: #615d78; font-size: .7rem; }
+.productos li.oculto .txt, .productos li.oculto .miniatura { opacity: .55; }
+.productos .mover { display: flex; gap: 4px; flex: none; }
+.productos .mover button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: .9rem; line-height: 1; }
+.productos .mover button:disabled { opacity: .35; cursor: default; }
+.productos .mover button:not(:disabled):hover { background: var(--surface-2); }
+.productos .chips { display: flex; gap: 6px; flex-wrap: wrap; flex: none; }
+.form-tienda .dlg-pie { padding: 14px 0 0; border: 0; }
+@media (max-width: 600px) {
+  .productos .chips { display: none; }
+  .foto-producto { align-items: flex-start; }
 }
