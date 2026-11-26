@@ -74,6 +74,16 @@ En **Authentication**:
    - **Host**: `smtp.resend.com` · **Port**: `465` · **Username**: `resend`
    - **Password**: una API key de Resend con permiso *Sending access* limitado al dominio `gestionspectrumpro.cl` (verificado en Resend, región São Paulo).
    Después, en **Rate Limits**, sube el límite de correos por hora (por ejemplo a 100).
+5. **Emails → Templates**: pega las plantillas con la gráfica de la marca que están en `supabase/templates/` (en cada una, el *Subject* y el contenido HTML completo del archivo):
+
+   | Plantilla en Supabase | Archivo | Subject |
+   |---|---|---|
+   | Invite user | `invitacion.html` | `Te invitaron a la plataforma de SpectrumPro` |
+   | Reset password | `recuperar.html` | `Restablece tu contraseña de SpectrumPro` |
+   | Change email address | `cambio-correo.html` | `Confirma tu nuevo correo en SpectrumPro` |
+   | Magic link | `enlace-acceso.html` | `Tu enlace para entrar a SpectrumPro` |
+
+   El logo de los correos es `assets/correo/logo.png` (PNG, porque Gmail y Outlook no muestran SVG) y se carga desde `https://gestionspectrumpro.cl`.
 
 ### 3. Crear la primera cuenta de dirección
 
