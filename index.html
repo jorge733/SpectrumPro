@@ -154,11 +154,6 @@
       <fieldset>
         <legend>Programa y talleres</legend>
         <div class="campos">
-          <label>Programa *
-            <select id="f-programa" name="programa" required>
-              <option>FormaPro</option><option>Terapia Ocupacional</option><option>Arte Terapia</option><option>Talleres</option><option>SpectrumOnline</option>
-            </select>
-          </label>
           <label>Estado
             <select id="f-estado" name="estado">
               <option value="activo">Activo</option><option value="pausa">En pausa</option><option value="egresado">Egresado</option><option value="retirado">Retirado</option>
@@ -171,6 +166,14 @@
               <option value="">Sin beca</option><option>Beca parcial</option><option>Beca completa</option><option>Arancel diferenciado</option>
             </select>
           </label>
+        </div>
+        <p class="campo-titulo">Programas * <small>(puedes marcar más de uno)</small></p>
+        <div id="f-programas" class="checks">
+          <label><input type="checkbox" name="programa" value="FormaPro">FormaPro</label>
+          <label><input type="checkbox" name="programa" value="Terapia Ocupacional">Terapia Ocupacional</label>
+          <label><input type="checkbox" name="programa" value="Arte Terapia">Arte Terapia</label>
+          <label><input type="checkbox" name="programa" value="Talleres">Talleres</label>
+          <label><input type="checkbox" name="programa" value="SpectrumOnline">SpectrumOnline</label>
         </div>
         <p class="campo-titulo">Talleres inscritos *</p>
         <div id="f-talleres" class="checks"></div>

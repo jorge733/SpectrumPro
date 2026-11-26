@@ -478,7 +478,7 @@ function pasarLista(el) {
       ${inscritos.length ? `<ul class="lista pase">${inscritos.map(a => `
         <li>
           ${avatar(a)}
-          <div class="txt"><b class="fila-click" data-ficha="${a.id}">${esc(nombreVisible(a))}</b><small>${esc(a.programa)}${a.pronombres ? ' · ' + esc(a.pronombres) : ''}${a.alergias ? ' · <span class="txt-alerta">Alergia: ' + esc(a.alergias) + '</span>' : ''}</small></div>
+          <div class="txt"><b class="fila-click" data-ficha="${a.id}">${esc(nombreVisible(a))}</b><small>${esc(programasDe(a).join(', '))}${a.pronombres ? ' · ' + esc(a.pronombres) : ''}${a.alergias ? ' · <span class="txt-alerta">Alergia: ' + esc(a.alergias) + '</span>' : ''}</small></div>
           <div class="seg" role="group" aria-label="Asistencia de ${esc(nombreVisible(a))}" data-alumno="${a.id}">
             ${Object.entries(ESTADOS).map(([k, v]) => `<button type="button" data-e="${k}" aria-pressed="${reg[a.id] === k}" title="${v.label}" ${futuro ? 'disabled' : ''}><span class="lbl-corto">${k}</span><span class="lbl-largo">${v.label}</span></button>`).join('')}
           </div>
@@ -598,11 +598,11 @@ function filtrarFichas() {
   return ordenarAlumnos(S.alumnos).filter(a =>
     (!q || sinTildes(`${a.nombre} ${a.apellidos} ${a.apodo} ${a.tutorNombre} ${a.rut}`).includes(q)) &&
     (!ui.filtroTaller || a.talleres.includes(ui.filtroTaller)) &&
-    (!ui.filtroPrograma || a.programa === ui.filtroPrograma) &&
+    (!ui.filtroPrograma || programasDe(a).includes(ui.filtroPrograma)) &&
     (!ui.filtroEstado || a.estado === ui.filtroEstado));
 }
 function vistaAlumnos(el) {
-  const programas = [...new Set(S.alumnos.map(a => a.programa))].sort();
+  const programas = [...new Set(S.alumnos.flatMap(programasDe))].sort();
   el.innerHTML = `
     <header class="cabecera">
       <div><p class="eyebrow">${S.alumnos.length} fichas${rol() === 'tallerista' ? ' de tus talleres' : ''}</p><h1>Fichas del alumnado</h1></div>
@@ -622,7 +622,7 @@ function pintarFichas() {
   $('#lista-fichas').innerHTML = lista.length ? `<div class="fichas">${lista.map(a => {
     const r = resumen(registros({ alumno: a.id, desde: hace30() }));
     return `<button type="button" class="ficha-card" data-ficha="${a.id}">
-      <div class="top">${avatar(a)}<div><b>${esc(nombreCompleto(a))}</b><small>${edad(a.fechaNac)} años · ${esc(a.programa)}</small></div></div>
+      <div class="top">${avatar(a)}<div><b>${esc(nombreCompleto(a))}</b><small>${edad(a.fechaNac)} años · ${esc(programasDe(a).join(', '))}</small></div></div>
       <div class="talleres-mini">${a.talleres.map(id => { const t = taller(id); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)}</span>` : ''; }).join('')}</div>
       <div class="pie">${a.estado !== 'activo' ? `<span class="chip chip-neutro">${ESTADO_ALUMNO[a.estado]}</span>` : chipPct(r.pct)}${a.beca ? `<span class="chip chip-neutro">${esc(a.beca)}</span>` : ''}${a.alergias ? '<span class="chip chip-bad">Alergia</span>' : ''}</div>
     </button>`;
@@ -760,7 +760,7 @@ async function abrirFicha(id) {
   const total = resumen(registros({ alumno: id }));
   const r30 = resumen(registros({ alumno: id, desde: hace30() }));
   const ultimos = registros({ alumno: id }).sort((x, y) => x.fecha < y.fecha ? 1 : -1).slice(0, 16).reverse();
-  const toCorto = a.programa === 'Terapia Ocupacional' && a.talleres.length < 3;
+  const toCorto = programasDe(a).includes('Terapia Ocupacional') && a.talleres.length < 3;
   const fila = (k, v) => `<dt>${k}</dt><dd>${v || '<span class="muted">—</span>'}</dd>`;
   const copiable = v => v ? `<span class="copiable"><span>${esc(v)}</span><button type="button" class="copiar" data-copiar="${esc(v)}">Copiar</button></span>` : '';
 
@@ -771,7 +771,7 @@ async function abrirFicha(id) {
         <h2 id="ficha-titulo">${esc(nombreCompleto(a))}</h2>
         <div class="controles" style="gap:6px">
           <span class="chip chip-neutro">${edad(a.fechaNac)} años</span>
-          <span class="chip chip-neutro">${esc(a.programa)}</span>
+          ${programasDe(a).map(p => `<span class="chip chip-neutro">${esc(p)}</span>`).join('')}
           ${a.estado !== 'activo' ? `<span class="chip chip-warn">${ESTADO_ALUMNO[a.estado]}</span>` : ''}
           ${a.beca ? `<span class="chip chip-info">${esc(a.beca)}</span>` : ''}
           ${chipPct(r30.pct)}
@@ -804,7 +804,7 @@ async function abrirFicha(id) {
         <section>
           <h3>Programa</h3>
           <dl class="dato">
-            ${fila('Programa', esc(a.programa))}
+            ${fila(programasDe(a).length > 1 ? 'Programas' : 'Programa', esc(programasDe(a).join(', ')))}
             ${fila('Estado', ESTADO_ALUMNO[a.estado])}
             ${fila('Ingreso', esc(fechaCorta(a.fechaIngreso)))}
             ${fila('Entrevista', esc(fechaCorta(a.entrevista)))}
@@ -851,7 +851,9 @@ async function abrirFicha(id) {
 
 /* ---------- formulario de ficha ---------- */
 let editando = null;
-const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'programa', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'direccion', 'intereses', 'apoyos', 'alergias'];
+// Un alumno puede estar en varios programas: se guardan en el mismo campo de texto separados por coma.
+function programasDe(a) { return String(a?.programa || '').split(',').map(p => p.trim()).filter(Boolean); }
+const CAMPOS_FICHA = ['nombre', 'apellidos', 'apodo', 'pronombres', 'fechaNac', 'rut', 'estado', 'fechaIngreso', 'entrevista', 'beca', 'tutorNombre', 'tutorRelacion', 'tutorTelefono', 'tutorEmail', 'emergencia', 'direccion', 'intereses', 'apoyos', 'alergias'];
 async function abrirFormulario(id = null) {
   editando = id;
   const a = id ? alumno(id) : null;
@@ -861,7 +863,9 @@ async function abrirFormulario(id = null) {
   $('#form-error').hidden = true;
   $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en la sección Talleres.</p>';
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
-  if (!a) { $('#f-programa').value = 'FormaPro'; $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
+  const progs = a ? programasDe(a) : ['FormaPro'];
+  for (const c of $$('#f-programas input')) c.checked = progs.includes(c.value);
+  if (!a) { $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
   $('#f-medicacion').value = ''; $('#f-observaciones').value = '';
   $('#f-privado').hidden = !puede.verTodo();
   avisoTO();
@@ -874,18 +878,20 @@ async function abrirFormulario(id = null) {
   }
 }
 function avisoTO() {
-  $('#f-aviso-to').hidden = !($('#f-programa').value === 'Terapia Ocupacional' && $$('#f-talleres input:checked').length < 3);
+  $('#f-aviso-to').hidden = !($('#f-programas input[value="Terapia Ocupacional"]').checked && $$('#f-talleres input:checked').length < 3);
 }
 $('#form-alumno').addEventListener('submit', async ev => {
   ev.preventDefault();
   const fd = new FormData(ev.target);
   const datos = {};
   for (const c of CAMPOS_FICHA) datos[c] = String(fd.get(c) ?? '').trim();
+  datos.programa = fd.getAll('programa').join(', ');
   datos.talleres = fd.getAll('talleres');
   const faltan = [];
   if (!datos.nombre) faltan.push('nombre');
   if (!datos.apellidos) faltan.push('apellidos');
   if (!datos.fechaNac) faltan.push('fecha de nacimiento');
+  if (!datos.programa) faltan.push('al menos un programa');
   if (!datos.talleres.length) faltan.push('al menos un taller');
   const err = $('#form-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
@@ -1031,7 +1037,7 @@ $('#u-eliminar').addEventListener('click', async () => {
 
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programas', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');
