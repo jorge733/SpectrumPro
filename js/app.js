@@ -1164,6 +1164,7 @@ async function abrirFormulario(id = null) {
   $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en Talleres semestrales o Talleres de verano.</p>';
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
   $('#f-rut').value = formatearRut($('#f-rut').value);
+  $('#f-tutorTelefono').value = formatearTel($('#f-tutorTelefono').value);
   const progs = a ? programasDe(a) : ['FormaPro'];
   for (const c of $$('#f-programas input')) c.checked = progs.includes(c.value);
   if (!a) { $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
@@ -1218,6 +1219,36 @@ $('#f-rut').addEventListener('input', ev => {
   while (pos < inp.value.length && vistos < utiles) { if (/[0-9K]/.test(inp.value[pos])) vistos++; pos++; }
   inp.setSelectionRange(pos, pos);
 });
+/* ---------- Teléfono chileno: formato +56 9 1234 5678 mientras se escribe ---------- */
+// Un número con otro código de país (empieza con + pero no con +56) se deja tal cual.
+const prefijoTel = t => /^\+\s*5\s*6/.test(t);          // ya trae +56
+const prefijoParcial = t => /^\+\s*5?\s*$/.test(t);      // «+» o «+5»: aún escribiendo el +56
+function esTelExtranjero(v) { const t = String(v || '').trim(); return t.startsWith('+') && !prefijoTel(t) && !prefijoParcial(t); }
+function digitosTel(v) {
+  const t = String(v || '').trim();
+  let d = (prefijoTel(t) ? t.replace(/^\+\s*5\s*6/, '') : t).replace(/\D/g, '').replace(/^0+/, '');
+  if (d.length > 9 && d.startsWith('56')) d = d.slice(2);
+  return d.slice(0, 9);
+}
+function formatearTel(v) {
+  const t = String(v || '').trim();
+  if (esTelExtranjero(t) || prefijoParcial(t)) return String(v || '');
+  const d = digitosTel(t);
+  return ['+56', d.slice(0, 1), d.slice(1, 5), d.slice(5, 9)].filter(Boolean).join(' ');
+}
+const telValido = v => !v || esTelExtranjero(v) || digitosTel(v).length === 9;
+$('#f-tutorTelefono').addEventListener('input', ev => {
+  const inp = ev.target;
+  if (!inp.value.trim()) { inp.value = ''; return; }
+  const alFinal = inp.selectionStart === inp.value.length;
+  let utiles = digitosTel(inp.value.slice(0, inp.selectionStart)).length;
+  inp.value = formatearTel(inp.value);
+  if (alFinal || !inp.value.startsWith('+56')) return;
+  // Devuelve el cursor detrás del mismo dígito en que estaba.
+  let pos = 3;
+  while (pos < inp.value.length && utiles > 0) { if (/\d/.test(inp.value[pos])) utiles--; pos++; }
+  inp.setSelectionRange(pos, pos);
+});
 $('#f-fechaNac').addEventListener('input', mostrarEdad);
 $('#f-fechaNac').addEventListener('change', mostrarEdad);
 // Requisito publicado en spectrumpro.cl para FormaPro y Terapia Ocupacional:
@@ -1255,6 +1286,10 @@ $('#form-alumno').addEventListener('submit', async ev => {
   if (datos.rut) {
     datos.rut = formatearRut(datos.rut);
     if (!rutValido(datos.rut)) return mostrar('El RUT no es válido: revisa los números y el dígito verificador.');
+  }
+  if (datos.tutorTelefono) {
+    datos.tutorTelefono = formatearTel(datos.tutorTelefono).trim();
+    if (!telValido(datos.tutorTelefono)) return mostrar('El teléfono de la persona responsable debe tener 9 dígitos (por ejemplo +56 9 1234 5678).');
   }
   if (datos.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.tutorEmail)) return mostrar('Revisa el correo de la persona responsable.');
   const btn = ev.submitter;

@@ -330,7 +330,7 @@
     { id: 'v11', nombre: 'Taller de Cortometraje de Verano 2', area: 'Centro de Formación', fechas: ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15'], horaInicio: '10:00', horaFin: '13:00', color: '#F28C28', activo: true, orden: 111,
       objetivo: 'Crear y filmar un cortometraje colectivo desde la lluvia de ideas hasta el rodaje en estudio, potenciando las habilidades sociales y la creatividad grupal en un ambiente estructurado.', edad: '', nota: 'Viernes: jornada extendida de 10:00 a 18:00.' },
   ];
-  const CLAVE_DEMO = 'spectrumpro:demo:v8';
+  const CLAVE_DEMO = 'spectrumpro:demo:v9';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const CLAVE_PROGRAMA = id => `spectrumpro:demo:programa:${id}`;
   const LIMITE_DEMO = 3 * 1024 * 1024; // localStorage tiene poco espacio
@@ -409,6 +409,13 @@
     const parentesco = ['Madre', 'Padre', 'Madre', 'Tutora legal', 'Padre', 'Madre', 'Abuela'];
     const comunas = ['Providencia', 'Ñuñoa', 'Las Condes', 'Santiago Centro', 'La Reina', 'Macul', 'San Miguel'];
     const responsables = ['Carolina', 'Rodrigo', 'Paula', 'Andrea', 'Felipe', 'Claudia', 'Marcela'];
+    // RUT ficticio con dígito verificador correcto (módulo 11).
+    const rutDemo = n => {
+      let suma = 0, mult = 2;
+      for (const c of String(n).split('').reverse()) { suma += Number(c) * mult; mult = mult === 7 ? 2 : mult + 1; }
+      const r = 11 - (suma % 11);
+      return `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${r === 11 ? 0 : r === 10 ? 'K' : r}`;
+    };
     const tel = () => `+56 9 ${Math.floor(1000 + rnd() * 8999)} ${Math.floor(1000 + rnd() * 8999)}`;
 
     const privado = {};
@@ -425,7 +432,7 @@
       return {
         id, nombre, apellidos, apodo, pronombres, programa, beca, talleres: tall,
         fechaNac: iso(new Date(t.getFullYear() - años, mes, dia)),
-        rut: `${20 + Math.floor(rnd() * 6)}.${100 + Math.floor(rnd() * 899)}.${100 + Math.floor(rnd() * 899)}-${Math.floor(rnd() * 10)}`,
+        rut: rutDemo(20000000 + Math.floor(rnd() * 6000000)),
         estado: i === 12 ? 'pausa' : 'activo',
         fechaIngreso: iso(ingreso), entrevista: iso(sumarDias(ingreso, -12)),
         tutorNombre: `${resp} ${ap1}`, tutorRelacion: parentesco[i % parentesco.length], tutorTelefono: tel(),
