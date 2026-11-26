@@ -3,7 +3,7 @@
    Interfaz. Los datos llegan de window.SPDatos (Supabase o demostración). */
 
 const D = window.SPDatos;
-const { iso, hoy, sumarDias } = window.SPFechas;
+const { iso, hoy, sumarDias, tocaEl } = window.SPFechas;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -50,6 +50,18 @@ const iniciales = s => String(s || '').split(/[\s@._-]+/).filter(p => /^\p{L}/u.
 const tono = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const avatar = (a, extra = '') => `<span class="avatar ${extra}" style="--h:${tono(a.id)}" aria-hidden="true">${esc(iniciales(`${a.apodo || a.nombre} ${a.apellidos || ''}`))}</span>`;
 const horario = t => t.horaInicio ? `${t.horaInicio}${t.horaFin ? ' – ' + t.horaFin : ''}` : 'Sin horario';
+// «lun 14, mié 16 y vie 18 de diciembre · lun 4 de enero de 2027»
+const listaY = xs => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} y ${xs.at(-1)}` : xs.join('');
+function fechasTxt(fechas) {
+  const grupos = [];
+  for (const f of [...fechas].sort()) {
+    const d = deISO(f), clave = f.slice(0, 7);
+    if (grupos.at(-1)?.clave !== clave) grupos.push({ clave, d, dias: [] });
+    grupos.at(-1).dias.push(`${DIAS_CORTOS[d.getDay()].toLowerCase()} ${d.getDate()}`);
+  }
+  return grupos.map(g => `${listaY(g.dias)} de ${MESES[g.d.getMonth()]}${g.d.getFullYear() !== hoy().getFullYear() ? ' de ' + g.d.getFullYear() : ''}`).join(' · ');
+}
+const sesionesTxt = n => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`;
 const punto = t => `<span class="punto" style="--c:${color(t.color)}"></span>`;
 
 /* ---------- estado ---------- */
@@ -353,7 +365,7 @@ function vistaPanel(el) {
   if (puede.esEquipo()) return vistaPanelEquipo(el);
   const t = hoy(), f = iso(t);
   const vig = vigentes();
-  const sesionesHoy = misTalleres().filter(x => x.dias.includes(t.getDay()));
+  const sesionesHoy = misTalleres().filter(x => tocaEl(x, t));
   const r30 = resumen(registros({ desde: hace30() }));
   const proximos = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
   const proxJovenes = proximos(S.cumple), proxEquipo = proximos(S.cumpleEquipo);
@@ -439,7 +451,7 @@ function vistaPanel(el) {
 // Panel del rol «equipo»: sin datos del alumnado ni asistencia.
 function vistaPanelEquipo(el) {
   const t = hoy();
-  const hoyTalleres = S.talleres.filter(x => x.activo && x.dias.includes(t.getDay()))
+  const hoyTalleres = S.talleres.filter(x => x.activo && tocaEl(x, t))
     .sort((a, b) => (a.horaInicio || '99').localeCompare(b.horaInicio || '99'));
   const prox = lista => lista.map(a => ({ a, ...proximoCumple(a.fechaNac, t) })).filter(x => x.dias <= 30).sort((x, y) => x.dias - y.dias);
   const lista = (arr, vacio) => arr.length ? `<ul class="lista">${arr.slice(0, 6).map(x => `
@@ -477,7 +489,7 @@ function vistaPanelEquipo(el) {
 function vistaAsistencia(el) {
   const propios = misTalleres();
   const d = deISO(ui.fecha);
-  const delDia = propios.filter(x => x.dias.includes(d.getDay()));
+  const delDia = propios.filter(x => tocaEl(x, d));
   if (!ui.taller || !propios.some(t => t.id === ui.taller)) ui.taller = (delDia[0] || propios[0])?.id || null;
   if (!ui.tallerMes || !propios.some(t => t.id === ui.tallerMes)) ui.tallerMes = ui.taller;
 
@@ -502,8 +514,8 @@ function inscritosActivos(tid) {
 function pasarLista(el) {
   const propios = misTalleres();
   const d = deISO(ui.fecha);
-  const delDia = propios.filter(x => x.dias.includes(d.getDay()));
-  const otros = propios.filter(x => !x.dias.includes(d.getDay()));
+  const delDia = propios.filter(x => tocaEl(x, d));
+  const otros = propios.filter(x => !tocaEl(x, d));
   const tal = taller(ui.taller);
   const inscritos = tal ? inscritosActivos(tal.id) : [];
   const reg = (tal && S.asistencia[ui.fecha]?.[tal.id]) || {};
@@ -585,7 +597,7 @@ function resumenMensual(el) {
   if (tal) for (let d = new Date(y, m - 1, 1); d.getMonth() === m - 1; d = sumarDias(d, 1)) {
     const f = iso(d);
     if (f > limite) break;
-    if (tal.dias.includes(d.getDay()) || S.asistencia[f]?.[tal.id]) fechas.push(d);
+    if (tocaEl(tal, d) || S.asistencia[f]?.[tal.id]) fechas.push(d);
   }
   const ins = tal ? ordenarAlumnos(S.alumnos.filter(a => a.talleres.includes(tal.id) && (a.estado === 'activo' || fechas.some(d => S.asistencia[iso(d)]?.[tal.id]?.[a.id])))) : [];
   el.innerHTML = `
@@ -710,9 +722,10 @@ function vistaTemporada(el, temporada) {
   const txt = TEMPORADAS[temporada];
   const eq = puede.esEquipo();
   const lista = (puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres()).filter(t => (t.temporada || 'semestral') === temporada);
+  if (temporada === 'verano') lista.sort((a, b) => (a.fechas[0] || '9').localeCompare(b.fechas[0] || '9') || a.orden - b.orden);
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${eq ? 'horario semanal y quién está a cargo.' : 'horario semanal y asistencia de los últimos 30 días.'}</p></div>
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${temporada === 'verano' ? 'fechas, horario' : 'horario semanal'}${eq ? ' y quién está a cargo.' : ' y asistencia de los últimos 30 días.'}</p></div>
       ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" data-temporada="${temporada}">+ Nuevo taller${temporada === 'verano' ? ' de verano' : ''}</button>` : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
@@ -721,10 +734,13 @@ function vistaTemporada(el, temporada) {
       const equipo = S.usuarios.filter(u => t.equipo.includes(u.id));
       return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}">
         <h2>${esc(t.nombre)}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+        ${t.objetivo ? `<p class="objetivo">${esc(t.objetivo)}</p>` : ''}
         <dl>
           <dt>Área</dt><dd>${esc(t.area) || '—'}</dd>
-          <dt>Días</dt><dd>${t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—'}</dd>
-          <dt>Horario</dt><dd class="num">${esc(horario(t))}</dd>
+          ${t.fechas.length ? `<dt>Fechas</dt><dd>${esc(fechasTxt(t.fechas))} <span class="muted">(${sesionesTxt(t.fechas.length)})</span></dd>`
+            : `<dt>Días</dt><dd>${t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—'}</dd>`}
+          <dt>Horario</dt><dd class="num">${esc(horario(t))}${t.nota ? `<br><span class="muted">${esc(t.nota)}</span>` : ''}</dd>
+          ${t.edad ? `<dt>Edad</dt><dd>${esc(t.edad)}</dd>` : ''}
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
           ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
@@ -1082,7 +1098,7 @@ async function abrirFicha(id) {
             ${fila('Entrevista', esc(fechaCorta(a.entrevista)))}
             ${fila('Beca', esc(a.beca))}
           </dl>
-          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)} · ${t.dias.map(d => DIAS_CORTOS[d]).join('/')}</span>` : ''; }).join('')}</div>
+          <div class="talleres-mini">${a.talleres.map(tid => { const t = taller(tid); return t ? `<span class="tag">${punto(t)}${esc(t.nombre)} · ${t.fechas.length ? sesionesTxt(t.fechas.length) : t.dias.map(d => DIAS_CORTOS[d]).join('/')}</span>` : ''; }).join('')}</div>
           ${toCorto ? `<p class="nota-campo">Terapia Ocupacional pide al menos 3 módulos. Tiene ${a.talleres.length}.</p>` : ''}
         </section>
         <section>
@@ -1210,6 +1226,34 @@ $('#form-alumno').addEventListener('submit', async ev => {
 
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
+let fechasTaller = [];
+// Los talleres de verano se programan por fechas exactas; los semestrales, por días de la semana.
+const mostrarCamposTemporada = () => {
+  const verano = $('#t-temporada').value === 'verano';
+  $('#t-fechas-box').hidden = !verano;
+  $('#t-dias-box').hidden = verano;
+};
+function pintarFechasTaller() {
+  fechasTaller.sort();
+  $('#t-fechas').innerHTML = fechasTaller.length
+    ? fechasTaller.map(f => { const d = deISO(f); return `<span class="tag">${DIAS_CORTOS[d.getDay()]} ${esc(fechaCorta(f))}<button type="button" data-quitar-fecha="${f}" aria-label="Quitar ${esc(fechaCorta(f))}">×</button></span>`; }).join('')
+    : '<p class="nota-suave">Aún no hay fechas. Elige una y presiona «Agregar fecha».</p>';
+}
+$('#t-temporada').addEventListener('change', mostrarCamposTemporada);
+$('#t-fecha-agregar').addEventListener('click', () => {
+  const f = $('#t-fecha-nueva').value;
+  if (!f) { $('#t-fecha-nueva').focus(); return; }
+  if (!fechasTaller.includes(f)) fechasTaller.push(f);
+  $('#t-fecha-nueva').value = '';
+  pintarFechasTaller();
+  $('#t-fecha-nueva').focus();
+});
+$('#t-fechas').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-quitar-fecha]');
+  if (!b) return;
+  fechasTaller = fechasTaller.filter(f => f !== b.dataset.quitarFecha);
+  pintarFechasTaller();
+});
 function abrirTaller(id = null, temporada = 'semestral') {
   editandoTaller = id;
   const t = id ? taller(id) : null;
@@ -1224,6 +1268,12 @@ function abrirTaller(id = null, temporada = 'semestral') {
   $('#t-horaFin').value = t?.horaFin || '';
   $('#t-encargado').value = t?.encargado || '';
   $('#t-activo').checked = t ? t.activo : true;
+  $('#t-edad').value = t?.edad || '';
+  $('#t-nota').value = t?.nota || '';
+  $('#t-objetivo').value = t?.objetivo || '';
+  fechasTaller = [...(t?.fechas || [])];
+  pintarFechasTaller();
+  mostrarCamposTemporada();
   $('#t-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<label><input type="checkbox" name="dias" value="${d}" ${t?.dias.includes(d) ? 'checked' : ''}>${DIAS_CORTOS[d]}</label>`).join('');
   const equipo = S.usuarios.filter(u => u.rol === 'tallerista');
   $('#t-equipo').innerHTML = equipo.length ? equipo.map(u => `<label><input type="checkbox" name="equipo" value="${u.id}" ${t?.equipo.includes(u.id) ? 'checked' : ''}>${esc(u.nombre || u.email)}${u.activo ? '' : ' <span class="muted">(inactiva)</span>'}</label>`).join('') : '<p class="nota-suave">Aún no hay talleristas. Invítalas desde Administración. Dirección y terapeutas pueden pasar lista en todos los talleres.</p>';
@@ -1239,10 +1289,15 @@ $('#form-taller').addEventListener('submit', async ev => {
     horaInicio: fd.get('horaInicio'), horaFin: fd.get('horaFin'), encargado: String(fd.get('encargado')).trim(),
     activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'), temporada: fd.get('temporada'),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
+    edad: String(fd.get('edad')).trim(), nota: String(fd.get('nota')).trim(), objetivo: String(fd.get('objetivo')).trim(),
+    fechas: fd.get('temporada') === 'verano' ? [...fechasTaller].sort() : [],
   };
+  // Con fechas exactas, los días de la semana salen de esas fechas.
+  if (t.fechas.length) t.dias = [...new Set(t.fechas.map(f => deISO(f).getDay()))].sort();
   const err = $('#taller-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (!t.nombre) return mostrar('Escribe el nombre del taller.');
+  if (t.temporada === 'verano' && !t.fechas.length) return mostrar('Agrega al menos una fecha de sesión.');
   if (!t.dias.length) return mostrar('Elige al menos un día de la semana.');
   if (t.horaInicio && t.horaFin && t.horaFin <= t.horaInicio) return mostrar('La hora de término debe ser posterior a la de inicio.');
   const btn = ev.submitter;

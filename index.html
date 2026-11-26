@@ -263,9 +263,17 @@
         <label>Hora de inicio<input id="t-horaInicio" name="horaInicio" type="time"></label>
         <label>Hora de término<input id="t-horaFin" name="horaFin" type="time"></label>
         <label class="ancho">A cargo (texto visible)<input id="t-encargado" name="encargado" autocomplete="off"></label>
+        <label>Edad<input id="t-edad" name="edad" autocomplete="off" placeholder="Ej.: 8 a 12 años"></label>
+        <label>Nota de horario<input id="t-nota" name="nota" autocomplete="off" placeholder="Ej.: viernes hasta las 18:00"></label>
+        <label class="ancho">Objetivo<textarea id="t-objetivo" name="objetivo" rows="3"></textarea></label>
       </div>
       <datalist id="t-areas"><option>Centro de Formación</option><option>Formación general</option><option>Mentorías</option><option>Arte y Apoyo</option><option>Terapia Ocupacional</option><option>SpectrumOnline</option></datalist>
-      <div><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
+      <div id="t-dias-box"><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
+      <div id="t-fechas-box" hidden>
+        <p class="campo-titulo">Fechas de las sesiones *</p>
+        <div class="fechas-agregar"><input type="date" id="t-fecha-nueva" aria-label="Fecha de una sesión"><button type="button" class="btn btn-sec btn-peq" id="t-fecha-agregar">Agregar fecha</button></div>
+        <div id="t-fechas" class="fechas-lista"></div>
+      </div>
       <div><p class="campo-titulo">Cuentas que pueden pasar lista</p><div id="t-equipo" class="checks"></div></div>
       <label class="check-suelto"><input type="checkbox" id="t-activo" name="activo" checked> Taller activo</label>
       <p id="taller-error" class="aviso-error" role="alert" hidden></p>

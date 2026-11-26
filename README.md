@@ -61,6 +61,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261124070000_tienda_equipo.sql` | El rol Equipo también edita la tienda |
    | `20261125000000_ficha_cualitativa.sql` | Ficha cualitativa del participante (formulario web) |
    | `20261126010000_talleres_temporada.sql` | Separa los talleres en semestrales y de verano |
+   | `20261126020000_talleres_verano_2026.sql` | Fechas, objetivo, edad y nota de los talleres; carga los talleres de verano de diciembre 2026 y enero 2027 |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 

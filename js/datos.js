@@ -10,7 +10,9 @@
   const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const hoy = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
   const sumarDias = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-  window.SPFechas = { pad, iso, hoy, sumarDias };
+  // ¿Hay sesión del taller ese día? Con fechas exactas (talleres de verano) manda la fecha; si no, el día de la semana.
+  const tocaEl = (t, d) => (t.fechas?.length ? t.fechas.includes(iso(d)) : t.dias.includes(d.getDay()));
+  window.SPFechas = { pad, iso, hoy, sumarDias, tocaEl };
 
   const urlBase = () => location.origin + location.pathname;
 
@@ -40,12 +42,14 @@
   const filaATaller = (f, equipo) => ({
     id: f.id, nombre: f.nombre, area: f.area, dias: f.dias || [], horaInicio: hora(f.hora_inicio), horaFin: hora(f.hora_fin),
     encargado: f.encargado, color: f.color, activo: f.activo, orden: f.orden, temporada: f.temporada || 'semestral',
+    fechas: (f.fechas || []).slice().sort(), objetivo: f.objetivo || '', edad: f.edad || '', nota: f.nota || '',
     equipo: equipo.filter(e => e.taller_id === f.id).map(e => e.perfil_id),
   });
   const tallerAFila = t => ({
     nombre: t.nombre, area: t.area || '', dias: t.dias, hora_inicio: t.horaInicio || null, hora_fin: t.horaFin || null,
     encargado: t.encargado || '', color: t.color || '#635CC7', activo: !!t.activo, orden: t.orden ?? 0,
     temporada: t.temporada === 'verano' ? 'verano' : 'semestral',
+    fechas: t.fechas || [], objetivo: t.objetivo || '', edad: t.edad || '', nota: t.nota || '',
   });
 
   const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'precio', 'variantes', 'imagen', 'visible', 'agotado', 'orden'];
@@ -273,7 +277,32 @@
   /* =====================================================================
      Backend de demostración
      ===================================================================== */
-  const CLAVE_DEMO = 'spectrumpro:demo:v6';
+  // Talleres de verano (diciembre 2026 y enero 2027). Lo mismo que carga supabase/migrations/20261126020000_talleres_verano_2026.sql.
+  const TALLERES_VERANO = [
+    { id: 'v1', nombre: 'Taller de Creación de Videojuegos · Grupo A', area: 'Centro de Formación', fechas: ['2026-12-14', '2026-12-16', '2026-12-18', '2026-12-21'], horaInicio: '11:00', horaFin: '13:00', color: '#00BC70', activo: true, orden: 103,
+      objetivo: 'Diseñar y programar un nivel propio sobre una plantilla base en Construct 3, integrando arte y lógica al ritmo de cada participante para ensamblar un videojuego continuo jugado en grupo.', edad: '', nota: '' },
+    { id: 'v2', nombre: 'Taller de Creación de Videojuegos · Grupo B', area: 'Centro de Formación', fechas: ['2026-12-14', '2026-12-16', '2026-12-18', '2026-12-21'], horaInicio: '15:00', horaFin: '16:45', color: '#2BA77A', activo: false, orden: 104,
+      objetivo: 'Diseñar y programar un nivel propio sobre una plantilla base en Construct 3, integrando arte y lógica al ritmo de cada participante para ensamblar un videojuego continuo jugado en grupo.', edad: '', nota: 'Se abre al llenarse el Grupo A.' },
+    { id: 'v3', nombre: 'Semana Intensiva: Universo Tolkien', area: '', fechas: ['2026-12-15', '2026-12-16', '2026-12-17', '2026-12-18'], horaInicio: '09:00', horaFin: '13:00', color: '#8C6D1F', activo: true, orden: 105,
+      objetivo: 'Explorar la mitología de la Tierra Media mediante el diseño artístico y manual de un juego de aventuras colectivo (tablero, fichas, dados y cartas), culminando en una partida teatralizada sin competencia.', edad: '', nota: '' },
+    { id: 'v4', nombre: 'Taller de Corto de Títeres de Navidad', area: 'Centro de Formación', fechas: ['2026-12-14', '2026-12-16', '2026-12-18'], horaInicio: '15:30', horaFin: '18:30', color: '#F8384B', activo: true, orden: 106,
+      objetivo: 'Combinar el oficio teatral de confección y manipulación de títeres con el lenguaje audiovisual (cámara, iluminación y sonido) para rodar un cortometraje navideño en equipo.', edad: '', nota: '' },
+    { id: 'v5', nombre: 'Taller de Creación de Máscaras', area: 'Arte y Apoyo', fechas: ['2026-12-14', '2026-12-21'], horaInicio: '11:00', horaFin: '12:45', color: '#7C4DCC', activo: true, orden: 107,
+      objetivo: 'Fomentar la expresión personal, la comunicación y la regulación emocional a través del arteterapia, construyendo y pintando una máscara tridimensional en cartón y papel en un entorno libre de juicios.', edad: '', nota: '' },
+    { id: 'v6', nombre: 'Taller de Preparación Física y Habilidades Sociales', area: '', fechas: ['2026-12-15'], horaInicio: '09:00', horaFin: '13:00', color: '#5A9E3A', activo: true, orden: 108,
+      objetivo: 'Fortalecer el autocuidado físico y mental, reducir el tiempo frente a pantallas y potenciar el vínculo social presencial mediante una caminata activa, juegos cooperativos y picnic saludable en plazas cercanas a Spectrum.', edad: '', nota: 'Incluye colación.' },
+    { id: 'v7', nombre: 'Taller Animación Digital (8 Horas)', area: 'Centro de Formación', fechas: ['2026-12-11', '2026-12-12', '2026-12-18', '2026-12-19'], horaInicio: '16:00', horaFin: '18:00', color: '#31B4E7', activo: true, orden: 101,
+      objetivo: 'Programa práctico intensivo de 8 horas totales distribuidas en dos fines de semana (viernes y sábado).', edad: '14 años o más', nota: '' },
+    { id: 'v8', nombre: 'Taller Animación Stopmotion (8 Horas)', area: 'Centro de Formación', fechas: ['2026-12-11', '2026-12-12', '2026-12-18', '2026-12-19'], horaInicio: '11:00', horaFin: '13:00', color: '#1F8FBF', activo: true, orden: 102,
+      objetivo: 'Programa práctico intensivo de 8 horas totales distribuidas en dos fines de semana (viernes y sábado).', edad: '8 a 12 años', nota: '' },
+    { id: 'v9', nombre: 'Taller de Creación de Videojuegos (Verano 2027)', area: 'Centro de Formación', fechas: ['2027-01-04', '2027-01-06', '2027-01-08', '2027-01-11'], horaInicio: '11:00', horaFin: '12:45', color: '#00BC70', activo: true, orden: 109,
+      objetivo: 'Desarrollar habilidades de diseño visual en pixel art y programación lógica creando una sala propia con desafíos y sonido, para unir todas las creaciones en un único videojuego colectivo.', edad: '', nota: '' },
+    { id: 'v10', nombre: 'Taller de Cortometraje de Verano 1', area: 'Centro de Formación', fechas: ['2027-01-04', '2027-01-05', '2027-01-06', '2027-01-07', '2027-01-08'], horaInicio: '10:00', horaFin: '13:00', color: '#E0B800', activo: true, orden: 110,
+      objetivo: 'Vivir el proceso real de producción cinematográfica asumiendo roles activos frente y detrás de cámara, fortaleciendo el trabajo colaborativo y la autonomía en set para estrenar una película original en familia.', edad: '', nota: 'Viernes: jornada extendida de 10:00 a 18:00.' },
+    { id: 'v11', nombre: 'Taller de Cortometraje de Verano 2', area: 'Centro de Formación', fechas: ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15'], horaInicio: '10:00', horaFin: '13:00', color: '#F28C28', activo: true, orden: 111,
+      objetivo: 'Crear y filmar un cortometraje colectivo desde la lluvia de ideas hasta el rodaje en estudio, potenciando las habilidades sociales y la creatividad grupal en un ambiente estructurado.', edad: '', nota: 'Viernes: jornada extendida de 10:00 a 18:00.' },
+  ];
+  const CLAVE_DEMO = 'spectrumpro:demo:v7';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -317,10 +346,9 @@
       ['m-vj', 'Mentoría de Creación de Videojuegos y Animación 3D', 'Mentorías', [], '', '', 'Bruno Díaz', '#00BC70', []],
       ['m-ed', 'Mentoría de Edición de Videos e Introducción a IA', 'Mentorías', [], '', '', 'Gonzalo Pavez', '#31B4E7', []],
       ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', []],
-      ['v-comic', 'Cómic de Verano', 'Centro de Formación', [1, 3, 5], '10:00', '12:00', 'Naru Torres', '#F28C28', [], 'verano'],
-      ['v-cine', 'Cine al Aire Libre', 'Arte y Apoyo', [2, 4], '10:30', '12:30', 'Vicente Bernal', '#1F8FD1', ['u-talle'], 'verano'],
-    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo, temporada = 'semestral'], i) =>
-      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo, temporada }));
+    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo], i) =>
+      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo, temporada: 'semestral' }))
+      .concat(TALLERES_VERANO.map(t => ({ ...t, dias: [...new Set(t.fechas.map(f => new Date(f + 'T12:00').getDay()))], encargado: '', equipo: [], temporada: 'verano' })));
 
     // [nombre, apellidos, apodo, pronombres, programa, talleres, cumpleaños (días desde hoy | [meses, día]), edad, beca]
     const filas = [
@@ -377,7 +405,7 @@
     for (let k = 42; k >= 1; k--) {
       const d = sumarDias(t, -k), fecha = iso(d);
       for (const tal of talleres) {
-        if (!tal.dias.includes(d.getDay())) continue;
+        if (!tocaEl(tal, d)) continue;
         for (const a of alumnos) {
           if (!a.talleres.includes(tal.id) || a.fechaIngreso > fecha) continue;
           const r = rnd(), pa = bajos.has(a.id) ? 0.3 : 0.07;
@@ -450,7 +478,7 @@
         auditar('update', 'perfiles', { campos: ['fecha_nac'] });
         guardar();
       },
-      async talleres() { await espera(); return copia(db.talleres).map(t => ({ ...t, temporada: t.temporada || 'semestral' })); },
+      async talleres() { await espera(); return copia(db.talleres).map(t => ({ fechas: [], objetivo: '', edad: '', nota: '', ...t, temporada: t.temporada || 'semestral' })); },
 
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();
