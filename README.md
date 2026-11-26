@@ -14,6 +14,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
 | **Talleres semestrales** | Horario semanal, equipo a cargo e inscritos de los talleres del semestre. Dirección crea y edita talleres |
 | **Talleres de verano** | Lo mismo para los talleres de la temporada de verano |
+| **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
@@ -62,6 +63,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261125000000_ficha_cualitativa.sql` | Ficha cualitativa del participante (formulario web) |
    | `20261126010000_talleres_temporada.sql` | Separa los talleres en semestrales y de verano |
    | `20261126020000_talleres_verano_2026.sql` | Fechas, objetivo, edad y nota de los talleres; carga los talleres de verano de diciembre 2026 y enero 2027 |
+   | `20261126030000_talleres_online.sql` | Modalidad (presencial u online) y enlace de la videollamada; los talleres de SpectrumOnline pasan a online |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 
@@ -198,7 +200,7 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 
 ```
 perfiles        (id = auth.users.id, email, nombre, rol, activo)
-talleres        (id, nombre, area, dias[], hora_inicio, hora_fin, encargado, color, activo, orden)
+talleres        (id, nombre, area, dias[], hora_inicio, hora_fin, encargado, color, activo, orden, modalidad, enlace)
 taller_equipo   (taller_id, perfil_id)          → quién pasa lista en cada taller
 alumnos         (id, datos personales, programa, estado, beca, familia, apoyos, alergias…)
 alumnos_privado (alumno_id, medicacion, observaciones)   → solo dirección y terapeutas

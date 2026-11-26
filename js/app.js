@@ -62,6 +62,11 @@ function fechasTxt(fechas) {
   return grupos.map(g => `${listaY(g.dias)} de ${MESES[g.d.getMonth()]}${g.d.getFullYear() !== hoy().getFullYear() ? ' de ' + g.d.getFullYear() : ''}`).join(' · ');
 }
 const sesionesTxt = n => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`;
+const esOnline = t => t?.modalidad === 'online';
+const enlaceValido = u => /^https:\/\/[^\s"'<>]+$/i.test(u || '');
+const botonUnirse = t => esOnline(t) && enlaceValido(t.enlace) && t.activo
+  ? `<a class="btn btn-peq" href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">Unirse</a>` : '';
+const chipOnline = t => esOnline(t) ? ' <span class="chip chip-online">Online</span>' : '';
 const punto = t => `<span class="punto" style="--c:${color(t.color)}"></span>`;
 
 /* ---------- estado ---------- */
@@ -413,9 +418,9 @@ function vistaPanel(el) {
           const pct = ins ? Math.min(100, Math.round(reg / ins * 100)) : 0;
           return `<div class="sesion">
             ${punto(s)}
-            <div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
+            <div class="txt"><b>${esc(s.nombre)}${chipOnline(s)}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
               <div class="barra" role="img" aria-label="${reg} de ${ins} con asistencia registrada"><span style="width:${pct}%"></span></div></div>
-            ${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}
+            <div class="sesion-acc">${botonUnirse(s)}${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}</div>
           </div>`;
         }).join('') : '<p class="vacio">Hoy no tienes talleres programados.</p>'}
       </section>
@@ -474,7 +479,7 @@ function vistaPanelEquipo(el) {
     <div class="rejilla">
       <section class="tarjeta">
         <h2>Talleres de hoy <small>${DIAS[t.getDay()]}</small></h2>
-        ${hoyTalleres.length ? hoyTalleres.map(s => `<div class="sesion">${punto(s)}<div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))}${s.encargado ? ' · ' + esc(s.encargado) : ''}</small></div></div>`).join('') : '<p class="vacio">Hoy no hay talleres programados.</p>'}
+        ${hoyTalleres.length ? hoyTalleres.map(s => `<div class="sesion">${punto(s)}<div class="txt"><b>${esc(s.nombre)}${chipOnline(s)}</b><small>${esc(horario(s))}${s.encargado ? ' · ' + esc(s.encargado) : ''}</small></div>${botonUnirse(s)}</div>`).join('') : '<p class="vacio">Hoy no hay talleres programados.</p>'}
       </section>
       <section class="tarjeta">
         <h2>Próximos cumpleaños <small>30 días</small></h2>
@@ -715,25 +720,30 @@ function pintarFichas() {
 const TEMPORADAS = {
   semestral: { titulo: 'Talleres semestrales', tuyos: 'Tus talleres semestrales', desc: 'Talleres del semestre' },
   verano: { titulo: 'Talleres de verano', tuyos: 'Tus talleres de verano', desc: 'Talleres de la temporada de verano' },
+  online: { titulo: 'Talleres online', tuyos: 'Tus talleres online', desc: 'Talleres por videollamada' },
 };
 const vistaTalleres = el => vistaTemporada(el, 'semestral');
 const vistaVerano = el => vistaTemporada(el, 'verano');
+// «Talleres online» junta los talleres online de cualquier temporada; las otras dos secciones muestran solo los presenciales.
+const vistaOnline = el => vistaTemporada(el, 'online');
 function vistaTemporada(el, temporada) {
   const txt = TEMPORADAS[temporada];
   const eq = puede.esEquipo();
-  const lista = (puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres()).filter(t => (t.temporada || 'semestral') === temporada);
+  const online = temporada === 'online';
+  const lista = (puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres())
+    .filter(t => online ? esOnline(t) : !esOnline(t) && (t.temporada || 'semestral') === temporada);
   if (temporada === 'verano') lista.sort((a, b) => (a.fechas[0] || '9').localeCompare(b.fechas[0] || '9') || a.orden - b.orden);
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${temporada === 'verano' ? 'fechas, horario' : 'horario semanal'}${eq ? ' y quién está a cargo.' : ' y asistencia de los últimos 30 días.'}</p></div>
-      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" data-temporada="${temporada}">+ Nuevo taller${temporada === 'verano' ? ' de verano' : ''}</button>` : ''}
+      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${temporada === 'verano' ? 'fechas, horario' : online ? 'horario, enlace' : 'horario semanal'}${eq ? ' y quién está a cargo.' : ' y asistencia de los últimos 30 días.'}</p></div>
+      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" ${online ? 'data-modalidad="online"' : `data-temporada="${temporada}"`}>+ Nuevo taller${temporada === 'verano' ? ' de verano' : online ? ' online' : ''}</button>` : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
       const r = resumen(registros({ taller: t.id, desde: hace30() }));
       const equipo = S.usuarios.filter(u => t.equipo.includes(u.id));
       return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}">
-        <h2>${esc(t.nombre)}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+        <h2>${esc(t.nombre)}${online && t.temporada === 'verano' ? ' <span class="chip chip-neutro">Verano</span>' : ''}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
         ${t.objetivo ? `<p class="objetivo">${esc(t.objetivo)}</p>` : ''}
         <dl>
           <dt>Área</dt><dd>${esc(t.area) || '—'}</dd>
@@ -742,16 +752,17 @@ function vistaTemporada(el, temporada) {
           <dt>Horario</dt><dd class="num">${esc(horario(t))}${t.nota ? `<br><span class="muted">${esc(t.nota)}</span>` : ''}</dd>
           ${t.edad ? `<dt>Edad</dt><dd>${esc(t.edad)}</dd>` : ''}
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
+          ${online ? `<dt>Enlace</dt><dd class="enlace">${enlaceValido(t.enlace) ? `<a href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">${esc(t.enlace.replace(/^https:\/\//i, ''))}</a>` : '<span class="muted">Sin enlace</span>'}</dd>` : ''}
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
           ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
         </dl>
-        <div class="acciones">${eq ? '' : chipPct(r.pct)}
+        <div class="acciones">${eq ? '' : chipPct(r.pct)}${botonUnirse(t)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
           <button type="button" class="btn btn-sec btn-peq" data-ver-mes="${t.id}">Ver mes</button>` : ''}
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
+    }).join('')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : online ? 'Aún no hay talleres online.' + (puede.admin() ? ' Crea el primero con «Nuevo taller online».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
 }
 
 /* ---------- Administración ---------- */
@@ -1240,6 +1251,8 @@ function pintarFechasTaller() {
     : '<p class="nota-suave">Aún no hay fechas. Elige una y presiona «Agregar fecha».</p>';
 }
 $('#t-temporada').addEventListener('change', mostrarCamposTemporada);
+const mostrarEnlace = () => { $('#t-enlace-box').hidden = $('#t-modalidad').value !== 'online'; };
+$('#t-modalidad').addEventListener('change', mostrarEnlace);
 $('#t-fecha-agregar').addEventListener('click', () => {
   const f = $('#t-fecha-nueva').value;
   if (!f) { $('#t-fecha-nueva').focus(); return; }
@@ -1254,7 +1267,7 @@ $('#t-fechas').addEventListener('click', ev => {
   fechasTaller = fechasTaller.filter(f => f !== b.dataset.quitarFecha);
   pintarFechasTaller();
 });
-function abrirTaller(id = null, temporada = 'semestral') {
+function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial') {
   editandoTaller = id;
   const t = id ? taller(id) : null;
   $('#form-taller').reset();
@@ -1262,6 +1275,9 @@ function abrirTaller(id = null, temporada = 'semestral') {
   $('#taller-error').hidden = true;
   $('#t-nombre').value = t?.nombre || '';
   $('#t-temporada').value = t?.temporada || temporada;
+  $('#t-modalidad').value = t ? (esOnline(t) ? 'online' : 'presencial') : modalidad;
+  $('#t-enlace').value = t?.enlace || '';
+  mostrarEnlace();
   $('#t-area').value = t?.area || '';
   $('#t-color').value = color(t?.color);
   $('#t-horaInicio').value = t?.horaInicio || '';
@@ -1290,6 +1306,7 @@ $('#form-taller').addEventListener('submit', async ev => {
     activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'), temporada: fd.get('temporada'),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
     edad: String(fd.get('edad')).trim(), nota: String(fd.get('nota')).trim(), objetivo: String(fd.get('objetivo')).trim(),
+    modalidad: fd.get('modalidad') === 'online' ? 'online' : 'presencial', enlace: String(fd.get('enlace') || '').trim(),
     fechas: fd.get('temporada') === 'verano' ? [...fechasTaller].sort() : [],
   };
   // Con fechas exactas, los días de la semana salen de esas fechas.
@@ -1300,6 +1317,8 @@ $('#form-taller').addEventListener('submit', async ev => {
   if (t.temporada === 'verano' && !t.fechas.length) return mostrar('Agrega al menos una fecha de sesión.');
   if (!t.dias.length) return mostrar('Elige al menos un día de la semana.');
   if (t.horaInicio && t.horaFin && t.horaFin <= t.horaInicio) return mostrar('La hora de término debe ser posterior a la de inicio.');
+  if (t.modalidad !== 'online') t.enlace = '';
+  else if (t.enlace && !enlaceValido(t.enlace)) return mostrar('El enlace debe ser una dirección completa que empiece con https://');
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
@@ -1435,7 +1454,7 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, tienda: vistaTienda, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, online: vistaOnline, tienda: vistaTienda, administracion: vistaAdministracion };
 // js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección).
 function vistaActual() {
   const v = location.hash.slice(1);
@@ -1552,7 +1571,7 @@ document.addEventListener('click', async ev => {
     }
     if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
-    if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.temporada);
+    if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.temporada, x.dataset.modalidad);
     if (acc === 'invitar') abrirUsuario();
     if (acc === 'nuevo-producto') abrirProducto();
     if (acc === 'exportar-fichas') exportarFichas();

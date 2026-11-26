@@ -42,6 +42,7 @@
   const filaATaller = (f, equipo) => ({
     id: f.id, nombre: f.nombre, area: f.area, dias: f.dias || [], horaInicio: hora(f.hora_inicio), horaFin: hora(f.hora_fin),
     encargado: f.encargado, color: f.color, activo: f.activo, orden: f.orden, temporada: f.temporada || 'semestral',
+    modalidad: f.modalidad || 'presencial', enlace: f.enlace || '',
     fechas: (f.fechas || []).slice().sort(), objetivo: f.objetivo || '', edad: f.edad || '', nota: f.nota || '',
     equipo: equipo.filter(e => e.taller_id === f.id).map(e => e.perfil_id),
   });
@@ -49,6 +50,7 @@
     nombre: t.nombre, area: t.area || '', dias: t.dias, hora_inicio: t.horaInicio || null, hora_fin: t.horaFin || null,
     encargado: t.encargado || '', color: t.color || '#635CC7', activo: !!t.activo, orden: t.orden ?? 0,
     temporada: t.temporada === 'verano' ? 'verano' : 'semestral',
+    modalidad: t.modalidad === 'online' ? 'online' : 'presencial', enlace: t.modalidad === 'online' ? t.enlace || '' : '',
     fechas: t.fechas || [], objetivo: t.objetivo || '', edad: t.edad || '', nota: t.nota || '',
   });
 
@@ -302,7 +304,7 @@
     { id: 'v11', nombre: 'Taller de Cortometraje de Verano 2', area: 'Centro de Formación', fechas: ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15'], horaInicio: '10:00', horaFin: '13:00', color: '#F28C28', activo: true, orden: 111,
       objetivo: 'Crear y filmar un cortometraje colectivo desde la lluvia de ideas hasta el rodaje en estudio, potenciando las habilidades sociales y la creatividad grupal en un ambiente estructurado.', edad: '', nota: 'Viernes: jornada extendida de 10:00 a 18:00.' },
   ];
-  const CLAVE_DEMO = 'spectrumpro:demo:v7';
+  const CLAVE_DEMO = 'spectrumpro:demo:v8';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
   const escribir = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
@@ -345,26 +347,27 @@
       ['m-dib', 'Mentoría de Dibujo Digital o Análogo', 'Mentorías', [], '', '', 'Naru Torres', '#E65EBE', []],
       ['m-vj', 'Mentoría de Creación de Videojuegos y Animación 3D', 'Mentorías', [], '', '', 'Bruno Díaz', '#00BC70', []],
       ['m-ed', 'Mentoría de Edición de Videos e Introducción a IA', 'Mentorías', [], '', '', 'Gonzalo Pavez', '#31B4E7', []],
-      ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', []],
-    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo], i) =>
-      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo, temporada: 'semestral' }))
+      ['online', 'Proyecto animado colectivo', 'SpectrumOnline', [], '', '', 'Naru Torres', '#5A9E3A', [], 'https://meet.google.com/abc-defg-hij'],
+      ['club', 'Club de Videojuegos Online', 'SpectrumOnline', [2], '18:00', '19:00', 'Bruno Díaz', '#4361EE', ['u-talle'], 'https://zoom.us/j/1234567890'],
+    ].map(([id, nombre, area, dias, horaInicio, horaFin, encargado, color, equipo, enlace], i) =>
+      ({ id, nombre, area, dias, horaInicio, horaFin, encargado, color, activo: true, orden: i + 1, equipo, temporada: 'semestral', modalidad: enlace ? 'online' : 'presencial', enlace: enlace || '' }))
       .concat(TALLERES_VERANO.map(t => ({ ...t, dias: [...new Set(t.fechas.map(f => new Date(f + 'T12:00').getDay()))], encargado: '', equipo: [], temporada: 'verano' })));
 
     // [nombre, apellidos, apodo, pronombres, programa, talleres, cumpleaños (días desde hoy | [meses, día]), edad, beca]
     const filas = [
       ['Matías', 'Rojas Fuentes', '', 'él', 'FormaPro', ['anim', 'video', 'dibujo'], 3, 19, 'Beca parcial'],
       ['Antonia', 'Silva Paredes', 'Anto', 'ella', 'FormaPro', ['dibujo', 'teatro'], 9, 22, ''],
-      ['Benjamín', 'Muñoz Tapia', 'Benja', 'él', 'Talleres', ['video', 'anim'], 17, 17, ''],
+      ['Benjamín', 'Muñoz Tapia', 'Benja', 'él', 'Talleres', ['video', 'anim', 'club'], 17, 17, ''],
       ['Josefa', 'Contreras Vidal', '', 'ella', 'Arte Terapia', ['lab', 'dibujo'], 26, 24, 'Arancel diferenciado'],
       ['Tomás', 'Herrera Lagos', '', 'él', 'Terapia Ocupacional', ['cocina', 'vellon', 'titeres'], 0, 21, 'Beca completa'],
       ['Florencia', 'Soto Araya', 'Flo', 'ella', 'FormaPro', ['teatro', 'titeres'], [2, 14], 20, ''],
-      ['Vicente', 'Pérez Morales', '', 'él', 'Talleres', ['anim'], [3, 3], 16, ''],
+      ['Vicente', 'Pérez Morales', '', 'él', 'Talleres', ['anim', 'club'], [3, 3], 16, ''],
       ['Isidora', 'González Pinto', 'Isi', 'ella', 'Arte Terapia', ['lab'], [4, 21], 18, 'Beca parcial'],
       ['Agustín', 'Díaz Navarro', '', 'él', 'FormaPro', ['video', 'anim', 'teatro'], [5, 8], 23, ''],
       ['Martina', 'Castro Reyes', 'Marti', 'elle', 'Talleres', ['dibujo', 'lab'], [6, 28], 19, ''],
       ['Cristóbal', 'Vargas Espinoza', 'Cris', 'él', 'Terapia Ocupacional', ['cocina', 'vellon', 'lab'], [7, 12], 25, 'Beca completa'],
       ['Emilia', 'Fernández Bravo', '', 'ella', 'FormaPro', ['titeres', 'teatro', 'dibujo'], [8, 5], 22, ''],
-      ['Lucas', 'Torres Olivares', '', 'él', 'Talleres', ['video'], [9, 18], 15, ''],
+      ['Lucas', 'Torres Olivares', '', 'él', 'Talleres', ['video', 'club'], [9, 18], 15, ''],
       ['Catalina', 'Ramírez Lillo', 'Cata', 'ella', 'Arte Terapia', ['lab', 'titeres'], [1, 27], 20, 'Arancel diferenciado'],
     ];
     const intereses = ['Animación 2D y cómics', 'Dibujo de personajes, anime', 'Edición de video, videojuegos indie', 'Pintura, música', 'Cocina, títeres', 'Actuación y voz', 'Stop motion', 'Fotografía', 'Modelado 3D, Minecraft', 'Ilustración digital', 'Guion y escritura', 'Teatro, improvisación', 'Programación de juegos', 'Doblaje y locución'];
@@ -478,7 +481,7 @@
         auditar('update', 'perfiles', { campos: ['fecha_nac'] });
         guardar();
       },
-      async talleres() { await espera(); return copia(db.talleres).map(t => ({ fechas: [], objetivo: '', edad: '', nota: '', ...t, temporada: t.temporada || 'semestral' })); },
+      async talleres() { await espera(); return copia(db.talleres).map(t => ({ fechas: [], objetivo: '', edad: '', nota: '', ...t, temporada: t.temporada || 'semestral', modalidad: t.modalidad || 'presencial', enlace: t.enlace || '' })); },
 
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();
