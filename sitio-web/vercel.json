@@ -3,6 +3,17 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.spectrumpro.cl"
+        }
+      ],
+      "destination": "https://spectrumpro.cl/:path*",
+      "permanent": true
+    },
+    {
       "source": "/quienes-somos",
       "destination": "/nosotros",
       "permanent": true
