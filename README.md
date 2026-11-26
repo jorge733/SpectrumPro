@@ -118,7 +118,7 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 ### 6. Publicar la plataforma
 
-Son archivos estáticos: sirve cualquier hosting. Con GitHub Pages, en *Settings → Pages* elige la rama y la carpeta raíz. La plataforma se publica en **https://gestionspectrumpro.cl** (el archivo `CNAME` ya lo declara). En *Settings → Pages → Custom domain* escribe `gestionspectrumpro.cl`, marca **Enforce HTTPS** y, en el DNS del dominio, crea registros `A` hacia `185.199.108.153`, `185.199.109.153`, `185.199.110.153` y `185.199.111.153` (y opcionalmente un `CNAME` de `www` hacia `<usuario>.github.io`). La encuesta queda en https://gestionspectrumpro.cl/encuesta.html.
+Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (normalmente un `A` hacia `76.76.21.21` para el dominio y un `CNAME` de `www` hacia `cname.vercel-dns.com`). Las etiquetas Open Graph de `index.html`, `encuesta.html` y `tienda/` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html y la tienda en https://gestionspectrumpro.cl/tienda/.
 
 ## Encuesta de la Muestra Audiovisual
 

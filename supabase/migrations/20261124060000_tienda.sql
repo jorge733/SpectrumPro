@@ -1,4 +1,4 @@
--- Tienda de productos (spectrumpro.vercel.app/tienda/).
+-- Tienda de productos (gestionspectrumpro.cl/tienda/).
 --
 -- · El público (anon) solo LEE: los productos visibles y los datos de contacto.
 -- · Dirección (es_admin()) edita todo desde la plataforma, sección «Tienda».
