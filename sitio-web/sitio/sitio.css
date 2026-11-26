@@ -24,7 +24,8 @@
   --acento: #b1acf6; --sombra: 0 0 0; color-scheme: dark; }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 100px; -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; scroll-padding-top: 100px; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+a, button, summary, label { -webkit-tap-highlight-color: transparent; }
 body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 18px/1.6 var(--texto); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
