@@ -1,7 +1,7 @@
 {
-  "name": "SpectrumPro · Gestión de alumnado",
+  "name": "SpectrumPro · Plataforma del equipo",
   "short_name": "SpectrumPro",
-  "description": "Asistencia, cumpleaños y fichas del alumnado de SpectrumPro.",
+  "description": "Plataforma del equipo de SpectrumPro: talleres, asistencia, fichas, cumpleaños, posts y tienda.",
   "lang": "es-CL",
   "start_url": "./index.html#panel",
   "scope": "./",
