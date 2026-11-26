@@ -330,7 +330,7 @@
     { id: 'v11', nombre: 'Taller de Cortometraje de Verano 2', area: 'Centro de Formación', fechas: ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15'], horaInicio: '10:00', horaFin: '13:00', color: '#F28C28', activo: true, orden: 111,
       objetivo: 'Crear y filmar un cortometraje colectivo desde la lluvia de ideas hasta el rodaje en estudio, potenciando las habilidades sociales y la creatividad grupal en un ambiente estructurado.', edad: '', nota: 'Viernes: jornada extendida de 10:00 a 18:00.' },
   ];
-  const CLAVE_DEMO = 'spectrumpro:demo:v9';
+  const CLAVE_DEMO = 'spectrumpro:demo:v10';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const CLAVE_PROGRAMA = id => `spectrumpro:demo:programa:${id}`;
   const LIMITE_DEMO = 3 * 1024 * 1024; // localStorage tiene poco espacio
@@ -437,8 +437,8 @@
         fechaIngreso: iso(ingreso), entrevista: iso(sumarDias(ingreso, -12)),
         tutorNombre: `${resp} ${ap1}`, tutorRelacion: parentesco[i % parentesco.length], tutorTelefono: tel(),
         tutorEmail: `${resp.toLowerCase()}.${ap1.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')}@ejemplo.cl`,
-        emergencia: `${responsables[(i + 3) % responsables.length]} ${ap1} · ${tel()}`,
-        emergencia2: i % 2 === 0 ? `${responsables[(i + 5) % responsables.length]} ${apellidos.split(' ')[1] || ap1} · ${tel()}` : '',
+        emergencia: `${responsables[(i + 3) % responsables.length]} ${ap1} · ${['Tía', 'Abuela', 'Tío', 'Abuelo', 'Vecina'][i % 5]} · ${tel()}`,
+        emergencia2: i % 2 === 0 ? `${responsables[(i + 5) % responsables.length]} ${apellidos.split(' ')[1] || ap1} · ${['Abuelo', 'Madrina', 'Hermana', 'Tío'][i % 4]} · ${tel()}` : '',
         direccion: comunas[i % comunas.length], intereses: intereses[i % intereses.length], apoyos: apoyos[i % apoyos.length],
         alergias: i % 5 === 0 ? 'Frutos secos' : (i % 7 === 3 ? 'Lactosa' : ''),
       };

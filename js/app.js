@@ -1097,8 +1097,7 @@ async function abrirFicha(id) {
             ${fila('Responsable', a.tutorNombre ? `${esc(a.tutorNombre)}${a.tutorRelacion ? ' · ' + esc(a.tutorRelacion) : ''}` : '')}
             ${fila('Teléfono', copiable(a.tutorTelefono))}
             ${fila('Correo', copiable(a.tutorEmail))}
-            ${fila(a.emergencia2 ? 'Emergencia 1' : 'Emergencia', esc(a.emergencia))}
-            ${fila('Emergencia 2', esc(a.emergencia2))}
+            ${CONTACTOS_EMERG.filter(k => k === 'emergencia' || a[k]).map((k, n) => { const c = leerEmergencia(a[k]); const quien = c.nombre ? esc(c.nombre) + (c.parentesco ? ` · ${esc(c.parentesco)}` : '') : esc(c.parentesco); return fila(a.emergencia2 ? `Emergencia ${n + 1}` : 'Emergencia', [quien, copiable(c.telefono)].filter(Boolean).join('<br>')); }).join('')}
           </dl>
         </section>
         <section>
@@ -1165,6 +1164,12 @@ async function abrirFormulario(id = null) {
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
   $('#f-rut').value = formatearRut($('#f-rut').value);
   $('#f-tutorTelefono').value = formatearTel($('#f-tutorTelefono').value);
+  for (const k of CONTACTOS_EMERG) {
+    const c = leerEmergencia(a?.[k]);
+    $(`#f-${k}-nombre`).value = c.nombre;
+    $(`#f-${k}-parentesco`).value = c.parentesco;
+    $(`#f-${k}-telefono`).value = c.telefono ? formatearTel(c.telefono) : '';
+  }
   const progs = a ? programasDe(a) : ['FormaPro'];
   for (const c of $$('#f-programas input')) c.checked = progs.includes(c.value);
   if (!a) { $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
@@ -1237,8 +1242,30 @@ function formatearTel(v) {
   return ['+56', d.slice(0, 1), d.slice(1, 5), d.slice(5, 9)].filter(Boolean).join(' ');
 }
 const telValido = v => !v || esTelExtranjero(v) || digitosTel(v).length === 9;
-$('#f-tutorTelefono').addEventListener('input', ev => {
+/* ---------- Contactos de emergencia ----------
+   Se guardan en la misma columna de texto como «Nombre · Parentesco · Teléfono».
+   Las fichas antiguas escritas en texto libre se separan lo mejor posible: el teléfono se detecta solo. */
+const SEP_EMERG = ' · ';
+function leerEmergencia(v) {
+  const t = String(v || '').trim();
+  if (!t) return { nombre: '', parentesco: '', telefono: '' };
+  const partes = t.split(/\s*·\s*/);
+  if (partes.length >= 3) return { nombre: partes[0], parentesco: partes[1], telefono: partes.slice(2).join(' ') };
+  const m = t.match(/\+?\(?\d[\d\s().-]{6,}\d/);
+  const telefono = m ? m[0].trim() : '';
+  let resto = (m ? t.replace(m[0], '') : t).replace(/\s*·\s*$|^\s*·\s*/g, '').replace(/[\s,;:-]+$/, '').trim();
+  let parentesco = '';
+  const par = resto.match(/^(.*?)\s*\(([^)]+)\)\s*$/) || (partes.length === 2 && !m ? [null, partes[0], partes[1]] : null);
+  if (par) { resto = par[1].trim(); parentesco = par[2].trim(); }
+  else if (/,/.test(resto)) { const i = resto.lastIndexOf(','); parentesco = resto.slice(i + 1).trim(); resto = resto.slice(0, i).trim(); }
+  return { nombre: resto, parentesco, telefono };
+}
+const unirEmergencia = c => (c.nombre || c.parentesco || c.telefono) ? [c.nombre, c.parentesco, c.telefono].map(x => x.trim()).join(SEP_EMERG) : '';
+const textoEmergencia = v => { const c = leerEmergencia(v); return [c.nombre && (c.parentesco ? `${c.nombre} (${c.parentesco})` : c.nombre) || c.parentesco, c.telefono].filter(Boolean).join(' · '); };
+const CONTACTOS_EMERG = ['emergencia', 'emergencia2'];
+document.addEventListener('input', ev => {
   const inp = ev.target;
+  if (!inp.classList?.contains('tel-cl')) return;
   if (!inp.value.trim()) { inp.value = ''; return; }
   const alFinal = inp.selectionStart === inp.value.length;
   let utiles = digitosTel(inp.value.slice(0, inp.selectionStart)).length;
@@ -1286,6 +1313,12 @@ $('#form-alumno').addEventListener('submit', async ev => {
   if (datos.rut) {
     datos.rut = formatearRut(datos.rut);
     if (!rutValido(datos.rut)) return mostrar('El RUT no es válido: revisa los números y el dígito verificador.');
+  }
+  for (const [n, k] of CONTACTOS_EMERG.entries()) {
+    const c = { nombre: $(`#f-${k}-nombre`).value.replace(/·/g, '-'), parentesco: $(`#f-${k}-parentesco`).value.replace(/·/g, '-'), telefono: formatearTel($(`#f-${k}-telefono`).value).trim() };
+    if (!telValido(c.telefono)) return mostrar(`El teléfono del contacto de emergencia ${n + 1} debe tener 9 dígitos (por ejemplo +56 9 1234 5678).`);
+    if ((c.parentesco || c.telefono) && !c.nombre.trim()) return mostrar(`Falta el nombre del contacto de emergencia ${n + 1}.`);
+    datos[k] = unirEmergencia(c);
   }
   if (datos.tutorTelefono) {
     datos.tutorTelefono = formatearTel(datos.tutorTelefono).trim();
@@ -1540,7 +1573,7 @@ $('#form-mi-cumple').addEventListener('submit', async ev => {
 
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programas', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia 1', 'emergencia'], ['Emergencia 2', 'emergencia2'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programas', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ...CONTACTOS_EMERG.flatMap((k, n) => [[`Emergencia ${n + 1}: nombre`, a => leerEmergencia(a[k]).nombre], [`Emergencia ${n + 1}: parentesco`, a => leerEmergencia(a[k]).parentesco], [`Emergencia ${n + 1}: teléfono`, a => leerEmergencia(a[k]).telefono]]), ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');
