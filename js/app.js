@@ -1163,6 +1163,7 @@ async function abrirFormulario(id = null) {
   $('#form-error').hidden = true;
   $('#f-talleres').innerHTML = S.talleres.filter(t => t.activo || a?.talleres.includes(t.id)).map(t => `<label><input type="checkbox" name="talleres" value="${t.id}" ${a?.talleres.includes(t.id) ? 'checked' : ''}>${punto(t)}${esc(t.nombre)}</label>`).join('') || '<p class="vacio">Primero crea un taller en Talleres semestrales o Talleres de verano.</p>';
   for (const c of CAMPOS_FICHA) { const inp = $('#f-' + c); if (inp) inp.value = a ? (a[c] ?? '') : ''; }
+  $('#f-rut').value = formatearRut($('#f-rut').value);
   const progs = a ? programasDe(a) : ['FormaPro'];
   for (const c of $$('#f-programas input')) c.checked = progs.includes(c.value);
   if (!a) { $('#f-estado').value = 'activo'; $('#f-fechaIngreso').value = iso(hoy()); }
@@ -1188,6 +1189,35 @@ function mostrarEdad() {
   const n = edad(v);
   out.textContent = n === 1 ? '1 año' : `${n} años`;
 }
+/* ---------- RUT: formato 12.345.678-9 mientras se escribe y validación del dígito verificador ---------- */
+function limpiarRut(v) {
+  const c = String(v || '').toUpperCase().replace(/[^0-9K]/g, '');
+  // La K solo puede ser el dígito verificador (último carácter).
+  return c.slice(0, -1).replace(/K/g, '') + c.slice(-1);
+}
+function formatearRut(v) {
+  const c = limpiarRut(v).slice(0, 9);
+  if (c.length < 2) return c;
+  const cuerpo = c.slice(0, -1).replace(/^0+(?=\d)/, '');
+  return `${cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${c.slice(-1)}`;
+}
+function rutValido(v) {
+  const c = limpiarRut(v);
+  if (!/^\d{7,8}[0-9K]$/.test(c)) return false;
+  let suma = 0, mult = 2;
+  for (let i = c.length - 2; i >= 0; i--) { suma += Number(c[i]) * mult; mult = mult === 7 ? 2 : mult + 1; }
+  const r = 11 - (suma % 11);
+  return c.slice(-1) === (r === 11 ? '0' : r === 10 ? 'K' : String(r));
+}
+$('#f-rut').addEventListener('input', ev => {
+  const inp = ev.target;
+  // Conserva la posición del cursor contando los caracteres útiles a su izquierda.
+  const utiles = limpiarRut(inp.value.slice(0, inp.selectionStart)).length;
+  inp.value = formatearRut(inp.value);
+  let pos = 0, vistos = 0;
+  while (pos < inp.value.length && vistos < utiles) { if (/[0-9K]/.test(inp.value[pos])) vistos++; pos++; }
+  inp.setSelectionRange(pos, pos);
+});
 $('#f-fechaNac').addEventListener('input', mostrarEdad);
 $('#f-fechaNac').addEventListener('change', mostrarEdad);
 // Requisito publicado en spectrumpro.cl para FormaPro y Terapia Ocupacional:
@@ -1222,6 +1252,10 @@ $('#form-alumno').addEventListener('submit', async ev => {
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   if (faltan.length) return mostrar(`Completa: ${faltan.join(', ')}.`);
   if (datos.fechaNac > iso(hoy())) return mostrar('La fecha de nacimiento no puede ser futura.');
+  if (datos.rut) {
+    datos.rut = formatearRut(datos.rut);
+    if (!rutValido(datos.rut)) return mostrar('El RUT no es válido: revisa los números y el dígito verificador.');
+  }
   if (datos.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.tutorEmail)) return mostrar('Revisa el correo de la persona responsable.');
   const btn = ev.submitter;
   botonOcupado(btn, true);
