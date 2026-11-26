@@ -181,6 +181,7 @@ textarea { resize: vertical; }
 
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .chip-ok { background: var(--ok-soft); color: var(--ok); }
+.chip-online { background: var(--accent-soft); color: var(--accent); font-size: .7rem; vertical-align: middle; }
 .chip-warn { background: var(--warn-soft); color: var(--warn); }
 .chip-bad { background: var(--bad-soft); color: var(--bad); }
 .chip-info { background: var(--info-soft); color: var(--info); }
@@ -211,6 +212,10 @@ textarea { resize: vertical; }
 .sesion .txt { flex: 1; min-width: 0; }
 .sesion .txt b { display: block; font-weight: 600; }
 .sesion .txt small { color: var(--muted); font-size: .8rem; }
+.sesion-acc { display: flex; align-items: center; gap: 8px; flex: none; }
+a.btn { text-decoration: none; }
+.taller dd.enlace { min-width: 0; overflow-wrap: anywhere; }
+.taller dd.enlace a { color: var(--accent); }
 .barra { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
 .barra > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 
@@ -464,6 +469,8 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
   }
   .nav a { flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .66rem; flex: 1; text-align: center; min-width: 0; }
   .nav a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .nav a span[data-corto] { font-size: 0; }
+  .nav a span[data-corto]::after { content: attr(data-corto); font-size: .66rem; }
   .lateral { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .lateral .espectro { flex-basis: calc(100% + 2 * max(16px, env(safe-area-inset-left, 0px))); }
   .plegar { display: none; }

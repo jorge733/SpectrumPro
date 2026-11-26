@@ -47,6 +47,10 @@ const iniciales = s => String(s || '').split(/[\s@._-]+/).filter(p => /^\p{L}/u.
 const tono = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const avatar = (a, extra = '') => `<span class="avatar ${extra}" style="--h:${tono(a.id)}" aria-hidden="true">${esc(iniciales(`${a.apodo || a.nombre} ${a.apellidos || ''}`))}</span>`;
 const horario = t => t.horaInicio ? `${t.horaInicio}${t.horaFin ? ' – ' + t.horaFin : ''}` : 'Sin horario';
+const esOnline = t => t?.modalidad === 'online';
+const enlaceValido = u => /^https:\/\/[^\s"'<>]+$/i.test(u || '');
+const botonUnirse = (t, peq = true) => esOnline(t) && enlaceValido(t.enlace) && t.activo
+  ? `<a class="btn ${peq ? 'btn-peq' : ''}" href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">Unirse</a>` : '';
 const punto = t => `<span class="punto" style="--c:${color(t.color)}"></span>`;
 
 /* ---------- estado ---------- */
@@ -382,9 +386,9 @@ function vistaPanel(el) {
           const pct = ins ? Math.min(100, Math.round(reg / ins * 100)) : 0;
           return `<div class="sesion">
             ${punto(s)}
-            <div class="txt"><b>${esc(s.nombre)}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
+            <div class="txt"><b>${esc(s.nombre)}${esOnline(s) ? ' <span class="chip chip-online">Online</span>' : ''}</b><small>${esc(horario(s))} · ${ins} inscritos</small>
               <div class="barra" role="img" aria-label="${reg} de ${ins} con asistencia registrada"><span style="width:${pct}%"></span></div></div>
-            ${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}
+            <div class="sesion-acc">${botonUnirse(s)}${reg >= ins && ins ? '<span class="chip chip-ok">Lista pasada</span>' : `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${s.id}">Pasar lista</button>`}</div>
           </div>`;
         }).join('') : '<p class="vacio">Hoy no tienes talleres programados.</p>'}
       </section>
@@ -629,12 +633,14 @@ function pintarFichas() {
   }).join('')}</div>` : `<div class="vacio-grande">${S.alumnos.length ? 'No hay fichas que coincidan con la búsqueda.' : puede.editarFichas() ? 'Aún no hay fichas. Crea la primera con «Nueva ficha».' : 'Aún no hay jóvenes inscritos en tus talleres.'}</div>`;
 }
 
-function vistaTalleres(el) {
-  const lista = puede.verTodo() ? S.talleres : misTalleres();
+function vistaTalleres(el, modalidad = 'presencial') {
+  const online = modalidad === 'online';
+  const lista = (puede.verTodo() ? S.talleres : misTalleres()).filter(t => esOnline(t) === online);
+  const titulo = online ? (puede.verTodo() ? 'Talleres online' : 'Tus talleres online') : (puede.verTodo() ? 'Talleres' : 'Tus talleres');
   el.innerHTML = `
     <header class="cabecera">
-      <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() ? 'Talleres' : 'Tus talleres'}</h1><p>Horario semanal y asistencia de los últimos 30 días.</p></div>
-      ${puede.admin() ? '<button type="button" class="btn" data-accion="nuevo-taller">+ Nuevo taller</button>' : ''}
+      <div><p class="eyebrow">${lista.length} ${online ? 'talleres online' : 'talleres presenciales'}</p><h1>${titulo}</h1><p>${online ? 'Sesiones por videollamada: horario, enlace y asistencia de los últimos 30 días.' : 'Horario semanal y asistencia de los últimos 30 días.'}</p></div>
+      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" data-modalidad="${modalidad}">+ Nuevo taller${online ? ' online' : ''}</button>` : ''}
     </header>
     ${lista.length ? `<div class="talleres">${lista.map(t => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
@@ -647,17 +653,21 @@ function vistaTalleres(el) {
           <dt>Días</dt><dd>${t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—'}</dd>
           <dt>Horario</dt><dd class="num">${esc(horario(t))}</dd>
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
+          ${online ? `<dt>Enlace</dt><dd class="enlace">${enlaceValido(t.enlace) ? `<a href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">${esc(t.enlace.replace(/^https:\/\//i, ''))}</a>` : '<span class="muted">Sin enlace</span>'}</dd>` : ''}
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
           <dt>Inscritos</dt><dd class="num">${ins.length}</dd>
         </dl>
-        <div class="acciones">${chipPct(r.pct)}
+        <div class="acciones">${chipPct(r.pct)}${botonUnirse(t)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
           <button type="button" class="btn btn-sec btn-peq" data-ver-mes="${t.id}">Ver mes</button>` : ''}
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>` : '<div class="vacio-grande">No tienes talleres asignados.</div>'}`;
+    }).join('')}</div>` : `<div class="vacio-grande">${online
+      ? (puede.admin() ? 'Aún no hay talleres online. Crea el primero con «Nuevo taller online».' : 'No tienes talleres online asignados.')
+      : (puede.admin() ? 'Aún no hay talleres presenciales. Crea el primero con «Nuevo taller».' : 'No tienes talleres presenciales asignados.')}</div>`}`;
 }
+const vistaOnline = el => vistaTalleres(el, 'online');
 
 /* ---------- Administración ---------- */
 function vistaAdministracion(el) {
@@ -914,7 +924,9 @@ $('#form-alumno').addEventListener('submit', async ev => {
 
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
-function abrirTaller(id = null) {
+const mostrarEnlace = () => { $('#t-enlace-box').hidden = $('#t-modalidad').value !== 'online'; };
+$('#t-modalidad').addEventListener('change', mostrarEnlace);
+function abrirTaller(id = null, modalidad = 'presencial') {
   editandoTaller = id;
   const t = id ? taller(id) : null;
   $('#form-taller').reset();
@@ -927,6 +939,9 @@ function abrirTaller(id = null) {
   $('#t-horaFin').value = t?.horaFin || '';
   $('#t-encargado').value = t?.encargado || '';
   $('#t-activo').checked = t ? t.activo : true;
+  $('#t-modalidad').value = t ? (esOnline(t) ? 'online' : 'presencial') : modalidad;
+  $('#t-enlace').value = t?.enlace || '';
+  mostrarEnlace();
   $('#t-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<label><input type="checkbox" name="dias" value="${d}" ${t?.dias.includes(d) ? 'checked' : ''}>${DIAS_CORTOS[d]}</label>`).join('');
   const equipo = S.usuarios.filter(u => u.rol === 'tallerista');
   $('#t-equipo').innerHTML = equipo.length ? equipo.map(u => `<label><input type="checkbox" name="equipo" value="${u.id}" ${t?.equipo.includes(u.id) ? 'checked' : ''}>${esc(u.nombre || u.email)}${u.activo ? '' : ' <span class="muted">(inactiva)</span>'}</label>`).join('') : '<p class="nota-suave">Aún no hay talleristas. Invítalas desde Administración. Dirección y terapeutas pueden pasar lista en todos los talleres.</p>';
@@ -941,6 +956,7 @@ $('#form-taller').addEventListener('submit', async ev => {
     id: editandoTaller, nombre: String(fd.get('nombre')).trim(), area: String(fd.get('area')).trim(), color: fd.get('color'),
     horaInicio: fd.get('horaInicio'), horaFin: fd.get('horaFin'), encargado: String(fd.get('encargado')).trim(),
     activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'),
+    modalidad: fd.get('modalidad') === 'online' ? 'online' : 'presencial', enlace: String(fd.get('enlace') || '').trim(),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
   };
   const err = $('#taller-error');
@@ -948,6 +964,8 @@ $('#form-taller').addEventListener('submit', async ev => {
   if (!t.nombre) return mostrar('Escribe el nombre del taller.');
   if (!t.dias.length) return mostrar('Elige al menos un día de la semana.');
   if (t.horaInicio && t.horaFin && t.horaFin <= t.horaInicio) return mostrar('La hora de término debe ser posterior a la de inicio.');
+  if (t.modalidad !== 'online') t.enlace = '';
+  else if (t.enlace && !enlaceValido(t.enlace)) return mostrar('El enlace debe ser una dirección completa que empiece con https://');
   const btn = ev.submitter;
   botonOcupado(btn, true);
   try {
@@ -1031,7 +1049,7 @@ $('#u-eliminar').addEventListener('click', async () => {
 
 /* ---------- exportar ---------- */
 function exportarFichas() {
-  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => taller(id)?.nombre).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
+  const cols = [['Nombre', 'nombre'], ['Apellidos', 'apellidos'], ['Nombre preferido', 'apodo'], ['Pronombres', 'pronombres'], ['Fecha de nacimiento', 'fechaNac'], ['RUT', 'rut'], ['Programa', 'programa'], ['Estado', a => ESTADO_ALUMNO[a.estado]], ['Talleres', a => a.talleres.map(id => { const t = taller(id); return t ? t.nombre + (esOnline(t) ? ' (online)' : '') : ''; }).join(' | ')], ['Beca', 'beca'], ['Ingreso', 'fechaIngreso'], ['Responsable', 'tutorNombre'], ['Parentesco', 'tutorRelacion'], ['Teléfono', 'tutorTelefono'], ['Correo', 'tutorEmail'], ['Emergencia', 'emergencia'], ['Dirección', 'direccion'], ['Alergias', 'alergias'], ['Intereses', 'intereses'], ['Apoyos', 'apoyos'], ['% asistencia (historial cargado)', a => resumen(registros({ alumno: a.id })).pct ?? '']];
   const filas = [cols.map(c => c[0])].concat(ordenarAlumnos(S.alumnos).map(a => cols.map(([, k]) => typeof k === 'function' ? k(a) : a[k])));
   descargar(`spectrumpro-fichas-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
   toast('Fichas descargadas');
@@ -1053,7 +1071,7 @@ function exportarAsistencia() {
 /* =====================================================================
    Enrutado y eventos
    ===================================================================== */
-const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, administracion: vistaAdministracion };
+const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: el => vistaTalleres(el), online: vistaOnline, administracion: vistaAdministracion };
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
@@ -1163,7 +1181,7 @@ document.addEventListener('click', async ev => {
       mostrarAcceso('entrar');
     }
     if (acc === 'nueva-ficha') abrirFormulario();
-    if (acc === 'nuevo-taller') abrirTaller();
+    if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.modalidad || 'presencial');
     if (acc === 'invitar') abrirUsuario();
     if (acc === 'exportar-fichas') exportarFichas();
     if (acc === 'exportar-asistencia') exportarAsistencia();

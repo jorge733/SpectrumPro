@@ -108,6 +108,7 @@
       <a href="#cumpleanos" data-vista="cumpleanos" title="Cumpleaños"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 0 0 2-2c0-.4-.1-.7-.3-1L12 0l-1.7 3c-.2.3-.3.6-.3 1a2 2 0 0 0 2 2m6 3h-5V7h-2v2H6a3 3 0 0 0-3 3v1.5c0 1.1.9 2 2 2 .5 0 1-.2 1.4-.6L8.5 13l2.1 2.1c.7.7 2 .7 2.8 0l2.1-2.1 2.1 2.1c.4.4.9.6 1.4.6 1.1 0 2-.9 2-2V12a3 3 0 0 0-3-3m1 8c-.9 0-1.8-.3-2.5-.9l-1.1-1-1 1a3.6 3.6 0 0 1-4.9 0l-1-1-1.1 1A3.7 3.7 0 0 1 5 17v4c0 .6.4 1 1 1h12c.6 0 1-.4 1-1v-4z"/></svg><span>Cumpleaños</span></a>
       <a href="#alumnos" data-vista="alumnos" title="Fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6m0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13m8 0h-1c1.2.8 2 2 2 3.5V19h6v-2.5c0-2.3-4.7-3.5-7-3.5"/></svg><span>Fichas</span></a>
       <a href="#talleres" data-vista="talleres" title="Talleres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V4z"/></svg><span>Talleres</span></a>
+      <a href="#online" data-vista="online" title="Talleres online"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2H0v2h24v-2zM4 6h16v10H4zm6 2v6l5-3z"/></svg><span data-corto="Online">Talleres online</span></a>
       <a href="#administracion" data-vista="administracion" data-solo="admin" title="Administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7" transform="translate(-1 0)"/></svg><span>Administración</span></a>
     </nav>
     <div class="usuario">
@@ -225,6 +226,8 @@
         <label>Hora de inicio<input id="t-horaInicio" name="horaInicio" type="time"></label>
         <label>Hora de término<input id="t-horaFin" name="horaFin" type="time"></label>
         <label class="ancho">A cargo (texto visible)<input id="t-encargado" name="encargado" autocomplete="off"></label>
+        <label>Modalidad<select id="t-modalidad" name="modalidad"><option value="presencial">Presencial</option><option value="online">Online</option></select></label>
+        <label class="ancho" id="t-enlace-box">Enlace de la videollamada<input id="t-enlace" name="enlace" type="url" inputmode="url" placeholder="https://meet.google.com/…" autocomplete="off"></label>
       </div>
       <datalist id="t-areas"><option>Centro de Formación</option><option>Arte y Apoyo</option><option>Terapia Ocupacional</option><option>SpectrumOnline</option></datalist>
       <div><p class="campo-titulo">Días de la semana *</p><div id="t-dias" class="checks checks-dias"></div></div>
