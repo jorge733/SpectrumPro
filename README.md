@@ -118,7 +118,7 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 ### 6. Publicar la plataforma
 
-Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (normalmente un `A` hacia `76.76.21.21` para el dominio y un `CNAME` de `www` hacia `cname.vercel-dns.com`). Las etiquetas Open Graph de `index.html`, `encuesta.html` y `tienda/` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html y la tienda en https://gestionspectrumpro.cl/tienda/.
+Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (hoy: un `A` de `gestionspectrumpro.cl` hacia `216.150.1.1` y un `CNAME` de `www` hacia `gestionspectrumpro.cl`). Las etiquetas Open Graph de `index.html`, `encuesta.html` y `tienda/` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html y la tienda en https://gestionspectrumpro.cl/tienda/.
 
 ## Encuesta de la Muestra Audiovisual
 
