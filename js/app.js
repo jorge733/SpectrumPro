@@ -764,7 +764,6 @@ function vistaTemporada(el, temporada) {
       </article>`;
     }).join('')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : online ? 'Aún no hay talleres online.' + (puede.admin() ? ' Crea el primero con «Nuevo taller online».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
 }
-const vistaOnline = el => vistaTalleres(el, 'online');
 
 /* ---------- Administración ---------- */
 function vistaAdministracion(el) {
