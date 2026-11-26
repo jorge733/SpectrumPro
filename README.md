@@ -141,6 +141,19 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (hoy: un `A` de `gestionspectrumpro.cl` hacia `216.150.1.1` y un `CNAME` de `www` hacia `gestionspectrumpro.cl`). Las etiquetas Open Graph de `index.html`, `encuesta.html` y `tienda/` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html y la tienda en https://gestionspectrumpro.cl/tienda/.
 
+## Sitio web público (spectrumpro.cl)
+
+`sitio-web/` es el sitio público que reemplaza al WordPress de https://spectrumpro.cl: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Colabora y Contacto. Son archivos estáticos, separados de la plataforma: se publican como un **segundo proyecto de Vercel** desde este mismo repositorio, así gestionspectrumpro.cl no cambia.
+
+1. En Vercel: **Add New → Project**, importa este repositorio y en **Root Directory** elige `sitio-web`. Framework: *Other*, sin comando de build.
+2. En ese proyecto nuevo: **Settings → Domains → Add**, escribe `spectrumpro.cl` y también `www.spectrumpro.cl` (Vercel redirige uno al otro).
+3. En el panel DNS del dominio (donde está registrado spectrumpro.cl) cambia **solo** los registros web que indica Vercel: el `A` de `spectrumpro.cl` (hoy apunta al hosting de WordPress) y el `CNAME` de `www`. **No toques los registros `MX`, `TXT` (SPF, DKIM, DMARC) ni los de correo**, o dejará de funcionar administracion@spectrumpro.cl.
+4. Espera a que Vercel marque el dominio como válido (minutos a unas horas) y revisa el sitio. El WordPress sigue existiendo en su hosting; si algo falla, basta con devolver el registro `A` a su valor anterior (anótalo antes de cambiarlo).
+
+`sitio-web/vercel.json` activa direcciones limpias (`/nosotros` en vez de `/nosotros.html`) y redirige las direcciones antiguas de WordPress (`/quienes-somos`, `/nuestros-talleres`, `/arte-terapia`, `/formapro`, `/tienda`…) a su página nueva, para no perder enlaces ni posicionamiento en Google.
+
+Los textos, fotos, talleres y equipo están en `sitio-web/sitio/contenido.js` (y el resto del texto en cada `.html`). Los enlaces a la tienda y al acceso del equipo apuntan a gestionspectrumpro.cl.
+
 ## Encuesta de la Muestra Audiovisual
 
 `encuesta.html` es una página pública, con la gráfica del afiche, para quienes asistirán a la Muestra Audiovisual (viernes 11 de diciembre, 11:00, Centro Cultural La Moneda). No pide iniciar sesión. Pregunta nombre, correo, teléfono (opcional), cuántas personas acompañan, la relación con SpectrumPro, cómo se enteraron, qué necesitan para estar cómodos (silla de ruedas, espacio de calma, protectores auditivos, subtítulos, Lengua de Señas Chilena…) y qué esperan de la muestra.
