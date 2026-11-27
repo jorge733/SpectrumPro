@@ -30,7 +30,7 @@ body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 18px/
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 p { margin: 0; }
-h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: .98; margin: 0; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: break-word; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: .98; margin: 0; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: normal; hyphens: manual; }
 h3 { line-height: 1.1; letter-spacing: -.015em; }
 :focus-visible { outline: 3px solid var(--c4); outline-offset: 3px; border-radius: 8px; }
 [hidden] { display: none !important; }
@@ -354,8 +354,8 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
 /* Celular y tablet */
 /* ---------- Comunidad ---------- */
 .cabeza .caja > div { min-width: 0; }
-.p-comunidad .cabeza h1 { font-size: clamp(26px, 6.8vw, 88px); hyphens: auto; }
-.p-comunidad .titulo-seccion { font-size: clamp(26px, 8.2vw, 65px); hyphens: auto; }
+.p-comunidad .cabeza h1 { font-size: clamp(26px, 6.8vw, 88px); }
+.p-comunidad .titulo-seccion { font-size: clamp(26px, 8.2vw, 65px); }
 .cab > div { min-width: 0; }
 .miradas { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .miradas li { padding: 9px 16px; border-radius: 999px; background: var(--blanco); border: 1px solid var(--linea); font-weight: 600; font-size: 15px; }

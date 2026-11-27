@@ -153,7 +153,47 @@
       const img = a.querySelector('img'); if (img && !img.dataset.fija) img.src = ytMiniatura(v);
     });
     observarRevelado();
+    ajustarTitulos();
   }
+
+  /* ---------- Títulos sin palabras cortadas ----------
+     Si una palabra de un título no cabe en su línea, el título se achica lo justo para que entre
+     entera (en vez de partirla y dejar letras sueltas abajo). Sirve también para textos editados. */
+  const TITULOS = 'h1, h2, h3, .cita, .frase';
+  function palabraMasAncha(el) {
+    let max = 0;
+    const r = document.createRange();
+    const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n; (n = tw.nextNode());) {
+      const re = /\S+/g;
+      for (let m; (m = re.exec(n.data));) {
+        r.setStart(n, m.index); r.setEnd(n, m.index + m[0].length);
+        max = Math.max(max, r.getBoundingClientRect().width);
+      }
+    }
+    return max;
+  }
+  function ajustarTitulos() {
+    const els = [...document.querySelectorAll(TITULOS)];
+    els.forEach(el => { if (el.style.fontSize) el.style.fontSize = ''; });
+    for (const el of els) {
+      const cs = getComputedStyle(el);
+      const disponible = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      if (disponible <= 0) continue;
+      for (let i = 0; i < 3; i++) {
+        const ancho = palabraMasAncha(el);
+        if (ancho <= disponible + .5) break;
+        el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * disponible / ancho * .98) + 'px';
+      }
+    }
+  }
+  let ajustePendiente = 0;
+  const pedirAjuste = () => { cancelAnimationFrame(ajustePendiente); ajustePendiente = requestAnimationFrame(ajustarTitulos); };
+  let anchoVentana = innerWidth;
+  addEventListener('resize', () => { if (innerWidth !== anchoVentana) { anchoVentana = innerWidth; pedirAjuste(); } });
+  addEventListener('load', pedirAjuste);
+  document.fonts?.ready.then(pedirAjuste);
+  document.addEventListener('toggle', pedirAjuste, true);   // títulos dentro de <details> al abrirse
 
   /* ---------- Google y redes sociales ---------- */
   function seo(T) {
