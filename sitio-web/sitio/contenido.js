@@ -26,6 +26,7 @@ window.SITIO_RESPALDO = {
   "correo": "contacto@spectrumpro.cl",
   "instagram": "spectrumpro.cl",
   "youtube": "https://www.youtube.com/@spectrumpro1710",
+  "linkedin": "https://www.linkedin.com/company/spectrum-pro/",
   "patreon": "https://www.patreon.com/cw/spectrumpro"
  },
  "elementos": [
