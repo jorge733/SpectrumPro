@@ -450,8 +450,8 @@ window.SITIO_RESPALDO = {
   {
    "tipo": "modulo",
    "titulo": "Revisteros",
-   "subtitulo": "",
-   "texto": "Proyecto de análisis y crítica de cine, series, documentales y juegos. Con reseñas, ensayos y recomendaciones que combinan opinión informada y mirada creativa, abrimos un espacio cercano para conversar sobre la cultura audiovisual.",
+   "subtitulo": "Gabriela Banderas",
+   "texto": "Un proyecto de análisis y crítica de cine, series, documentales y videojuegos que reúne reseñas, ensayos y recomendaciones donde la opinión informada se encuentra con una mirada creativa. Aquí abrimos un espacio cercano para conversar sobre la cultura audiovisual, mientras jóvenes creadores dan vida a una revista digital y aprenden el oficio de redactar.",
    "lista": "",
    "nota": "",
    "imagen": "",
