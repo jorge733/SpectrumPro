@@ -30,7 +30,7 @@ const activos = () => S.comunidad.suscriptores.filter(s => s.estado === 'activo'
    Vista
    ===================================================================== */
 async function vistaComunidad(el) {
-  if (!puede.sitio()) { location.hash = 'panel'; return; }
+  if (!puede.comunidad()) { location.hash = 'panel'; return; }
   const cab = `
     <header class="cabecera">
       <div><p class="eyebrow">Dirección y equipo</p><h1>Comunidad</h1><p>Boletines por correo para quienes se suscriben en spectrumpro.cl/comunidad. Los textos, documentos y podcasts de esa página se editan en «Sitio web».</p></div>

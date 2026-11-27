@@ -9,6 +9,11 @@ drop table if exists public.boletines;
 drop table if exists public.suscriptores;
 drop table if exists public.comunidad_intentos;
 drop function if exists public.proteger_envio_boletin();
+-- Las imágenes del bucket «sitio» vuelven a subirlas solo quienes editan el sitio (dirección).
+drop policy if exists sitio_fotos_subir on storage.objects;
+create policy sitio_fotos_subir on storage.objects for insert to authenticated
+  with check (bucket_id = 'sitio' and public.puede_editar_sitio());
+drop function if exists public.puede_gestionar_comunidad();
 
 delete from public.sitio_elementos where tipo in ('recurso', 'episodio');
 alter table public.sitio_elementos drop constraint if exists sitio_tipo_valido;

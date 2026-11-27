@@ -15,7 +15,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Talleres semestrales** | Talleres del semestre agrupados por área (FormaPro arriba, luego Centro de Formación, Mentorías, SpectrumOnline, Terapia Ocupacional y al final Arte y Apoyo). Cada taller tiene horario, quién está a cargo y su correo, inscritos, y una ficha con pestañas **Información**, **Programa** (texto y PDF opcional) y **Afiches** (material promocional). Botón **Horario para imprimir**: grilla semanal que se arma sola y se imprime o guarda en PDF (o se descarga para Excel). Dirección crea y edita talleres, sube programa y afiches, y cambia el orden con flechas ↑ ↓ dentro de cada área |
 | **Talleres de verano** | Lo mismo para los talleres de la temporada de verano; su horario imprimible va por fechas |
 | **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
-| **Sitio web** | Dirección y rol Equipo. Edita todo https://spectrumpro.cl: cada título, párrafo, botón e imagen de las 8 páginas y del pie, títulos para Google, secciones visibles, aviso superior, contacto y las listas (equipo, talleres, producciones, clientes…), con vista previa en vivo. Ver «Editar el sitio desde la plataforma» más abajo |
+| **Sitio web** | Solo dirección. Edita todo https://spectrumpro.cl: cada título, párrafo, botón e imagen de las 8 páginas y del pie, títulos para Google, secciones visibles, aviso superior, contacto y las listas (equipo, talleres, producciones, clientes…), con vista previa en vivo. Ver «Editar el sitio desde la plataforma» más abajo |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Comunidad** | Dirección y rol Equipo. Boletines por correo para quienes se suscriben en https://spectrumpro.cl/comunidad: escribirlos con vista previa, enviarse una prueba y mandarlos a todas las personas suscritas; lista de suscriptores con baja y CSV. Ver «Comunidad» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
@@ -29,7 +29,7 @@ En el menú, **Posts**, **Tienda**, **Sitio web** y **Comunidad** están juntos 
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
 | **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
-| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo y editan la tienda y el sitio web |
+| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo, editan la tienda y escriben y envían los boletines de la Comunidad. No editan el sitio web |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
@@ -73,6 +73,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261127020000_sitio_web.sql` | Contenido del sitio público editable desde la plataforma (tablas `sitio_textos` y `sitio_elementos`, bucket público `sitio`) con el contenido actual ya cargado |
    | `20261128000000_sitio_web_completo.sql` | Listas «Cinta de la portada» y «Clientes» con su contenido actual |
    | `20261129000000_comunidad.sql` | Comunidad: listas «Recursos» y «Podcasts» del sitio, suscriptores, boletines y bucket público `documentos` (ver «Comunidad») |
+   | `20261130000000_sitio_solo_direccion.sql` | El sitio web lo edita solo dirección; la Comunidad (boletines y suscriptores) sigue en manos de dirección y el rol Equipo |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -192,7 +193,7 @@ Son archivos estáticos y se publican en Vercel. El dominio oficial es **https:/
 
 ### Editar el sitio desde la plataforma
 
-Todo el sitio se edita en https://gestionspectrumpro.cl, sección **Sitio web** (dirección y rol Equipo):
+Todo el sitio se edita en https://gestionspectrumpro.cl, sección **Sitio web** (solo dirección):
 
 | Pestaña | Qué se edita |
 | --- | --- |

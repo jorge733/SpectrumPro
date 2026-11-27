@@ -915,7 +915,7 @@
       async borrarFotoProducto() { },
       /* Sitio web: en la demostración parte del respaldo del sitio (sitio-web/sitio/contenido.js). */
       async sitio() {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         if (!db.sitio) {
           let base = { textos: {}, elementos: [] };
           try {
@@ -930,7 +930,7 @@
         return copia(db.sitio);
       },
       async guardarTextosSitio(cambios) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         await espera();
         const ahora = new Date().toISOString();
         for (const [k, v] of Object.entries(cambios)) { db.sitio.textos[k] = String(v ?? ''); db.sitio.fechas[k] = ahora; }
@@ -938,14 +938,14 @@
         guardar();
       },
       async borrarTextosSitio(claves) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         for (const k of claves) { delete db.sitio.textos[k]; delete db.sitio.fechas[k]; }
         auditar('delete', 'sitio_textos', {});
         guardar();
       },
       async fotosSitio() { return []; },
       async guardarElementoSitio(e) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         await espera();
         const id = e.id || nuevoId();
         const i = db.sitio.elementos.findIndex(x => x.id === id);
@@ -955,14 +955,14 @@
         guardar(); return id;
       },
       async eliminarElementoSitio(id) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         const e = db.sitio.elementos.find(x => x.id === id);
         db.sitio.elementos = db.sitio.elementos.filter(x => x.id !== id);
         auditar('delete', 'sitio_elementos', { elemento: e?.titulo });
         guardar();
       },
       async ordenarElementosSitio(ids) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         ids.forEach((id, i) => { const e = db.sitio.elementos.find(x => x.id === id); if (e) e.orden = i + 1; });
         guardar();
       },
@@ -1020,7 +1020,7 @@
       },
       // En la demostración el PDF no se guarda: se usa un enlace temporal de este navegador.
       async subirDocumentoSitio(archivo) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         validarDocumento(archivo);
         return URL.createObjectURL(archivo);
       },

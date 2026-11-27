@@ -113,7 +113,7 @@ async function vistaSitio(el) {
   if (!puede.sitio()) { location.hash = 'panel'; return; }
   const cab = `
     <header class="cabecera">
-      <div><p class="eyebrow">Dirección y equipo</p><h1>Sitio web</h1><p>Todo spectrumpro.cl: textos, botones, imágenes, listas, Google y aviso. Los cambios se ven en el sitio apenas se guardan.</p></div>
+      <div><p class="eyebrow">Solo dirección</p><h1>Sitio web</h1><p>Todo spectrumpro.cl: textos, botones, imágenes, listas, Google y aviso. Los cambios se ven en el sitio apenas se guardan.</p></div>
       <div class="controles">
         <button type="button" class="btn btn-sec" data-sitio-previa>Vista previa en vivo</button>
         <a class="btn btn-sec" href="${SITIO_URL}" target="_blank" rel="noopener">Abrir el sitio ↗</a>

@@ -98,8 +98,10 @@ const puede = {
   admin: () => rol() === 'admin',
   // La tienda la editan dirección y el rol Equipo.
   tienda: () => ['admin', 'equipo'].includes(rol()),
-  // El sitio web público (spectrumpro.cl) también lo editan dirección y el rol Equipo.
-  sitio: () => ['admin', 'equipo'].includes(rol()),
+  // El sitio web público (spectrumpro.cl) lo edita solo dirección.
+  sitio: () => rol() === 'admin',
+  // Comunidad (boletines y suscriptores): dirección y el rol Equipo.
+  comunidad: () => ['admin', 'equipo'].includes(rol()),
   // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
   esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
@@ -369,6 +371,7 @@ function mostrarApp() {
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
   $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
   $$('[data-solo="sitio"]').forEach(el => { el.hidden = !puede.sitio(); });
+  $$('[data-solo="comunidad"]').forEach(el => { el.hidden = !puede.comunidad(); });
   $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   // Un grupo del menú se muestra solo si la persona puede abrir al menos una de sus secciones.
   $$('.nav-grupo').forEach(g => { g.hidden = !$$('.nav-sub a', g).some(a => !a.hidden); });
@@ -2026,7 +2029,8 @@ function vistaActual() {
   if (!VISTAS[v]) return 'panel';
   if ((v === 'administracion' || v === 'posts') && !puede.admin()) return 'panel';
   if (v === 'tienda' && !puede.tienda()) return 'panel';
-  if ((v === 'sitio' || v === 'comunidad') && !puede.sitio()) return 'panel';
+  if (v === 'sitio' && !puede.sitio()) return 'panel';
+  if (v === 'comunidad' && !puede.comunidad()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
