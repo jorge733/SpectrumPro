@@ -281,6 +281,7 @@
         <label>Hora de inicio<input id="t-horaInicio" name="horaInicio" type="time"></label>
         <label>Hora de término<input id="t-horaFin" name="horaFin" type="time"></label>
         <label class="ancho">A cargo (texto visible)<input id="t-encargado" name="encargado" autocomplete="off"></label>
+        <label class="ancho">Correo de quien está a cargo <small class="muted">· opcional; si son varias personas, separa los correos con coma</small><input id="t-encargado-email" name="encargadoEmail" type="text" inputmode="email" autocomplete="off" spellcheck="false" placeholder="nombre@correo.cl"></label>
         <label class="ancho" id="t-enlace-box">Enlace de la videollamada<input id="t-enlace" name="enlace" type="url" inputmode="url" placeholder="https://meet.google.com/…" autocomplete="off"></label>
         <label>Edad<input id="t-edad" name="edad" autocomplete="off" placeholder="Ej.: 8 a 12 años"></label>
         <label>Nota de horario<input id="t-nota" name="nota" autocomplete="off" placeholder="Ej.: viernes hasta las 18:00"></label>
@@ -294,11 +295,17 @@
         <div id="t-fechas" class="fechas-lista"></div>
       </div>
       <div><p class="campo-titulo">Cuentas que pueden pasar lista</p><div id="t-equipo" class="checks"></div></div>
+      <label class="ancho programa-texto">Programa del taller <small class="muted">· se ve en la pestaña «Programa» del taller. Puedes pegarlo desde Word o Google Docs</small><textarea id="t-programa-texto" name="programaTexto" rows="8" placeholder="Objetivos, contenidos, sesión por sesión, materiales…"></textarea></label>
       <div class="programa-campo">
-        <p class="campo-titulo"><label for="t-programa">Programa del taller (PDF, hasta 10 MB)</label></p>
+        <p class="campo-titulo"><label for="t-programa">Programa en PDF (opcional, hasta 10 MB)</label></p>
         <p id="t-programa-actual" class="nota-suave" hidden></p>
         <input id="t-programa" name="programa" type="file" accept="application/pdf,.pdf">
         <label class="check-suelto" id="t-programa-quitar-box" hidden><input type="checkbox" id="t-programa-quitar"> Quitar el programa actual</label>
+      </div>
+      <div class="programa-campo">
+        <p class="campo-titulo"><label for="t-afiches">Material promocional: afiches y publicidad (imágenes o PDF, hasta 10 MB cada uno)</label></p>
+        <div id="t-afiches-actuales" class="afiches-editar"></div>
+        <input id="t-afiches" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf">
       </div>
       <label class="check-suelto"><input type="checkbox" id="t-activo" name="activo" checked> Taller activo</label>
       <p id="taller-error" class="aviso-error" role="alert" hidden></p>
@@ -310,6 +317,10 @@
     </footer>
   </form>
 </dialog>
+
+<dialog id="dlg-taller-ver" class="dialogo dialogo-ancho" aria-labelledby="taller-ver-titulo"></dialog>
+
+<dialog id="dlg-horario" class="dialogo dialogo-ancho dialogo-horario" aria-labelledby="horario-titulo"></dialog>
 
 <dialog id="dlg-usuario" class="dialogo" aria-labelledby="usuario-titulo">
   <form id="form-usuario" novalidate>
@@ -332,6 +343,7 @@
         </label>
       </div>
       <div id="u-talleres-box"><p class="campo-titulo">Talleres a su cargo</p><div id="u-talleres" class="checks"></div></div>
+      <label class="check-suelto"><input type="checkbox" id="u-aviso-cumple" name="avisoCumple"> Recibir por correo el aviso de cumpleaños (el mismo día y 3 días antes)</label>
       <label class="check-suelto" id="u-activo-box"><input type="checkbox" id="u-activo" name="activo" checked> Cuenta activa</label>
       <p class="nota-suave" id="u-nota">Recibirá un correo para crear su contraseña.</p>
       <p id="usuario-error" class="aviso-error" role="alert" hidden></p>
