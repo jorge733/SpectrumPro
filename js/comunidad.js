@@ -4,6 +4,8 @@
      supabase/functions/_compartido/correo-boletin.js), se mandan de prueba a la propia cuenta y luego
      a todas las personas suscritas. Los enviados con «Publicar en la página» aparecen en
      https://spectrumpro.cl/comunidad.
+   · Comentarios: los que dejan las personas suscritas en los boletines de la página; se aprueban,
+     ocultan, responden («SpectrumPro») o eliminan. Las reacciones se ven en la lista de boletines.
    · Suscriptores: quienes se suscribieron en la página Comunidad (con su correo confirmado o no),
      para revisar, exportar a CSV, dar de baja o eliminar.
    El contenido de la página Comunidad (textos, recursos y podcasts) se edita en «Sitio web».
@@ -22,9 +24,21 @@ const correoHtml = (b, prueba) => window.SPCorreoBoletin ? window.SPCorreoBoleti
 
 ui.tabComunidad ??= 'boletines';
 ui.estadoSusc ??= 'activo';
+ui.estadoCom ??= 'pendiente';
+ui.respondiendo ??= null;   // id del comentario cuya respuesta se está escribiendo
 
 const boletin = id => S.comunidad?.boletines.find(b => b.id === id);
 const activos = () => S.comunidad.suscriptores.filter(s => s.estado === 'activo').length;
+const ESTADOS_C = { pendiente: ['Por revisar', 'chip-warn'], aprobado: ['Publicado', 'chip-ok'], oculto: ['Oculto', 'chip-neutro'] };
+const ICONOS = { gusta: '❤️', aplauso: '👏', aprendi: '💡', identifica: '🤝' };
+const comentarios = () => S.comunidad.comentarios || [];
+const porRevisar = () => comentarios().filter(c => c.estado === 'pendiente').length;
+// Resumen de la interacción de un boletín: «❤️ 3 · 💡 2 · 💬 4 (1 por revisar)».
+function interaccion(b) {
+  const r = (S.comunidad.reacciones || []).filter(x => x.boletin_id === b.id);
+  const cs = comentarios().filter(c => c.boletin_id === b.id), p = cs.filter(c => c.estado === 'pendiente').length;
+  return [...r.map(x => `${ICONOS[x.tipo] || ''} ${x.total}`), cs.length ? `💬 ${cs.length}${p ? ` (${p} por revisar)` : ''}` : ''].filter(Boolean).join(' · ');
+}
 
 /* =====================================================================
    Vista
@@ -54,6 +68,8 @@ async function vistaComunidad(el) {
   const n = { activo: 0, pendiente: 0, baja: 0 };
   for (const s of S.comunidad.suscriptores) n[s.estado] = (n[s.estado] || 0) + 1;
   const tabs = { boletines: ['Boletines', S.comunidad.boletines.length], suscriptores: ['Suscriptores', n.activo] };
+  if (S.comunidad.comentarios) tabs.comentarios = ['Comentarios', porRevisar() ? `${porRevisar()} por revisar` : comentarios().length];
+  if (!tabs[ui.tabComunidad]) ui.tabComunidad = 'boletines';
   el.innerHTML = cab + `
     <section class="kpis" aria-label="Indicadores">
       <div class="kpi"><span class="kpi-valor">${n.activo}</span><span class="kpi-etq">Personas suscritas</span></div>
@@ -64,7 +80,7 @@ async function vistaComunidad(el) {
     <div class="pestanas" role="tablist" aria-label="Comunidad">
       ${Object.entries(tabs).map(([k, [t, c]]) => `<button type="button" role="tab" data-tab-comunidad="${k}" aria-pressed="${ui.tabComunidad === k}" aria-selected="${ui.tabComunidad === k}">${t} <small>${c}</small></button>`).join('')}
     </div>
-    <div class="pila">${ui.tabComunidad === 'suscriptores' ? panelSuscriptores() : panelBoletines()}</div>`;
+    <div class="pila">${{ suscriptores: panelSuscriptores, comentarios: panelComentarios }[ui.tabComunidad]?.() ?? panelBoletines()}</div>`;
 }
 
 function panelBoletines() {
@@ -77,7 +93,7 @@ function panelBoletines() {
     ${lista.length ? `<ul class="lista boletines">${lista.map(b => `
       <li class="fila-click" data-boletin="${b.id}">
         ${b.imagen ? `<img class="miniatura" src="${esc(urlImagen(b.imagen))}" alt="" loading="lazy">` : '<span class="miniatura vacia">✉</span>'}
-        <div class="txt"><b>${esc(b.titulo)}</b><small>${b.estado === 'enviado' ? `Enviado el ${esc(fechaDe(b.enviado_en))} a ${b.destinatarios} ${b.destinatarios === 1 ? 'persona' : 'personas'}` : `Editado el ${esc(fechaDe(b.actualizado))}`}${b.estado === 'enviado' ? (b.publico ? ' · en la página' : ' · no se publica') : ''}</small></div>
+        <div class="txt"><b>${esc(b.titulo)}</b><small>${b.estado === 'enviado' ? `Enviado el ${esc(fechaDe(b.enviado_en))} a ${b.destinatarios} ${b.destinatarios === 1 ? 'persona' : 'personas'}` : `Editado el ${esc(fechaDe(b.actualizado))}`}${b.estado === 'enviado' ? (b.publico ? ' · en la página' : ' · no se publica') : ''}${interaccion(b) ? ' · ' + esc(interaccion(b)) : ''}</small></div>
         <span class="chips"><span class="chip ${ESTADOS_B[b.estado][1]}">${ESTADOS_B[b.estado][0]}</span></span>
       </li>`).join('')}</ul>` : '<p class="vacio">Aún no hay boletines. Crea el primero con «Nuevo boletín».</p>'}
   </section>`;
@@ -108,6 +124,51 @@ function panelSuscriptores() {
   </section>`;
 }
 
+
+/* ---------- Comentarios ---------- */
+function panelComentarios() {
+  const e = ui.estadoCom;
+  const lista = comentarios().filter(c => e === 'todos' || c.estado === e).sort((a, b) => e === 'pendiente' ? a.creado.localeCompare(b.creado) : b.creado.localeCompare(a.creado));
+  const filtros = { pendiente: 'Por revisar', aprobado: 'Publicados', oculto: 'Ocultos', todos: 'Todos' };
+  const titulo = id => S.comunidad.boletines.find(b => b.id === id)?.titulo || 'Boletín eliminado';
+  return `<section class="tarjeta">
+    <h2><span>Comentarios</span><small>${porRevisar()} por revisar</small></h2>
+    <p class="nota-suave">Solo pueden comentar personas suscritas y confirmadas. Ningún comentario aparece en la página hasta que lo apruebas. Si respondes, la respuesta sale bajo el comentario como «SpectrumPro». El correo de quien comenta nunca se publica.</p>
+    <div class="pestanas pestanas-chicas" role="group" aria-label="Filtrar comentarios">
+      ${Object.entries(filtros).map(([k, x]) => `<button type="button" data-estado-com="${k}" aria-pressed="${e === k}">${x}</button>`).join('')}
+    </div>
+    ${lista.length ? `<ul class="lista-comentarios">${lista.map(c => `
+      <li class="comentario-mod" data-comentario="${c.id}">
+        <div class="cab-com"><b>${esc(c.nombre)}</b> <a href="mailto:${esc(c.email)}" class="muted">${esc(c.email)}</a>
+          <span class="chip ${ESTADOS_C[c.estado][1]}">${ESTADOS_C[c.estado][0]}</span></div>
+        <small class="muted">En «${esc(titulo(c.boletin_id))}» · ${esc(fechaDe(c.creado))}</small>
+        <p class="texto-com">${esc(c.texto)}</p>
+        ${c.respuesta && ui.respondiendo !== c.id ? `<div class="resp-com"><b>Respuesta de SpectrumPro</b><p>${esc(c.respuesta)}</p></div>` : ''}
+        ${ui.respondiendo === c.id ? `<div class="resp-form">
+          <label>Respuesta del equipo <small class="muted">· se publica bajo el comentario como «SpectrumPro»</small><textarea id="resp-${c.id}" rows="3" maxlength="2000">${esc(c.respuesta)}</textarea></label>
+          <div class="acciones-com"><button type="button" class="btn btn-peq" data-com-guardar="${c.id}">${c.estado === 'aprobado' ? 'Guardar respuesta' : 'Responder y publicar'}</button>
+          ${c.respuesta ? `<button type="button" class="btn btn-sec btn-peq" data-com-sin-resp="${c.id}">Quitar respuesta</button>` : ''}
+          <button type="button" class="btn btn-sec btn-peq" data-com-cancelar>Cancelar</button></div>
+        </div>` : `<div class="acciones-com">
+          ${c.estado !== 'aprobado' ? `<button type="button" class="btn btn-peq" data-com-estado="aprobado" data-id="${c.id}">Aprobar y publicar</button>` : ''}
+          ${c.estado !== 'oculto' ? `<button type="button" class="btn btn-sec btn-peq" data-com-estado="oculto" data-id="${c.id}">${c.estado === 'aprobado' ? 'Ocultar' : 'No publicar'}</button>` : ''}
+          <button type="button" class="btn btn-sec btn-peq" data-com-responder="${c.id}">${c.respuesta ? 'Editar respuesta' : 'Responder'}</button>
+          <button type="button" class="btn btn-sec btn-peq" data-com-eliminar="${c.id}">Eliminar</button>
+        </div>`}
+      </li>`).join('')}</ul>` : `<p class="vacio">${e === 'pendiente' ? 'No hay comentarios por revisar. 🎉' : 'No hay comentarios en este grupo.'}</p>`}
+  </section>`;
+}
+async function moderar(id, cambios, msj) {
+  try {
+    await conCarga(() => D.moderarComentario(id, cambios));
+    const c = comentarios().find(x => x.id === id);
+    if (c) Object.assign(c, cambios);
+    ui.respondiendo = null;
+    toast(msj);
+    render();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 /* =====================================================================
    Editor de boletines
    ===================================================================== */
@@ -123,7 +184,7 @@ function pintarPrevia() {
   const fr = $('#bo-previa');
   if (!fr || !editando) return;
   const b = leerForm();
-  fr.srcdoc = correoHtml({ ...b, imagen: urlImagen(b.imagen), titulo: b.titulo || 'Título del boletín', texto: b.texto || 'Aquí va el texto del boletín.' }, false);
+  fr.srcdoc = correoHtml({ ...b, id: b.id || 'vista-previa', imagen: urlImagen(b.imagen), titulo: b.titulo || 'Título del boletín', texto: b.texto || 'Aquí va el texto del boletín.' }, false);
   $('#bo-asunto').textContent = b.titulo || 'Título del boletín';
   $('#bo-resumen').textContent = b.resumen || b.texto.slice(0, 90);
 }
@@ -213,6 +274,31 @@ document.addEventListener('click', async ev => {
   const t = ev.target;
   let x;
   if ((x = t.closest('[data-tab-comunidad]'))) { ui.tabComunidad = x.dataset.tabComunidad; render(); return; }
+  if ((x = t.closest('[data-estado-com]'))) { ui.estadoCom = x.dataset.estadoCom; ui.respondiendo = null; render(); return; }
+  if ((x = t.closest('[data-com-estado]'))) {
+    const aprobar = x.dataset.comEstado === 'aprobado';
+    moderar(x.dataset.id, { estado: x.dataset.comEstado }, aprobar ? 'Comentario publicado en la página' : 'Comentario oculto: no se ve en la página');
+    return;
+  }
+  if ((x = t.closest('[data-com-responder]'))) {
+    ui.respondiendo = x.dataset.comResponder; render();
+    $(`#resp-${ui.respondiendo}`)?.focus();
+    return;
+  }
+  if (t.closest('[data-com-cancelar]')) { ui.respondiendo = null; render(); return; }
+  if ((x = t.closest('[data-com-guardar]'))) {
+    const id = x.dataset.comGuardar, txt = ($(`#resp-${id}`)?.value || '').trim();
+    if (!txt) { toast('Escribe la respuesta (o usa «Cancelar»).', 'error'); return; }
+    moderar(id, { respuesta: txt, estado: 'aprobado' }, 'Respuesta publicada');
+    return;
+  }
+  if ((x = t.closest('[data-com-sin-resp]'))) { moderar(x.dataset.comSinResp, { respuesta: '' }, 'Respuesta quitada'); return; }
+  if ((x = t.closest('[data-com-eliminar]'))) {
+    const c = comentarios().find(y => y.id === x.dataset.comEliminar);
+    if (!c || !await confirmar(`¿Eliminar el comentario de ${c.nombre}?`, 'Se borra para siempre. Si solo quieres que no se vea, usa «Ocultar».', 'Eliminar')) return;
+    try { await intentar(() => D.eliminarComentario(c.id), 'Comentario eliminado'); S.comunidad.comentarios = comentarios().filter(y => y.id !== c.id); render(); } catch { /* ya avisado */ }
+    return;
+  }
   if ((x = t.closest('[data-estado-susc]'))) { ui.estadoSusc = x.dataset.estadoSusc; render(); return; }
   if (t.closest('[data-boletin-nuevo]')) { abrirBoletin(); return; }
   if ((x = t.closest('[data-boletin]'))) { abrirBoletin(x.dataset.boletin); return; }

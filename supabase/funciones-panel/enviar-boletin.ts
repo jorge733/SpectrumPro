@@ -86,7 +86,8 @@ ${resumen ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${
       titulo: b.titulo || 'Sin título',
       resumen: b.resumen,
       aviso: prueba ? 'Correo de prueba: así lo recibirá la comunidad. El enlace para darse de baja no funciona en las pruebas.' : '',
-      cuerpo: imagen + formato(b.texto) + btn,
+      // Los boletines publicados en la página se pueden comentar y reaccionar allí.
+      cuerpo: imagen + formato(b.texto) + btn + (b.publico && b.id ? `<p style="margin:8px 0 4px;padding-top:16px;border-top:1px solid #eee;font-size:15px;color:${COLOR.suave}">¿Qué te pareció? <a href="${SITIO}/comunidad#boletin-${esc(b.id)}" style="color:${COLOR.enlace};font-weight:700">Comenta y reacciona en la página →</a></p>` : ''),
       pie: `<p style="margin:0">Recibes este correo porque te suscribiste a las noticias de SpectrumPro.<br>${web}<a href="${esc(enlaceBaja)}" style="color:${COLOR.suave}">Darme de baja</a></p>`,
     });
   }

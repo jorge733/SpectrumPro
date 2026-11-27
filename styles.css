@@ -938,3 +938,13 @@ body.con-previa .principal { padding-right: calc(min(560px, 44vw) + 24px); }
   .previa-correo { position: static; }
   .previa-correo iframe { height: 520px; }
 }
+.lista-comentarios { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.comentario-mod { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; background: var(--surface); }
+.comentario-mod .cab-com { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.comentario-mod .cab-com .chip { margin-left: auto; }
+.comentario-mod .texto-com { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0; }
+.comentario-mod .resp-com { border-left: 3px solid var(--brand, #635cc7); padding: 6px 10px; background: var(--surface-2); border-radius: 0 8px 8px 0; font-size: .9rem; }
+.comentario-mod .resp-com p { margin: 2px 0 0; white-space: pre-wrap; }
+.comentario-mod .resp-form { display: grid; gap: 8px; }
+.comentario-mod .resp-form label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.acciones-com { display: flex; flex-wrap: wrap; gap: 6px; }

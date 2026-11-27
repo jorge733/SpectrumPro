@@ -73,6 +73,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261127020000_sitio_web.sql` | Contenido del sitio público editable desde la plataforma (tablas `sitio_textos` y `sitio_elementos`, bucket público `sitio`) con el contenido actual ya cargado |
    | `20261128000000_sitio_web_completo.sql` | Listas «Cinta de la portada» y «Clientes» con su contenido actual |
    | `20261129000000_comunidad.sql` | Comunidad: listas «Recursos» y «Podcasts» del sitio, suscriptores, boletines y bucket público `documentos` (ver «Comunidad») |
+   | `20261130000000_comunidad_comentarios.sql` | Reacciones y comentarios (con moderación) en los boletines de la página Comunidad |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -227,11 +228,13 @@ Reemplaza al Substack de Spectrum Medios sin depender de él. Tiene tres partes:
 - **Suscripción con doble confirmación**: el formulario llama a la función `comunidad`, que guarda a la persona como «sin confirmar» y le manda un correo con un enlace. Solo al abrirlo queda suscrita (y recibe una bienvenida). Cada correo trae su enlace para darse de baja, y Gmail y Outlook muestran el botón «Anular suscripción». La función frena abusos (campo trampa, 5 intentos cada 10 minutos por conexión, no reenvía la confirmación antes de 10 minutos) y no revela si un correo ya estaba suscrito. Las suscripciones sin confirmar se borran solas a los 30 días.
 - **Plataforma → Edición → Comunidad**: escribir boletines (título, resumen, texto, imagen y botón) viendo cómo llegarán, **Enviarme una prueba** y **Enviar a N personas**. El envío va en tandas de 100 con la función `enviar-boletin`, un correo por persona; si se corta, el boletín queda «Enviando…» y **Continuar envío** lo termina sin repetir correos. Con **Publicarlo en la página Comunidad** marcado, el boletín enviado aparece en «Boletines anteriores». En **Suscriptores**: confirmados, sin confirmar y de baja, **Dar de baja**, **Eliminar** y **Descargar CSV**. Desde la plataforma nadie puede reactivar a una persona que se dio de baja: tiene que suscribirse otra vez.
 
+- **Reacciones y comentarios** en cada boletín de «Boletines anteriores»: ❤️ Me gustó, 👏 Aplausos, 💡 Aprendí algo y 🤝 Me identifica (una de cada una por navegador, sin pedir datos) y comentarios. Solo comentan personas **suscritas y confirmadas**, con su correo (que nunca se publica); la respuesta es siempre la misma, para no revelar si un correo está suscrito. Todo comentario llega **por revisar** y se avisa por correo a `COMUNIDAD_AVISOS` (por defecto contacto@spectrumpro.cl). En **Comunidad → Comentarios** se aprueba, se deja sin publicar, se responde (la respuesta sale como «SpectrumPro») o se elimina. Los boletines publicados traen en el correo el enlace «Comenta y reacciona en la página». Requiere `supabase/migrations/20261130000000_comunidad_comentarios.sql`.
+
 La plantilla del correo está en `supabase/functions/_compartido/correo-boletin.js` y la usan tanto las funciones como la vista previa de la plataforma, así lo que se ve antes de enviar es lo que llega.
 
 ### Activarla
 
-1. En **SQL Editor** ejecuta `supabase/migrations/20261129000000_comunidad.sql`.
+1. En **SQL Editor** ejecuta `supabase/migrations/20261129000000_comunidad.sql` y luego `supabase/migrations/20261130000000_comunidad_comentarios.sql`.
 2. Publica las dos funciones con la CLI de Supabase (comparten `supabase/functions/_compartido/`, por eso conviene la CLI y no el editor del panel):
 
    ```bash

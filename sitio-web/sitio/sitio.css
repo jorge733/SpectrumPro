@@ -88,7 +88,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .abrir-menu[aria-expanded="true"] i::after { transform: translateY(-3px) rotate(-45deg); }
 
 /* Portada */
-.portada { padding-block: clamp(40px, 6vw, 80px) clamp(56px, 7vw, 96px); }
+.portada { padding-block: clamp(40px, 6vw, 80px) clamp(56px, 7vw, 96px); overflow-x: clip; }   /* los stickers del collage no empujan la página hacia el lado */
 .portada .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 4vw, 64px); align-items: center; }
 .portada h1 { font-size: clamp(42px, 6.3vw, 95px); line-height: .92; letter-spacing: -.035em; }
 .portada h1 span { display: block; }
@@ -339,7 +339,7 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
 .pie-sitio .arcoiris i { flex: 1; }
 .arcoiris i:nth-child(1) { background: var(--c5); } .arcoiris i:nth-child(2) { background: var(--c4); } .arcoiris i:nth-child(3) { background: var(--c3); }
 .arcoiris i:nth-child(4) { background: var(--c2); } .arcoiris i:nth-child(5) { background: var(--c1); } .arcoiris i:nth-child(6) { background: var(--c6); }
-.pie-sitio .wrap { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px; padding-top: clamp(48px, 7vw, 88px); }
+.pie-sitio .wrap { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); gap: 40px; padding-top: clamp(48px, 7vw, 88px); }
 .pie-sitio .lema { font-size: clamp(29px, 3.7vw, 51px); max-width: 13ch; }
 .pie-sitio .lema span { color: var(--c2); }
 .pie-sitio h3 { font: 700 13px/1 var(--texto); letter-spacing: .14em; text-transform: uppercase; color: var(--suave); margin-bottom: 16px; }
@@ -395,6 +395,39 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
 .boletin .contenido a:not(.btn) { color: var(--acento); }
 .boletin .contenido .btn { justify-self: start; }
 .boletin:target { border-color: var(--kk); box-shadow: 0 0 0 3px var(--kk); }
+.boletin > summary .conteo { grid-column: 1; font-size: 14px; color: var(--suave); font-weight: 600; }
+.interaccion { margin-top: 10px; padding-top: 20px; border-top: 1px solid var(--linea); display: grid; gap: 16px; }
+.reacciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.reaccion { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 14px; border-radius: 999px; border: 2px solid var(--linea); background: var(--papel); color: var(--tinta); font: 700 15px/1 var(--texto); cursor: pointer; transition: transform .15s var(--ease), border-color .2s, background .2s; }
+.reaccion span { font-size: 20px; line-height: 1; }
+.reaccion b { min-width: 1ch; }
+.reaccion:hover { transform: translateY(-2px); border-color: var(--kk); }
+.reaccion[aria-pressed="true"] { background: var(--k); border-color: var(--sobre); color: var(--sobre); }
+.reaccion:disabled { opacity: .6; cursor: wait; transform: none; }
+.reaccion:focus-visible, .form-comentario :focus-visible { outline: 3px solid var(--c5); outline-offset: 2px; }
+.titulo-comentarios, .form-comentario h4 { font: 700 13px/1.2 var(--texto); letter-spacing: .12em; text-transform: uppercase; color: var(--suave); margin: 6px 0 0; }
+.sin-comentarios { color: var(--suave); font-size: 16px; }
+.comentarios { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.comentarios > li { background: var(--papel); border-radius: 16px; padding: 14px 16px; display: grid; gap: 6px; font-size: 16px; }
+.comentarios .quien { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 15px; }
+.comentarios .quien time { color: var(--suave); font-size: 13px; }
+.comentarios p { overflow-wrap: anywhere; }
+.comentarios .respuesta { margin-top: 6px; margin-left: 14px; padding: 10px 14px; border-left: 4px solid var(--c5); background: var(--blanco); border-radius: 0 12px 12px 0; display: grid; gap: 4px; }
+.comentarios .marca { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: var(--c5); color: #fff; padding: 3px 8px; border-radius: 999px; }
+.p-comunidad .comentarios .respuesta { border-left-color: var(--kk); }
+.p-comunidad .comentarios .marca { background: var(--kk); color: var(--sobre); }
+.form-comentario { display: grid; gap: 12px; background: var(--papel); border-radius: 16px; padding: 16px; }
+.form-comentario .fila { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.form-comentario label { display: grid; gap: 6px; font-weight: 700; font-size: 14px; }
+.form-comentario label small { font-weight: 500; color: var(--suave); }
+.form-comentario label > span { display: block; }
+.form-comentario input, .form-comentario textarea { font: 500 16px/1.4 var(--texto); padding: 11px 12px; border-radius: 12px; border: 2px solid var(--linea); background: var(--blanco); color: var(--tinta); width: 100%; resize: vertical; }
+.form-comentario .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.form-comentario .nota { font-size: 13px; color: var(--suave); }
+.form-comentario .btn { justify-self: start; padding: 13px 20px; font-size: 15px; }
+.form-comentario .btn[disabled] { opacity: .6; cursor: wait; transform: none; }
+.form-comentario .mensaje { border-radius: 12px; padding: 10px 12px; font-weight: 600; font-size: 14px; background: #d5f4e6; color: #0b4d31; }
+.form-comentario .mensaje.error { background: #fde0e2; color: #8a1020; }
 .suscripcion { background: var(--c4); color: var(--sobre); display: grid; grid-template-columns: 1fr minmax(0, 440px); gap: clamp(28px, 4vw, 56px); align-items: center; }
 .suscripcion .intro { color: rgb(23 21 31 / .8); }
 .suscripcion .eyebrow { color: var(--sobre); }
@@ -451,12 +484,25 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
   .valores { grid-template-columns: 1fr; }
   .valor, .valor + .valor, .valor:nth-child(even) { padding: 20px 0; border-left: 0; flex-direction: row; align-items: flex-start; gap: 16px; }
   .valor .punto { width: 28px; height: 28px; flex: none; margin-top: 2px; }
-  .pie-sitio .wrap { grid-template-columns: 1fr 1fr; }
-  .pie-sitio .wrap > :first-child { grid-column: 1 / -1; }
+  .portada .wrap > * { min-width: 0; }
+  .portada h1 { font-size: min(42px, calc((100vw - 34px) / 8)); }   /* «Transformando» mide ~7,8 veces el tamaño: cabe entera en una línea */
   .btn { white-space: normal; }
   .acciones .btn { flex: 1 1 auto; }
   .vitrina span { font-size: 13px; padding: 7px 10px; }
   .video .play { width: 66px; height: 66px; margin: -33px 0 0 -33px; }
+}
+
+/* Pie: en tablets chicas y celulares, el lema arriba y dos columnas abajo. */
+@media (max-width: 760px) {
+  .pie-sitio .wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+  .pie-sitio .wrap > :first-child { grid-column: 1 / -1; }
+  .pie-sitio ul a { overflow-wrap: anywhere; }
+}
+@media (max-width: 400px) {
+  .pie-sitio .wrap { grid-template-columns: minmax(0, 1fr); }
+  .aportes { grid-template-columns: minmax(0, 1fr); }
+  .aporte { padding: 24px 20px; }
+  .aporte h2 { font-size: clamp(28px, 8.5vw, 34px); }
 }
 
 /* Visor de videos (YouTube dentro del sitio) */

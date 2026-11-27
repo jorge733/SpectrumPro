@@ -114,6 +114,7 @@
     if (/sitio_(textos|elementos)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_SITIO);
     if (/(boletines|suscriptores)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_COMUNIDAD);
     if (/sitio_tipo_valido/i.test(m) && /recurso|episodio/i.test(m)) return new Error(ERROR_COMUNIDAD);
+    if (/boletin_comentarios_resp_largo/i.test(m)) return new Error('La respuesta puede tener hasta 2000 caracteres.');
     if (/boletines_\w+_largo/i.test(m)) return new Error('Uno de los textos del boletín es demasiado largo. Acórtalo e inténtalo de nuevo.');
     if (/sitio_tipo_valido/i.test(m)) return new Error('Falta actualizar el sitio web en Supabase: ejecuta supabase/migrations/20261128000000_sitio_web_completo.sql en el SQL Editor.');
     if (/sitio_titulo_largo/i.test(m)) return new Error('Revisa el título: es obligatorio y puede tener hasta 120 caracteres.');
@@ -437,8 +438,23 @@
           todo(() => sb.from('boletines').select('id,titulo,resumen,texto,imagen,boton_texto,boton_enlace,publico,estado,destinatarios,enviado_en,creado,actualizado').order('creado', { ascending: false }).order('id')),
           todo(() => sb.from('suscriptores').select('id,email,nombre,perfil,estado,creado,confirmado,baja_en').order('creado', { ascending: false }).order('id')),
         ]);
-        return { boletines, suscriptores };
+        // Comentarios y reacciones (migración 20261130000000_comunidad_comentarios.sql). Si aún no se
+        // ejecuta, la sección funciona igual, sin la pestaña Comentarios.
+        let comentarios = null, reacciones = [];
+        try {
+          comentarios = (await todo(() => sb.from('boletin_comentarios').select('id,boletin_id,nombre,texto,estado,respuesta,respuesta_en,creado,suscriptores(email)').order('creado', { ascending: false }).order('id')))
+            .map(({ suscriptores: s, ...c }) => ({ ...c, email: s?.email || '' }));
+          reacciones = ok(await sb.from('boletin_reacciones_totales').select('boletin_id,tipo,total'));
+        } catch { comentarios = null; }
+        return { boletines, suscriptores, comentarios, reacciones };
       },
+      async moderarComentario(id, cambios) {
+        const fila = {};
+        if (cambios.estado) fila.estado = cambios.estado;
+        if (cambios.respuesta != null) fila.respuesta = String(cambios.respuesta);
+        ok(await sb.from('boletin_comentarios').update(fila).eq('id', id));
+      },
+      async eliminarComentario(id) { ok(await sb.from('boletin_comentarios').delete().eq('id', id)); },
       async guardarBoletin(b) {
         const fila = boletinAFila(b);
         if (b.id) { ok(await sb.from('boletines').update(fila).eq('id', b.id)); return b.id; }
@@ -654,7 +670,7 @@
     const d = n => new Date(Date.now() - n * 864e5).toISOString();
     const s = (email, nombre, perfil, estado, dias) => ({ id: nuevoId(), email, nombre, perfil, estado, creado: d(dias), confirmado: estado === 'pendiente' ? null : d(dias - .1), baja_en: estado === 'baja' ? d(1) : null });
     return {
-      boletines: [],
+      boletines: [], comentarios: [], reacciones: [],
       suscriptores: [
         s('camila.rojas@ejemplo.cl', 'Camila Rojas', 'familia', 'activo', 20),
         s('profe.martinez@ejemplo.cl', 'Andrés Martínez', 'educacion', 'activo', 14),
@@ -976,6 +992,8 @@
         if (!editaTienda()) prohibido();
         await espera();
         db.comunidad ??= crearComunidadDemo();
+        db.comunidad.comentarios ??= [];
+        db.comunidad.reacciones ??= [];
         return copia(db.comunidad);
       },
       async guardarBoletin(b) {
@@ -1004,8 +1022,32 @@
         const n = db.comunidad.suscriptores.filter(s => s.estado === 'activo').length;
         Object.assign(b, { estado: 'enviado', enviado_en: new Date().toISOString(), destinatarios: n });
         auditar('update', 'boletines', { boletin: b.titulo, enviado: n });
+        // Demostración: la comunidad responde al boletín.
+        if (b.publico) {
+          db.comunidad.comentarios ??= []; db.comunidad.reacciones ??= [];
+          const hace = m => new Date(Date.now() - m * 60e3).toISOString();
+          db.comunidad.comentarios.push(
+            { id: nuevoId(), boletin_id: b.id, nombre: 'Camila', email: 'camila.rojas@ejemplo.cl', texto: '¡Gracias por compartir esto! Mi hijo escuchó el podcast y se sintió muy identificado.', estado: 'pendiente', respuesta: '', respuesta_en: null, creado: hace(5) },
+            { id: nuevoId(), boletin_id: b.id, nombre: 'Andrés, profesor', email: 'profe.martinez@ejemplo.cl', texto: '¿Tienen material para usar en clases de básica?', estado: 'pendiente', respuesta: '', respuesta_en: null, creado: hace(2) });
+          db.comunidad.reacciones.push({ boletin_id: b.id, tipo: 'gusta', total: 3 }, { boletin_id: b.id, tipo: 'aprendi', total: 2 }, { boletin_id: b.id, tipo: 'identifica', total: 1 });
+        }
         guardar();
         return { ok: true, enviados: n, restantes: 0, destinatarios: n };
+      },
+      async moderarComentario(id, cambios) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        const c = db.comunidad.comentarios.find(x => x.id === id);
+        if (!c) throw new Error('Ese comentario ya no existe.');
+        if (cambios.estado) c.estado = cambios.estado;
+        if (cambios.respuesta != null) { c.respuesta = String(cambios.respuesta); c.respuesta_en = c.respuesta.trim() ? new Date().toISOString() : null; }
+        auditar('update', 'boletin_comentarios', {});
+        guardar();
+      },
+      async eliminarComentario(id) {
+        if (!editaTienda()) prohibido();
+        db.comunidad.comentarios = db.comunidad.comentarios.filter(x => x.id !== id);
+        guardar();
       },
       async bajaSuscriptor(id) {
         if (!editaTienda()) prohibido();
