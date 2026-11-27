@@ -448,6 +448,17 @@ window.SITIO_RESPALDO = {
    "orden": 5
   },
   {
+   "tipo": "modulo",
+   "titulo": "Revisteros",
+   "subtitulo": "",
+   "texto": "Proyecto de análisis y crítica de cine, series, documentales y juegos. Con reseñas, ensayos y recomendaciones que combinan opinión informada y mirada creativa, abrimos un espacio cercano para conversar sobre la cultura audiovisual.",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 6
+  },
+  {
    "tipo": "actividad",
    "titulo": "Cine Club",
    "subtitulo": "",
