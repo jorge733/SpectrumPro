@@ -112,16 +112,6 @@
       "source": "/nuestros-clientes/",
       "destination": "/productora#clientes",
       "permanent": true
-    },
-    {
-      "source": "/tienda",
-      "destination": "https://gestionspectrumpro.cl/tienda/",
-      "permanent": true
-    },
-    {
-      "source": "/tienda/",
-      "destination": "https://gestionspectrumpro.cl/tienda/",
-      "permanent": true
     }
   ]
 }

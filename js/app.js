@@ -907,6 +907,9 @@ const CATEGORIAS = { ropa: 'Ropa', accesorios: 'Accesorios', papeleria: 'Papeler
 const pesos = n => n == null || n === '' ? '' : '$' + Number(n).toLocaleString('es-CL');
 const productosOrdenados = () => [...S.tienda.productos].sort((a, b) => (a.orden - b.orden) || a.nombre.localeCompare(b.nombre, 'es'));
 const producto = id => S.tienda?.productos.find(p => p.id === id);
+// La tienda vive en spectrumpro.cl/tienda: las fotos de muestra (/tienda/img/…) están allá.
+const TIENDA_URL = 'https://spectrumpro.cl/tienda';
+const fotoTienda = u => /^\/?tienda\//.test(u || '') ? 'https://spectrumpro.cl/' + u.replace(/^\//, '') : (u || '');
 
 async function vistaTienda(el) {
   if (!puede.tienda()) { location.hash = 'panel'; return; }
@@ -914,7 +917,7 @@ async function vistaTienda(el) {
     <header class="cabecera">
       <div><p class="eyebrow">Dirección y equipo</p><h1>Tienda</h1><p>Lo que guardes aquí aparece al instante en la tienda pública.</p></div>
       <div class="controles">
-        <a class="btn btn-sec" href="tienda/" target="_blank" rel="noopener">Ver la tienda ↗</a>
+        <a class="btn btn-sec" href="${TIENDA_URL}" target="_blank" rel="noopener">Ver la tienda ↗</a>
         ${S.tienda ? '<button type="button" class="btn" data-accion="nuevo-producto">+ Nuevo producto</button>' : ''}
       </div>
     </header>`;
@@ -943,7 +946,7 @@ async function vistaTienda(el) {
       ${lista.length > 5 ? buscador('productos', 'Buscar producto, categoría o variante') : ''}
       ${lista.length ? `<div data-filtrable="productos"><ul class="lista productos">${lista.map((p, i) => `
         <li class="fila-click ${p.visible ? '' : 'oculto'}" data-producto="${p.id}" ${qAttr(p.nombre, CATEGORIAS[p.categoria], p.variantes, p.visible ? '' : 'oculto', p.agotado ? 'agotado' : '', p.precio == null ? 'sin precio' : '')}>
-          ${p.imagen ? `<img class="miniatura" src="${esc(p.imagen)}" alt="" loading="lazy">` : '<span class="miniatura vacia">Sin foto</span>'}
+          ${p.imagen ? `<img class="miniatura" src="${esc(fotoTienda(p.imagen))}" alt="" loading="lazy">` : '<span class="miniatura vacia">Sin foto</span>'}
           <div class="txt"><b>${esc(p.nombre)}</b><small>${esc(CATEGORIAS[p.categoria] || '')}${p.precio != null ? ' · ' + esc(pesos(p.precio)) : ''}${p.variantes ? ' · ' + esc(p.variantes) : ''}</small></div>
           <span class="chips">${p.visible ? '' : '<span class="chip chip-neutro">Oculto</span>'}${p.agotado ? '<span class="chip chip-warn">Agotado</span>' : ''}${p.precio == null ? '<span class="chip chip-info">Sin precio</span>' : ''}</span>
           <span class="mover">
@@ -991,7 +994,7 @@ let editandoProducto = null, fotoNueva = null;
 function verFotoProducto(src) {
   const img = $('#p-foto-vista');
   img.hidden = !src; $('#p-foto-vacia').hidden = !!src;
-  if (src) img.src = src; else img.removeAttribute('src');
+  if (src) img.src = fotoTienda(src); else img.removeAttribute('src');
 }
 function abrirProducto(id = null) {
   editandoProducto = id; fotoNueva = null;

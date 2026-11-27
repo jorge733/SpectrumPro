@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tienda · Poleras, polerones y cuadernos de SpectrumPro</title>
+<meta name="description" content="Poleras, polerones, cuadernos, chapitas, bolsos y más de SpectrumPro, la primera productora audiovisual neurodivergente de Chile. Pide por WhatsApp.">
+<meta name="theme-color" content="#fbf7ef">
+<link rel="canonical" href="https://spectrumpro.cl/tienda">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpectrumPro">
+<meta property="og:locale" content="es_CL">
+<meta property="og:url" content="https://spectrumpro.cl/tienda">
+<meta property="og:title" content="Tienda de SpectrumPro · Lleva puesto el talento neurodivergente">
+<meta property="og:description" content="Poleras, polerones, cuadernos, chapitas y más, hechos con talento neurodivergente. Pide por WhatsApp.">
+<meta property="og:image" content="https://spectrumpro.cl/assets/og/tienda.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Spectrum Productos: poleras, polerón, cuadernos y morral con el logo de SpectrumPro. Lleva puesto el talento neurodivergente.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icono-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/sitio/sitio.css">
+<style>
+/* Tienda: usa sitio.css y agrega el catálogo con filtros. */
+.p-tienda { --k: var(--p6); --kk: var(--c6); }
+.cabeza .cartel { width: clamp(240px, 30vw, 420px); height: auto; border-radius: 26px; background: #000; border: 3px solid var(--sobre); box-shadow: 8px 8px 0 var(--sobre); transform: rotate(3deg); }
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+.filtros button { font: 700 15px/1 var(--texto); padding: 12px 18px; border-radius: 999px; border: 2px solid var(--tinta); background: transparent; color: var(--tinta); cursor: pointer; transition: background .2s, color .2s, transform .15s; }
+.filtros button:hover { background: var(--papel-2); }
+.filtros button[aria-pressed="true"] { background: var(--tinta); color: var(--papel); }
+.filtros button:active { transform: scale(.95); }
+.catalogo { display: grid; gap: 20px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.prod { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio); overflow: hidden; display: flex; flex-direction: column; min-width: 0; transition: translate .35s var(--ease), box-shadow .35s var(--ease), border-color .35s; }
+.prod:hover { translate: 0 -6px; box-shadow: 0 22px 44px rgb(var(--sombra) / .14); border-color: var(--kc); }
+.prod .img { position: relative; aspect-ratio: 1; background: #fff; overflow: hidden; margin: 10px 10px 0; border-radius: calc(var(--radio) - 8px); border-bottom: 5px solid var(--kc); }
+.prod .img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 52%; transition: transform .5s var(--ease); }
+.prod:hover .img img { transform: scale(1.06); }
+.prod.agotado .img img { opacity: .45; }
+.prod.agotado:hover .img img { transform: none; }
+.prod .etiqueta { position: absolute; top: 10px; left: 10px; font: 700 12px/1 var(--texto); letter-spacing: .12em; text-transform: uppercase; background: var(--sobre); color: #fff; padding: 8px 12px; border-radius: 999px; }
+.prod .cuerpo { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.prod .cat { font: 700 12px/1 var(--texto); letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+.prod h3 { font-size: 22px; margin-top: 4px; }
+.prod p { color: var(--suave); font-size: 15px; }
+.prod .var { color: var(--tinta); font-weight: 600; }
+.prod .pie { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.prod .precio { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.prod .precio .consultar { font-weight: 600; font-size: 15px; color: var(--suave); }
+.prod .btn { font-size: 15px; padding: 13px 16px; width: 100%; white-space: normal; text-align: center; }
+.vacio { grid-column: 1 / -1; color: var(--suave); padding: 40px 0; text-align: center; }
+.cargando .vacio { animation: latir 1.4s ease-in-out infinite; }
+.llamado-caja .intro b { color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@keyframes latir { 50% { opacity: .45; } }
+@keyframes tarjeta { from { opacity: 0; transform: translateY(24px) scale(.97); } }
+@media (prefers-reduced-motion: no-preference) {
+  .prod { animation: tarjeta .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+  .cabeza .cartel { animation: entrar .9s var(--ease) .25s both; --r: 3deg; }
+}
+@media (prefers-reduced-motion: reduce) { .prod, .filtros button { transition: none; } .cargando .vacio { animation: none; } }
+@media (max-width: 1080px) { .catalogo { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 960px) {
+  .cabeza .cartel { width: min(100%, 420px); transform: rotate(2deg); }
+}
+@media (max-width: 760px) {
+  .catalogo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .prod .img { margin: 6px 6px 0; }
+  .prod .cuerpo { padding: 12px 12px 14px; }
+  .prod h3 { font-size: 17px; }
+  .prod p { font-size: 14px; }
+  .prod .btn { font-size: 14px; padding: 12px 10px; }
+}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "CollectionPage",
+   "@id": "https://spectrumpro.cl/tienda#pagina",
+   "url": "https://spectrumpro.cl/tienda",
+   "name": "Tienda · Poleras, polerones y cuadernos de SpectrumPro",
+   "description": "Poleras, polerones, cuadernos, chapitas, bolsos y más de SpectrumPro. Pide por WhatsApp.",
+   "inLanguage": "es-CL",
+   "isPartOf": { "@id": "https://spectrumpro.cl/#sitio" },
+   "about": { "@id": "https://spectrumpro.cl/#organizacion" },
+   "primaryImageOfPage": "https://spectrumpro.cl/assets/og/tienda.jpg",
+   "breadcrumb": { "@id": "https://spectrumpro.cl/tienda#migas" }
+  },
+  {
+   "@type": "BreadcrumbList",
+   "@id": "https://spectrumpro.cl/tienda#migas",
+   "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://spectrumpro.cl/" },
+    { "@type": "ListItem", "position": 2, "name": "Tienda", "item": "https://spectrumpro.cl/tienda" }
+   ]
+  }
+ ]
+}
+</script>
+</head>
+<body class="p-tienda">
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<header class="cabecera"><div class="wrap"><div class="barra">
+  <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_252_3217)">
+<path d="M11.1752 8.65575C12.282 8.75721 13.4831 8.86501 14.6529 8.97915C16.2376 9.13768 17.4577 10.7547 17.4577 12.7014V14.2614C17.4577 17.5144 15.3006 20.146 12.6467 20.146H4.43359C1.77344 20.1524 0 17.5144 0 14.2677V12.4985H6.48373C6.48373 12.4985 6.40198 13.1961 7.45849 13.1961H10.4268C11.0871 13.1961 11.2695 11.9976 10.6469 11.8644C10.6469 11.8644 8.6345 11.6615 6.2762 11.3888C5.10649 11.2556 3.84873 11.1035 2.71675 10.9513C1.16971 10.742 0 9.14402 0 7.23532V5.89098C0 4.33105 0.503102 2.82818 1.40869 1.72481C2.30798 0.615097 3.53429 0 4.81092 0H11.8481C14.6025 0.196577 17.4577 0.646803 17.4577 7.65384H10.9739C10.9739 7.65384 11.0557 6.95631 9.99916 6.95631H7.03715C6.37682 6.95631 6.18816 8.15479 6.81704 8.28796C6.81704 8.28796 8.76027 8.44015 11.1815 8.65575H11.1752Z" fill="#635CC7"/>
+<path d="M36.4061 7.06408C36.4061 16.6964 27.8219 15.9418 27.8219 15.9418H24.7656V26.3794H18.6592V0.0380249H29.7903C33.1611 0.0380249 36.4061 2.08624 36.4061 7.05774V7.06408ZM29.4822 9.44838C29.7211 9.08693 29.7903 8.54159 29.6583 8.066C29.5262 7.5904 29.2306 7.27969 28.891 7.27969H24.7593V9.81617H28.891C29.1111 9.81617 29.325 9.683 29.4759 9.44204L29.4822 9.44838Z" fill="#635CC7"/>
+<path d="M43.3924 9.03622V11.1796H50.7754V15.2379H46.411V17.3813H55.731V26.4175H37.6885V0H55.731V9.03622H43.3924Z" fill="#31B4E7"/>
+<path d="M68.5225 9.51816V8.2626C68.5225 7.72993 68.3464 7.22264 68.0445 6.84851C67.7364 6.47437 67.3213 6.26511 66.8874 6.26511H65.1076C64.6737 6.26511 64.2587 6.47437 63.9505 6.84851C63.6424 7.22264 63.4726 7.72993 63.4726 8.2626V12.5049C63.4726 13.6082 64.2021 14.5023 65.1076 14.5023H66.8874C67.793 14.5023 68.5225 13.6082 68.5225 12.5049V11.2493H74.9999V14.6989C74.9999 16.3096 74.4779 17.8505 73.5472 18.9919C72.6164 20.127 71.3524 20.7675 70.0381 20.7675H61.957C60.6426 20.7675 59.3786 20.127 58.4478 18.9919C57.5171 17.8568 56.9951 16.3096 56.9951 14.6989V6.06854C56.9951 4.45787 57.5171 2.91696 58.4478 1.77554C59.3786 0.640462 60.6426 0 61.957 0H70.0381C71.3524 0 72.6164 0.640462 73.5472 1.77554C74.4779 2.91061 74.9999 4.45787 74.9999 6.06854V9.51816H68.5225Z" fill="#31B4E7"/>
+<path d="M17.4451 21.3826L17.4577 27.6477L11.4141 29.011V44.7499H6.04981V29.7783L0 27.6033V22.5684L17.4451 21.3762V21.3826Z" fill="#00BC70"/>
+<path d="M36.6632 44.7562H29.0978V38.935C29.0978 37.7999 27.6703 37.9204 27.6703 37.9204H24.8843V44.7562H18.6836V27.6096H30.4751C33.5566 27.6096 36.5186 28.9349 36.5186 32.1689C36.5186 35.403 33.588 36.538 33.588 36.538C36.8707 37.5463 36.6695 44.7626 36.6695 44.7626L36.6632 44.7562ZM29.1921 34.6103C29.406 34.3757 29.4751 34.0206 29.3557 33.7162C29.2362 33.4118 28.9658 33.2089 28.6576 33.2089H24.8843V34.8576H28.6576C28.8588 34.8576 29.0538 34.7688 29.1921 34.6167V34.6103Z" fill="#00BC70"/>
+<path d="M55.7881 27.6033V39.7657C55.7881 42.4861 53.3291 44.6928 50.298 44.6928H43.2294C40.1982 44.6928 37.7393 42.4861 37.7393 39.7657V27.6033H44.2356V37.2102C44.2356 37.4004 44.3173 37.578 44.4683 37.7112C44.6192 37.8443 44.8204 37.9204 45.028 37.9141H48.4994C48.7069 37.9141 48.9081 37.838 49.0591 37.7112C49.21 37.5843 49.2917 37.4004 49.2917 37.2102V27.6033H55.7881Z" fill="#FADD41"/>
+<path d="M74.9438 21.9977V44.7436H70.4284V30.1652L67.8626 44.7436H63.9698L61.404 30.1652V44.7436H56.8887V21.9977H63.6617L65.9194 29.9496L68.177 21.9977H74.9501H74.9438Z" fill="#FADD41"/>
+<path d="M17.4448 53.5008C17.4448 62.6321 9.36368 61.9092 9.36368 61.9092H5.7665V72.3912H0.0185547V45.9738H11.2189C14.3947 45.9738 17.4448 48.7829 17.4448 53.4944V53.5008ZM10.2064 56.2085C10.4265 55.866 10.4957 55.3461 10.3762 54.8958C10.2567 54.4456 9.97369 54.1539 9.65926 54.1539H5.77279V56.5572H9.65926C9.86679 56.5572 10.0617 56.4304 10.2127 56.2021L10.2064 56.2085Z" fill="#F8384B"/>
+<path d="M36.4748 72.3912H29.3433V63.4882C29.3433 61.7317 27.7963 61.9219 27.7963 61.9219H24.7714V72.3912H18.709V45.9738H29.7521C33.0977 45.9738 36.3113 48.0283 36.3113 53.0188C36.3113 58.0094 33.1229 59.7722 33.1229 59.7722C36.6886 61.3322 36.4685 72.3849 36.4685 72.3849L36.4748 72.3912ZM29.4439 56.2592C29.6766 55.8977 29.7458 55.3461 29.62 54.8705C29.4942 54.3949 29.1924 54.0842 28.8591 54.0842H24.7651V56.627H28.8591C29.0792 56.627 29.2867 56.4938 29.4376 56.2529L29.4439 56.2592Z" fill="#F8384B"/>
+<path d="M55.7561 53.6973V64.674C55.7561 68.9353 53.5298 72.3912 50.7879 72.3912H42.7006C41.3799 72.3912 40.1159 71.5795 39.1851 70.1337C38.2544 68.6879 37.7324 66.7222 37.7324 64.674V53.6973C37.7324 51.6491 38.2544 49.6897 39.1851 48.2375C40.1159 46.7918 41.3799 45.9737 42.7006 45.9801H50.7879C53.5298 45.9801 55.7561 49.436 55.7561 53.6973ZM49.2723 57.6289C49.2723 56.8172 48.5365 56.1577 47.631 56.1577H45.8512C44.9457 56.1577 44.2162 56.8172 44.2162 57.6289V60.7424C44.2162 61.5541 44.9519 62.2136 45.8512 62.2136H47.631C48.5365 62.2136 49.266 61.5541 49.2723 60.7424V57.6289Z" fill="#F8384B"/>
+<path d="M57.0018 45.9738C57.0018 45.9738 56.9011 72.3912 57.0018 72.3912C57.1024 72.3912 65.8123 59.1825 65.8123 59.1825L57.0018 45.9738Z" fill="#E65EBE"/>
+<path d="M65.8309 46.5825C65.8309 46.5825 65.7302 73 65.8309 73C65.9315 73 74.8049 59.7913 74.8049 59.7913L65.8309 46.5825Z" fill="#E65EBE"/>
+</g>
+<defs>
+<clipPath id="clip0_252_3217">
+<rect width="75" height="73" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+<span>SpectrumPro</span></a>
+  <button type="button" class="abrir-menu" aria-expanded="false" aria-controls="menu"><i aria-hidden="true"></i><span>Menú</span></button>
+  <nav id="menu" class="menu" aria-label="Principal">
+    <a href="/nosotros">Nosotros</a><a href="/formacion">Formación</a><a href="/arte-y-apoyo">Arte y Apoyo</a><a href="/productora">Productora</a><a href="/tienda">Tienda</a><a href="/contacto">Contacto</a>
+    <a class="colabora" href="/colabora">Colabora</a>
+  </nav>
+</div></div></header>
+<main id="contenido">
+<section class="cabeza">
+  <div class="wrap"><div class="caja">
+    <div>
+      <p class="eyebrow">Tienda oficial</p>
+      <h1>Lleva puesto el talento</h1>
+      <p class="intro">Poleras, polerones, cuadernos, chapitas y más, con el logo y los personajes de SpectrumPro. Cada compra apoya los talleres.</p>
+      <nav class="indice" aria-label="En esta página"><a href="#productos" id="ver-productos">Ver los productos</a><a href="#pedir">Cómo pedir</a></nav>
+    </div>
+    <img class="cartel" src="/tienda/img/hero.jpg" alt="Ilustración de SpectrumPro: un niño con una claqueta junto a un equipo de rodaje. Texto: La Primera Productora Audiovisual Neurodivergente de Chile." width="760" height="598">
+  </div></div>
+</section>
+
+<section class="banda" id="productos">
+  <div class="wrap">
+    <div class="cab">
+      <div>
+        <p class="eyebrow">Catálogo</p>
+        <h2 class="titulo-seccion">Nuestros productos</h2>
+        <p class="intro">Elige el que te guste y pídelo por WhatsApp: el mensaje ya va escrito.</p>
+      </div>
+      <div class="filtros" role="group" aria-label="Filtrar por tipo">
+        <button type="button" data-f="todo" aria-pressed="true">Todo</button>
+        <button type="button" data-f="ropa" aria-pressed="false">Ropa</button>
+        <button type="button" data-f="accesorios" aria-pressed="false">Accesorios</button>
+        <button type="button" data-f="papeleria" aria-pressed="false">Papelería</button>
+      </div>
+    </div>
+    <div class="catalogo cargando" id="catalogo" aria-live="polite"><p class="vacio">Cargando productos…</p></div>
+  </div>
+</section>
+
+<section class="banda papel-2" id="pedir">
+  <div class="wrap">
+    <p class="eyebrow">Cómo pedir</p>
+    <h2 class="titulo-seccion" style="margin-bottom:40px">En tres pasos</h2>
+    <div class="pasos">
+      <div class="paso revelar" style="--kc:var(--c5);--i:0"><h3>Elige</h3><p>Mira el catálogo y anota el producto, el color y la talla o cantidad.</p></div>
+      <div class="paso revelar" style="--kc:var(--c4);--i:1"><h3>Escríbenos</h3><p>Toca «Pedir por WhatsApp» en el producto. El mensaje ya va escrito con su nombre.</p></div>
+      <div class="paso revelar" style="--kc:var(--c3);--i:2"><h3>Paga y recibe</h3><p id="paso-pago">Te confirmamos precio y disponibilidad, y acordamos el pago y la entrega.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="banda">
+  <div class="wrap">
+    <div class="llamado-caja revelar">
+      <span class="circulo a" aria-hidden="true"></span><span class="circulo b" aria-hidden="true"></span>
+      <div>
+        <p class="eyebrow">¿Dudas?</p>
+        <h2>¿Un pedido grande o algo especial?</h2>
+        <p class="intro">Escríbenos al WhatsApp <b id="wa-numero">+56 9 9638 9673</b> y lo conversamos.</p>
+      </div>
+      <div class="acciones"><a class="btn claro" id="wa-banda" href="https://wa.me/56996389673?text=Hola%2C%20tengo%20una%20consulta%20sobre%20los%20productos%20de%20SpectrumPro" target="_blank" rel="noopener" data-icono-wa>Abrir WhatsApp</a></div>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="pie-sitio">
+<div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="wrap">
+  <div>
+    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+  </div>
+  <div>
+    <h3>Contacto</h3>
+    <ul>
+      <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Síguenos</h3>
+    <ul>
+      <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
+      <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
+      <li><a data-enlace="linkedin" href="https://www.linkedin.com/company/spectrum-pro/" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.4 2H3.6A1.6 1.6 0 0 0 2 3.6v16.8A1.6 1.6 0 0 0 3.6 22h16.8a1.6 1.6 0 0 0 1.6-1.6V3.6A1.6 1.6 0 0 0 20.4 2ZM8 19H5V9.5h3V19ZM6.5 8.2a1.7 1.7 0 1 1 0-3.5 1.7 1.7 0 0 1 0 3.5ZM19 19h-3v-4.6c0-1.1 0-2.5-1.5-2.5S12.8 13 12.8 14.3V19h-3V9.5h2.8v1.3h.1a3.1 3.1 0 0 1 2.8-1.5c3 0 3.5 2 3.5 4.5V19Z"/></svg>LinkedIn</a></li>
+      <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
+    </ul>
+  </div>
+  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+</div></footer>
+<script src="/config.js"></script>
+<script src="/sitio/contenido.js"></script>
+<script src="/sitio/sitio.js"></script>
+<script src="/tienda/supabase.js"></script>
+<script>
+'use strict';
+/* Tienda. Los productos y el contacto vienen de Supabase (se editan en la plataforma, sección Tienda).
+   Si Supabase no responde o falta la migración, se muestra la lista de respaldo de abajo. */
+(() => {
+  const WA_ICONO = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
+  const RESPALDO = {
+    ajustes: { whatsapp: '56996389673', instagram: '', pago: '', entrega: '' },
+    productos: [
+      { nombre: 'Poleras unisex', descripcion: 'Con el logo de SpectrumPro adelante y atrás.', categoria: 'ropa', variantes: 'Negra y roja', imagen: '/tienda/img/poleras.jpg' },
+      { nombre: 'Polerón unisex', descripcion: 'Con el logo pequeño adelante y grande en la espalda.', categoria: 'ropa', variantes: 'Gris', imagen: '/tienda/img/poleron.jpg' },
+      { nombre: 'Tazón y chapita', descripcion: 'Edición Muestra Audiovisual 2026.', categoria: 'accesorios', variantes: '', imagen: '/tienda/img/tazon.jpg' },
+      { nombre: 'Calendarios', descripcion: 'De escritorio.', categoria: 'papeleria', variantes: 'A color o en blanco y negro', imagen: '/tienda/img/calendarios.jpg' },
+      { nombre: 'Cuadernos', descripcion: 'Con el logo o con Pipripiolo para colorear.', categoria: 'papeleria', variantes: 'Logo o Pipripiolo', imagen: '/tienda/img/cuadernos.jpg' },
+      { nombre: 'Chapitas', descripcion: 'Con los logos de SpectrumPro.', categoria: 'accesorios', variantes: 'Negra o a color', imagen: '/tienda/img/chapitas.jpg' },
+      { nombre: 'Bolso blanco', descripcion: 'Tote bag con el logo de SpectrumPro en negro.', categoria: 'accesorios', variantes: '', imagen: '/tienda/img/bolso.jpg' },
+      { nombre: 'Morral negro', descripcion: 'Mochila de cuerdas con el logo en blanco.', categoria: 'accesorios', variantes: '', imagen: '/tienda/img/morral.jpg' },
+    ],
+  };
+  const CAT = { ropa: 'Ropa', accesorios: 'Accesorios', papeleria: 'Papelería' };
+  const COLORES = ['var(--c1)', 'var(--c5)', 'var(--c2)', 'var(--c4)', 'var(--c3)', 'var(--c6)'];
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pesos = n => '$' + Number(n).toLocaleString('es-CL');
+  const waLink = (num, txt) => `https://wa.me/${num}?text=${encodeURIComponent(txt)}`;
+  const telefono = n => { const m = String(n).match(/^56(9)(\d{4})(\d{4})$/); return m ? `+56 ${m[1]} ${m[2]} ${m[3]}` : '+' + n; };
+  // Fotos antiguas guardadas como «tienda/img/…» (sin la barra inicial).
+  const foto = u => /^tienda\//.test(u || '') ? '/' + u : (u || '');
+  const g = document.getElementById('catalogo');
+  let filtro = 'todo';
+
+  function pintar({ productos, ajustes }) {
+    const num = /^[0-9]{8,15}$/.test(ajustes.whatsapp || '') ? ajustes.whatsapp : RESPALDO.ajustes.whatsapp;
+    g.classList.remove('cargando');
+    g.innerHTML = productos.length ? productos.map((p, i) => {
+      const precio = p.precio != null && p.precio !== '' ? `<span class="precio">${pesos(p.precio)}</span>` : '<span class="precio"><span class="consultar">Consultar precio</span></span>';
+      const msg = p.agotado ? `Hola, ¿cuándo vuelve a haber ${p.nombre} de SpectrumPro?` : `Hola, quiero pedir: ${p.nombre} de SpectrumPro`;
+      const img = foto(p.imagen);
+      return `<article class="prod${p.agotado ? ' agotado' : ''}" data-c="${esc(p.categoria)}" style="--kc:${COLORES[i % COLORES.length]};--i:${i}">
+        <div class="img">${img ? `<img src="${esc(img)}" alt="${esc(p.nombre)}${p.descripcion ? ': ' + esc(p.descripcion) : ''}" loading="lazy" width="460" height="460">` : ''}${p.agotado ? '<span class="etiqueta">Agotado</span>' : ''}</div>
+        <div class="cuerpo"><span class="cat">${esc(CAT[p.categoria] || '')}</span><h3>${esc(p.nombre)}</h3>${p.descripcion ? `<p>${esc(p.descripcion)}</p>` : ''}${p.variantes ? `<p class="var">${esc(p.variantes)}</p>` : ''}
+        <div class="pie">${precio}<a class="btn ${p.agotado ? 'borde' : 'wa'}" href="${waLink(num, msg)}" target="_blank" rel="noopener">${WA_ICONO}${p.agotado ? 'Avísame cuando vuelva' : 'Pedir por WhatsApp'}</a></div></div></article>`;
+    }).join('') : '<p class="vacio">Pronto habrá productos nuevos. Escríbenos por WhatsApp si buscas algo.</p>';
+    document.getElementById('ver-productos').textContent = productos.length ? `Ver los ${productos.length} productos` : 'Ver productos';
+    // Filtros: solo los tipos que tienen productos.
+    document.querySelectorAll('.filtros button').forEach(b => { b.hidden = b.dataset.f !== 'todo' && !productos.some(p => p.categoria === b.dataset.f); });
+    document.getElementById('wa-numero').textContent = telefono(num);
+    document.getElementById('wa-banda').href = waLink(num, 'Hola, tengo una consulta sobre los productos de SpectrumPro');
+    const partes = [];
+    if (ajustes.pago) partes.push(`Pago: ${esc(ajustes.pago.replace(/\.$/, ''))}.`);
+    if (ajustes.entrega) partes.push(`Entrega: ${esc(ajustes.entrega.replace(/\.$/, ''))}.`);
+    document.getElementById('paso-pago').innerHTML = 'Te confirmamos precio y disponibilidad.' + (partes.length ? ' ' + partes.join(' ') : ' Luego acordamos el pago y la entrega.');
+    aplicarFiltro();
+  }
+  function aplicarFiltro() {
+    document.querySelectorAll('.filtros button').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === filtro));
+    let k = 0;
+    g.querySelectorAll('.prod').forEach(el => {
+      el.hidden = !(filtro === 'todo' || el.dataset.c === filtro);
+      if (el.hidden) return;
+      el.style.setProperty('--i', k++);
+      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    });
+  }
+  document.querySelectorAll('.filtros button').forEach(b => b.addEventListener('click', () => { filtro = b.dataset.f; aplicarFiltro(); }));
+
+  async function cargar() {
+    const cfg = window.TIENDA_SUPABASE || {};
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('sin configuración');
+    const h = { apikey: cfg.supabaseAnonKey };
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
+    try {
+      const base = cfg.supabaseUrl.replace(/\/$/, '') + '/rest/v1/';
+      const [rp, ra] = await Promise.all([
+        fetch(base + 'tienda_productos?select=nombre,descripcion,categoria,precio,variantes,imagen,agotado&visible=eq.true&order=orden.asc,nombre.asc', { headers: h, signal: ctrl.signal }),
+        fetch(base + 'tienda_ajustes?select=whatsapp,instagram,pago,entrega&id=eq.1', { headers: h, signal: ctrl.signal }),
+      ]);
+      if (!rp.ok || !ra.ok) throw new Error('respuesta ' + rp.status + '/' + ra.status);
+      const productos = await rp.json(), aj = await ra.json();
+      return { productos, ajustes: aj[0] || RESPALDO.ajustes };
+    } finally { clearTimeout(t); }
+  }
+  cargar().then(pintar).catch(() => pintar(RESPALDO));
+})();
+</script>
+</body>
+</html>

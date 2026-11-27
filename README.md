@@ -139,28 +139,28 @@ La publishable key es pública por diseño: la seguridad la dan las políticas R
 
 ### 6. Publicar la plataforma
 
-Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (hoy: un `A` de `gestionspectrumpro.cl` hacia `216.150.1.1` y un `CNAME` de `www` hacia `gestionspectrumpro.cl`). Las etiquetas Open Graph de `index.html`, `encuesta.html` y `tienda/` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html y la tienda en https://gestionspectrumpro.cl/tienda/.
+Son archivos estáticos y se publican en Vercel. El dominio oficial es **https://gestionspectrumpro.cl**: en Vercel, *Project → Settings → Domains → Add*, escribe `gestionspectrumpro.cl` (y `www.gestionspectrumpro.cl`, que Vercel redirige al principal) y crea en el DNS del dominio los registros que Vercel indica (hoy: un `A` de `gestionspectrumpro.cl` hacia `216.150.1.1` y un `CNAME` de `www` hacia `gestionspectrumpro.cl`). Las etiquetas Open Graph de `index.html` y `encuesta.html` ya apuntan a este dominio. La encuesta queda en https://gestionspectrumpro.cl/encuesta.html. La tienda está en el sitio público (https://spectrumpro.cl/tienda); `tienda/index.html` de la plataforma solo redirige allá los enlaces antiguos.
 
 ## Sitio web público (spectrumpro.cl)
 
-`sitio-web/` es el sitio público que reemplaza al WordPress de https://spectrumpro.cl: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Colabora y Contacto. Son archivos estáticos, separados de la plataforma: se publican como un **segundo proyecto de Vercel** desde este mismo repositorio, así gestionspectrumpro.cl no cambia.
+`sitio-web/` es el sitio público que reemplaza al WordPress de https://spectrumpro.cl: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Tienda, Colabora y Contacto. Son archivos estáticos, separados de la plataforma: se publican como un **segundo proyecto de Vercel** desde este mismo repositorio, así gestionspectrumpro.cl no cambia.
 
 1. En Vercel: **Add New → Project**, importa este repositorio y en **Root Directory** elige `sitio-web`. Framework: *Other*, sin comando de build.
 2. En ese proyecto nuevo: **Settings → Domains → Add**, escribe `spectrumpro.cl` y también `www.spectrumpro.cl` (Vercel redirige uno al otro).
 3. En el panel DNS del dominio (donde está registrado spectrumpro.cl) cambia **solo** los registros web que indica Vercel: el `A` de `spectrumpro.cl` (hoy apunta al hosting de WordPress) y el `CNAME` de `www`. **No toques los registros `MX`, `TXT` (SPF, DKIM, DMARC) ni los de correo**, o dejará de funcionar administracion@spectrumpro.cl.
 4. Espera a que Vercel marque el dominio como válido (minutos a unas horas) y revisa el sitio. El WordPress sigue existiendo en su hosting; si algo falla, basta con devolver el registro `A` a su valor anterior (anótalo antes de cambiarlo).
 
-`sitio-web/vercel.json` activa direcciones limpias (`/nosotros` en vez de `/nosotros.html`) y redirige las direcciones antiguas de WordPress (`/quienes-somos`, `/nuestros-talleres`, `/arte-terapia`, `/formapro`, `/tienda`…) a su página nueva, para no perder enlaces ni posicionamiento en Google.
+`sitio-web/vercel.json` activa direcciones limpias (`/nosotros` en vez de `/nosotros.html`) y redirige las direcciones antiguas de WordPress (`/quienes-somos`, `/nuestros-talleres`, `/arte-terapia`, `/formapro`…) a su página nueva, para no perder enlaces ni posicionamiento en Google.
 
 ### Google (SEO)
 
 - `sitio-web/sitemap.xml` y `sitio-web/robots.txt` le indican a Google qué páginas indexar. Si se agrega una página, súmala al sitemap.
 - Cada página tiene un título con palabras de búsqueda, descripción, Open Graph y datos estructurados (`application/ld+json`): la organización con dirección, teléfono, correo, horario y redes en Inicio y Contacto, y migas de pan en el resto.
-- La plataforma (gestionspectrumpro.cl) lleva `noindex` para que no compita con el sitio en las búsquedas de «SpectrumPro»; solo la tienda queda en su sitemap.
-- Tras publicar en spectrumpro.cl: en [Google Search Console](https://search.google.com/search-console) agrega la propiedad de dominio `spectrumpro.cl` (se verifica con un registro `TXT` en el DNS), envía `https://spectrumpro.cl/sitemap.xml` y pide indexar la portada. Haz lo mismo con `https://gestionspectrumpro.cl/sitemap.xml`.
+- La plataforma (gestionspectrumpro.cl) lleva `noindex` para que no compita con el sitio en las búsquedas de «SpectrumPro».
+- Tras publicar en spectrumpro.cl: en [Google Search Console](https://search.google.com/search-console) agrega la propiedad de dominio `spectrumpro.cl` (se verifica con un registro `TXT` en el DNS), envía `https://spectrumpro.cl/sitemap.xml` y pide indexar la portada.
 - En [Google Business Profile](https://business.google.com) crea o reclama la ficha de SpectrumPro con la misma dirección, teléfono y sitio web: es lo que hace aparecer el negocio en Maps y en el recuadro de la derecha.
 
-Los textos, fotos, talleres y equipo están en `sitio-web/sitio/contenido.js` (y el resto del texto en cada `.html`). Los enlaces a la tienda y al acceso del equipo apuntan a gestionspectrumpro.cl.
+Los textos, fotos, talleres y equipo están en `sitio-web/sitio/contenido.js` (y el resto del texto en cada `.html`). El enlace de acceso del equipo apunta a gestionspectrumpro.cl.
 
 ## Encuesta de la Muestra Audiovisual
 
@@ -175,7 +175,7 @@ El público solo puede **enviar** respuestas: no puede leer las de otras persona
 
 ## Tienda
 
-`tienda/index.html` es la tienda pública de productos (`/tienda/`): portada, catálogo con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto.
+`sitio-web/tienda/index.html` es la tienda pública de productos (https://spectrumpro.cl/tienda), con la misma cabecera, pie y estilo que el resto del sitio: portada, catálogo con filtros (Ropa, Accesorios, Papelería), pasos para pedir y botón de WhatsApp con el mensaje ya escrito para cada producto.
 
 Los productos y el contacto se editan en la plataforma, sección **Tienda** (dirección y rol Equipo): nombre, foto, tipo, precio, tallas o colores, descripción, orden, «Agotado» y «Mostrar en la tienda»; además el WhatsApp, Instagram, forma de pago y entrega. Los cambios se ven al instante en la tienda.
 
@@ -184,7 +184,7 @@ Para activarla:
 1. En **SQL Editor** de Supabase, ejecuta `supabase/migrations/20261124060000_tienda.sql`. Crea las tablas `tienda_productos` y `tienda_ajustes`, el bucket público de fotos `tienda` y carga los 8 productos actuales.
 2. Listo: la tienda lee de Supabase. Mientras no se ejecute la migración, muestra la lista de respaldo que trae la página (sin precios).
 
-**Incrustarla en spectrumpro.cl (WordPress):** pega el contenido de `tienda/wordpress.html` en un widget **HTML** de Elementor, en una página con plantilla de ancho completo. Ese código carga `/tienda/?embed=1`, que oculta la cabecera y el pie propios de la tienda, ajusta el alto solo y hace scroll en la página de WordPress al tocar «Ver productos» o «Cómo pedir».
+Lee Supabase con `sitio-web/tienda/supabase.js` (la clave pública), aparte de `sitio-web/config.js`, para que el resto del sitio siga usando los textos de `contenido.js`. Las fotos de muestra (`/tienda/img/…`) están en `sitio-web/tienda/img/`; la plataforma las muestra desde spectrumpro.cl. La dirección antigua https://gestionspectrumpro.cl/tienda/ redirige a la nueva.
 
 El público solo puede **leer** los productos visibles y el contacto. Crear, editar, borrar y subir fotos lo pueden hacer solo dirección y el rol Equipo (después de ejecutar `20261124070000_tienda_equipo.sql`), y cada cambio queda en la auditoría. Las fotos se reducen en el navegador (máx. 1000 px) antes de subirlas.
 
@@ -205,7 +205,7 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | --- | --- |
 | `index.html` | Pantalla de carga, acceso, estructura y diálogos |
 | `encuesta.html` | Encuesta pública para la Muestra Audiovisual |
-| `tienda/` | Tienda pública de productos; se edita en la sección Tienda |
+| `tienda/` | Redirige a la tienda, que ahora está en `sitio-web/tienda/` (spectrumpro.cl/tienda) |
 | `assets/og/` | Imágenes de 1200×630 para la vista previa al compartir cada página (Open Graph) |
 | `ficha-participante.html` | Ficha cualitativa del participante, para completar en la web |
 | `styles.css` | Estilos con la paleta del logo, tema claro y oscuro y adaptación a celular |

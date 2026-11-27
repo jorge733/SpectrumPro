@@ -3,7 +3,7 @@
 // - Archivos propios (css, js, imágenes): también primero red; sin conexión, la copia guardada.
 //   (Antes se servía la copia guardada y, tras publicar, se mezclaba HTML nuevo con JS viejo.)
 // - Supabase y CDNs: pasan directo, nunca se guardan (son datos privados o con su propia caché).
-const VERSION = 'spectrumpro-v20';
+const VERSION = 'spectrumpro-v21';
 const BASE = ['./', './index.html', './styles.css', './config.js', './js/datos.js', './js/app.js', './js/posts.js', './manifest.webmanifest', './assets/logo.svg', './assets/icono-192.png'];
 
 self.addEventListener('install', e => {

@@ -120,7 +120,7 @@
       if (!r.ok) return;
       const ps = await r.json();
       if (!ps.length) return;
-      el.innerHTML = ps.map((p, i) => `<a class="revelar" style="--i:${i}" href="https://gestionspectrumpro.cl/tienda/#productos"><img src="${esc(p.imagen)}" alt="" loading="lazy"><span>${esc(p.nombre)}${p.precio != null ? `<b>$${Number(p.precio).toLocaleString('es-CL')}</b>` : ''}</span></a>`).join('');
+      el.innerHTML = ps.map((p, i) => `<a class="revelar" style="--i:${i}" href="/tienda#productos"><img src="${esc(p.imagen)}" alt="" loading="lazy"><span>${esc(p.nombre)}${p.precio != null ? `<b>$${Number(p.precio).toLocaleString('es-CL')}</b>` : ''}</span></a>`).join('');
       observarRevelado();
     } catch { /* la vitrina es opcional */ }
   }
