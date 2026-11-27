@@ -461,7 +461,7 @@ window.SITIO_RESPALDO = {
   {
    "tipo": "modulo",
    "titulo": "Taller de Cortometrajes",
-   "subtitulo": "",
+   "subtitulo": "Gabriela Banderas y Gonzalo Pavez",
    "texto": "Una experiencia creativa y colaborativa guiada por una actriz y un director audiovisual, donde se recorre todo el proceso de hacer cine desde la idea hasta el rodaje. A través de la elaboración de guion, la actuación y el trabajo en equipo, las y los participantes fortalecen habilidades sociales clave como la comunicación, la escucha, la empatía y la resolución conjunta de desafíos, integrando además elementos esenciales de puesta en escena como arte escénico, vestuario, maquillaje y producción para dar vida a sus propias historias.",
    "lista": "",
    "nota": "",
