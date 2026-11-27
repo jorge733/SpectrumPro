@@ -88,6 +88,17 @@
   };
   const ERROR_SITIO = 'Falta activar el sitio web en Supabase: ejecuta supabase/migrations/20261127020000_sitio_web.sql en el SQL Editor.';
 
+  /* ---------- comunidad ---------- */
+  const ERROR_COMUNIDAD = 'Falta activar la Comunidad en Supabase: ejecuta supabase/migrations/20261129000000_comunidad.sql en el SQL Editor.';
+  const boletinAFila = b => ({
+    titulo: String(b.titulo || '').trim(), resumen: String(b.resumen || ''), texto: String(b.texto || ''), imagen: String(b.imagen || ''),
+    boton_texto: String(b.boton_texto || ''), boton_enlace: String(b.boton_enlace || ''), publico: b.publico !== false,
+  });
+  function validarDocumento(a) {
+    if (a.type !== 'application/pdf' && !/\.pdf$/i.test(a.name)) throw new Error(`«${a.name}» no es un PDF.`);
+    if (a.size > 25 * 1048576) throw new Error(`«${a.name}» pesa más de 25 MB. Comprímelo o súbelo a Google Drive y pega el enlace.`);
+  }
+
   /* ---------- errores legibles ---------- */
   function traducir(e) {
     const m = String(e?.message || e || '');
@@ -101,6 +112,9 @@
     if (/maximum allowed size|Payload too large|exceeded the maximum/i.test(m)) return new Error('El PDF es demasiado grande (máximo 10 MB).');
     if (/mime type|invalid_mime/i.test(m)) return new Error('El programa debe ser un archivo PDF.');
     if (/sitio_(textos|elementos)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_SITIO);
+    if (/(boletines|suscriptores)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_COMUNIDAD);
+    if (/sitio_tipo_valido/i.test(m) && /recurso|episodio/i.test(m)) return new Error(ERROR_COMUNIDAD);
+    if (/boletines_\w+_largo/i.test(m)) return new Error('Uno de los textos del boletín es demasiado largo. Acórtalo e inténtalo de nuevo.');
     if (/sitio_tipo_valido/i.test(m)) return new Error('Falta actualizar el sitio web en Supabase: ejecuta supabase/migrations/20261128000000_sitio_web_completo.sql en el SQL Editor.');
     if (/sitio_titulo_largo/i.test(m)) return new Error('Revisa el título: es obligatorio y puede tener hasta 120 caracteres.');
     if (/sitio_\w+_largo/i.test(m)) return new Error('Uno de los textos es demasiado largo. Acórtalo e inténtalo de nuevo.');
@@ -417,6 +431,41 @@
         const m = String(url || '').match(/\/storage\/v1\/object\/public\/sitio\/(.+)$/);
         if (m) await sb.storage.from('sitio').remove([decodeURIComponent(m[1])]);
       },
+      /* ----- comunidad (boletines y suscriptores) ----- */
+      async comunidad() {
+        const [boletines, suscriptores] = await Promise.all([
+          todo(() => sb.from('boletines').select('id,titulo,resumen,texto,imagen,boton_texto,boton_enlace,publico,estado,destinatarios,enviado_en,creado,actualizado').order('creado', { ascending: false }).order('id')),
+          todo(() => sb.from('suscriptores').select('id,email,nombre,perfil,estado,creado,confirmado,baja_en').order('creado', { ascending: false }).order('id')),
+        ]);
+        return { boletines, suscriptores };
+      },
+      async guardarBoletin(b) {
+        const fila = boletinAFila(b);
+        if (b.id) { ok(await sb.from('boletines').update(fila).eq('id', b.id)); return b.id; }
+        return ok(await sb.from('boletines').insert(fila).select('id').single()).id;
+      },
+      async eliminarBoletin(id) { ok(await sb.from('boletines').delete().eq('id', id)); },
+      async enviarBoletin(id, accion) {
+        const { data, error } = await sb.functions.invoke('enviar-boletin', { body: { accion, id } });
+        if (error) {
+          let m = error.message;
+          try { m = (await error.context.json()).error || m; } catch { /* sin cuerpo */ }
+          if (/Failed to send a request|not found|404/i.test(m)) m = 'Falta publicar la función «enviar-boletin» en Supabase (ver README, «Comunidad»).';
+          throw traducir(m);
+        }
+        return data;
+      },
+      async bajaSuscriptor(id) { ok(await sb.from('suscriptores').update({ estado: 'baja', baja_en: new Date().toISOString() }).eq('id', id)); },
+      async eliminarSuscriptor(id) { ok(await sb.from('suscriptores').delete().eq('id', id)); },
+      // PDF para la página Comunidad (lista «recurso» del sitio): bucket público «documentos».
+      async subirDocumentoSitio(archivo) {
+        validarDocumento(archivo);
+        const nombre = archivo.name.replace(/\.pdf$/i, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'documento';
+        const ruta = `${Date.now().toString(36)}-${nombre}.pdf`;
+        const { error } = await sb.storage.from('documentos').upload(ruta, archivo, { contentType: 'application/pdf', cacheControl: '31536000', upsert: false });
+        if (error) throw /bucket not found/i.test(error.message) ? new Error(ERROR_COMUNIDAD) : traducir(error);
+        return sb.storage.from('documentos').getPublicUrl(ruta).data.publicUrl;
+      },
       async auditoria(limite = 200) {
         return ok(await sb.from('auditoria').select('*').order('creado', { ascending: false }).limit(limite));
       },
@@ -598,6 +647,22 @@
         p('morral', 'Morral negro', 'Mochila de cuerdas con el logo en blanco.', 'accesorios', '', 8),
       ],
       ajustes: { whatsapp: '56996389673', instagram: '', pago: '', entrega: '' },
+    };
+  }
+
+  function crearComunidadDemo() {
+    const d = n => new Date(Date.now() - n * 864e5).toISOString();
+    const s = (email, nombre, perfil, estado, dias) => ({ id: nuevoId(), email, nombre, perfil, estado, creado: d(dias), confirmado: estado === 'pendiente' ? null : d(dias - .1), baja_en: estado === 'baja' ? d(1) : null });
+    return {
+      boletines: [],
+      suscriptores: [
+        s('camila.rojas@ejemplo.cl', 'Camila Rojas', 'familia', 'activo', 20),
+        s('profe.martinez@ejemplo.cl', 'Andrés Martínez', 'educacion', 'activo', 14),
+        s('fono.lucia@ejemplo.cl', 'Lucía Fernández', 'salud', 'activo', 9),
+        s('tomas.ve@ejemplo.cl', 'Tomás', 'neurodivergente', 'activo', 6),
+        s('sin.confirmar@ejemplo.cl', '', '', 'pendiente', 2),
+        s('se.fue@ejemplo.cl', 'Paula', 'otro', 'baja', 30),
+      ],
     };
   }
 
@@ -906,6 +971,59 @@
         return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async borrarFotoSitio() { },
+      /* Comunidad: en la demostración hay suscriptores de ejemplo y los envíos no mandan correos. */
+      async comunidad() {
+        if (!editaTienda()) prohibido();
+        await espera();
+        db.comunidad ??= crearComunidadDemo();
+        return copia(db.comunidad);
+      },
+      async guardarBoletin(b) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        db.comunidad ??= crearComunidadDemo();
+        const ahora = new Date().toISOString();
+        const previo = db.comunidad.boletines.find(x => x.id === b.id);
+        if (previo) Object.assign(previo, boletinAFila(b), { actualizado: ahora });
+        else db.comunidad.boletines.push({ ...boletinAFila(b), id: b.id = nuevoId(), estado: 'borrador', destinatarios: 0, enviado_en: null, creado: ahora, actualizado: ahora });
+        auditar(previo ? 'update' : 'insert', 'boletines', { boletin: b.titulo });
+        guardar(); return b.id;
+      },
+      async eliminarBoletin(id) {
+        if (!editaTienda()) prohibido();
+        db.comunidad.boletines = db.comunidad.boletines.filter(x => x.id !== id);
+        auditar('delete', 'boletines', {});
+        guardar();
+      },
+      async enviarBoletin(id, accion) {
+        if (!editaTienda()) prohibido();
+        await espera(700);
+        const b = db.comunidad.boletines.find(x => x.id === id);
+        if (!b) throw new Error('Ese boletín ya no existe.');
+        if (accion === 'prueba') return { ok: true, para: (yo()?.email || 'tu correo') + ' (demostración: no se envía de verdad)' };
+        const n = db.comunidad.suscriptores.filter(s => s.estado === 'activo').length;
+        Object.assign(b, { estado: 'enviado', enviado_en: new Date().toISOString(), destinatarios: n });
+        auditar('update', 'boletines', { boletin: b.titulo, enviado: n });
+        guardar();
+        return { ok: true, enviados: n, restantes: 0, destinatarios: n };
+      },
+      async bajaSuscriptor(id) {
+        if (!editaTienda()) prohibido();
+        const s = db.comunidad.suscriptores.find(x => x.id === id);
+        if (s) Object.assign(s, { estado: 'baja', baja_en: new Date().toISOString() });
+        guardar();
+      },
+      async eliminarSuscriptor(id) {
+        if (!editaTienda()) prohibido();
+        db.comunidad.suscriptores = db.comunidad.suscriptores.filter(x => x.id !== id);
+        guardar();
+      },
+      // En la demostración el PDF no se guarda: se usa un enlace temporal de este navegador.
+      async subirDocumentoSitio(archivo) {
+        if (!editaTienda()) prohibido();
+        validarDocumento(archivo);
+        return URL.createObjectURL(archivo);
+      },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
       async restablecer() { db.talleres.forEach(t => { escribir(CLAVE_PROGRAMA(t.id), null); (t.afiches || []).forEach(x => escribir(CLAVE_AFICHE(x.ruta), null)); }); db = crearDemo(); guardar(); },
 

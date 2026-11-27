@@ -67,6 +67,12 @@ const TIPOS = {
     titulo: ['Nombre de la organización *', 0], enlace: ['Sitio web (opcional)', 0] } },
   cinta: { nombre: 'Cinta de la portada', nuevo: 'Nueva palabra', pagina: 'Inicio', ruta: '/', campos: {
     titulo: ['Palabra o frase corta *', 0] } },
+  recurso: { nombre: 'Recursos', nuevo: 'Nuevo recurso', pagina: 'Comunidad', ruta: '/comunidad#recursos', foto: 'Portada del documento (vertical)', documento: true, campos: {
+    titulo: ['Título *', 0], subtitulo: ['Tipo y tamaño (ej: PDF · 2 MB, Artículo · Fuente)', 0], texto: ['Descripción breve', 2],
+    enlace: ['Enlace del PDF o del artículo *', 0], nota: ['Texto del botón (si se deja vacío: «Descargar PDF» o «Abrir»)', 0] } },
+  episodio: { nombre: 'Podcasts', nuevo: 'Nuevo episodio', pagina: 'Comunidad', ruta: '/comunidad#escucha', foto: 'Portada (horizontal, 2:1)', campos: {
+    titulo: ['Título del episodio *', 0], subtitulo: ['Podcast y número (ej: No desistas · Episodio 1)', 0], texto: ['Descripción', 3],
+    enlace: ['Enlace (Spotify, YouTube…) *', 0], nota: ['Texto del botón (si se deja vacío: «Escuchar en Spotify»…)', 0] } },
 };
 const LARGOS = { titulo: 120, subtitulo: 160, texto: 3000, lista: 2000, nota: 500, enlace: 500 };
 
@@ -604,6 +610,10 @@ function abrirElemento(tipo, id = null, copiaDe = null) {
         </div>
       </div>` : ''}
       <div class="campos">${Object.entries(t.campos).map(([c, def]) => campoE(c, def)).join('')}</div>
+      ${t.documento ? `<div class="foto-acciones">
+        <label class="btn btn-sec btn-peq">Subir PDF<input id="se-pdf" type="file" accept="application/pdf" class="solo-lector"></label>
+        <p class="nota-suave">Hasta 25 MB. Al subirlo se llena el enlace (y el tipo y tamaño, si está vacío). Si es un artículo de otra página, pega su enlace.</p>
+      </div>` : ''}
       <label class="check-suelto"><input type="checkbox" name="visible" ${!e || e.visible ? 'checked' : ''}> Mostrar en el sitio</label>
       <p id="sitio-error" class="aviso-error" role="alert" hidden></p>
     </div>
@@ -632,6 +642,22 @@ document.addEventListener('change', async ev => {
     } catch (e) { editando.fotoNueva = null; err.textContent = e.message; err.hidden = false; }
     return;
   }
+  if (el.id === 'se-pdf') {
+    const f = el.files[0], form = $('#form-sitio-elemento');
+    if (!f || !form) return;
+    const err = $('#sitio-error'); err.hidden = true;
+    try {
+      const url = await conCarga(() => D.subirDocumentoSitio(f), 'Subiendo el PDF…');
+      form.elements.enlace.value = url;
+      const mb = f.size / 1048576;
+      if (!form.elements.subtitulo.value.trim()) form.elements.subtitulo.value = 'PDF · ' + (mb >= 1 ? mb.toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB');
+      if (!form.elements.titulo.value.trim()) form.elements.titulo.value = f.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ');
+      toast('PDF subido. Recuerda «Guardar y publicar».');
+      enviarPrevia();
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+    el.value = '';
+    return;
+  }
   if (el.dataset?.sitioSubir) {
     const clave = el.dataset.sitioSubir, f = el.files[0];
     if (!f) return;
@@ -657,7 +683,10 @@ document.addEventListener('submit', async ev => {
   const mostrar = m => { err.textContent = m; err.hidden = false; };
   err.hidden = true;
   if (!e.titulo) return mostrar('Completa el campo «' + t.campos.titulo[0].replace(' *', '') + '».');
-  if (e.enlace && !/^https:\/\/\S+$/.test(e.enlace)) return mostrar('El enlace debe empezar con https://');
+  if ((editando.tipo === 'recurso' || editando.tipo === 'episodio') && !e.enlace) return mostrar('Falta el enlace' + (editando.tipo === 'recurso' ? ': sube el PDF o pega el enlace del artículo.' : ' del episodio.'));
+  // Los recursos pueden apuntar a un PDF que viene con el sitio (/sitio/docs/…).
+  const enlaceDelSitio = editando.tipo === 'recurso' && /^\/sitio\/docs\/[\w.-]+\.pdf$/.test(e.enlace);
+  if (e.enlace && !enlaceDelSitio && !/^https:\/\/\S+$/.test(e.enlace) && !e.enlace.startsWith('blob:')) return mostrar('El enlace debe empezar con https://');
   if (editando.tipo === 'produccion' && !ytId(e.enlace)) return mostrar('Pega el enlace del video de YouTube.');
   if (editando.tipo === 'taller' && e.enlace && !ytId(e.enlace)) return mostrar('El video del resultado debe ser un enlace de YouTube.');
   if (editando.tipo === 'equipo' && e.nota && !esCorreo(e.nota)) return mostrar('Revisa el correo.');

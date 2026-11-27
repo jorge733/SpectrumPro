@@ -51,6 +51,22 @@
         <img src="${esc(x.imagen || ytMiniatura(x.enlace))}" alt="" loading="lazy">
         <span class="play">${ICONO_PLAY}</span>
         <span class="pie"><b>${esc(x.titulo)}</b>${x.subtitulo ? `<span>${esc(x.subtitulo)}</span>` : ''}</span></a>`,
+    // Comunidad: documentos y artículos («nota» = texto del botón) y episodios de podcast.
+    recurso: (x, i) => {
+      const pdf = /\.pdf(\?|#|$)/i.test(x.enlace || '');
+      const ir = x.enlace ? ` href="${esc(x.enlace)}" target="_blank" rel="noopener"${pdf ? ' type="application/pdf"' : ''}` : '';
+      return `<article class="recurso revelar" style="--k:${SUAVES[i % SUAVES.length]};--kc:${COLORES[i % COLORES.length]};--i:${i % 3}">
+        ${x.imagen ? `<a class="portada-doc"${ir} tabindex="-1" aria-hidden="true"><img src="${esc(x.imagen)}" alt="" loading="lazy"></a>` : '<span class="portada-doc" aria-hidden="true"></span>'}
+        <div class="cuerpo">${x.subtitulo ? `<span class="tipo">${esc(x.subtitulo)}</span>` : ''}<h3>${esc(x.titulo)}</h3>${parrafos(x.texto)}
+        ${x.enlace ? `<a class="enlace-flecha"${ir}>${esc(x.nota || (pdf ? 'Descargar PDF' : 'Abrir'))} <span aria-hidden="true">→</span></a>` : ''}</div></article>`;
+    },
+    episodio: (x, i) => {
+      const spotify = /spotify\.com/.test(x.enlace || ''), yt = /youtu\.?be/.test(x.enlace || '');
+      return `<article class="episodio revelar" style="--i:${i % 3}">
+        ${x.imagen ? `<div class="portada-ep"><img src="${esc(x.imagen)}" alt="" loading="lazy"></div>` : ''}
+        <div class="cuerpo">${x.subtitulo ? `<span class="quien">${esc(x.subtitulo)}</span>` : ''}<h3>${esc(x.titulo)}</h3>${parrafos(x.texto)}
+        ${x.enlace ? `<a class="btn ${spotify ? 'spotify' : 'claro'}" href="${esc(x.enlace)}" target="_blank" rel="noopener">${esc(x.nota || (spotify ? 'Escuchar en Spotify' : yt ? 'Ver en YouTube' : 'Escuchar'))}</a>` : ''}</div></article>`;
+    },
   };
 
   /* ---------- Pintar ---------- */
@@ -105,7 +121,9 @@
     });
     // Secciones ocultadas desde la plataforma.
     document.querySelectorAll('[data-seccion]').forEach(sec => {
-      if (T['seccion_' + sec.dataset.seccion] === 'oculta') sec.hidden = true;
+      const oculta = T['seccion_' + sec.dataset.seccion] === 'oculta';
+      sec.toggleAttribute('data-oculta', oculta);   // comunidad.js lo respeta al mostrar los boletines
+      if (oculta) sec.hidden = true;
       else if (!sec.matches('[data-si-hay]')) sec.hidden = false;
     });
     seo(T);
@@ -292,8 +310,9 @@
   pintar(guardado() || RESPALDO);
   desdeSupabase().then(d => {
     if (!d.elementos.length && !Object.keys(d.textos).length) return; // migración sin ejecutar aún
-    // Listas nuevas (cinta, clientes) mientras no se ejecute la migración que las carga: se usa el respaldo.
-    if (Number(d.textos.version_contenido || 0) < 2) {
+    // Listas nuevas (cinta, clientes, recursos, episodios) mientras no se ejecute la migración que las carga: se usa el respaldo.
+    // (versión 3: recursos y episodios de la página Comunidad).
+    if (Number(d.textos.version_contenido || 0) < 3) {
       const hay = new Set(d.elementos.map(x => x.tipo));
       d.elementos.push(...RESPALDO.elementos.filter(x => !hay.has(x.tipo)));
     }

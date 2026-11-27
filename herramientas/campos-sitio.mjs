@@ -18,6 +18,7 @@ const PAGINAS = [
   { id: 'arte', nombre: 'Arte y Apoyo', ruta: '/arte-y-apoyo', archivo: 'arte-y-apoyo.html' },
   { id: 'productora', nombre: 'Productora', ruta: '/productora', archivo: 'productora.html' },
   { id: 'tienda', nombre: 'Tienda', ruta: '/tienda', archivo: 'tienda/index.html' },
+  { id: 'comunidad', nombre: 'Comunidad', ruta: '/comunidad', archivo: 'comunidad.html' },
   { id: 'colabora', nombre: 'Colabora', ruta: '/colabora', archivo: 'colabora.html' },
   { id: 'contacto', nombre: 'Contacto', ruta: '/contacto', archivo: 'contacto.html' },
 ];
@@ -31,6 +32,7 @@ const NOMBRES = {
   formacion_intro: 'Introducción', formapro_texto: 'Texto de FormaPro', online_texto: 'Texto de SpectrumOnline',
   arte_terapia_texto: 'Texto de Arte Terapia', terapia_ocupacional_texto: 'Texto de Terapia Ocupacional', productora_texto: 'Introducción',
   colabora_donacion: 'Texto de la donación', colabora_suscripcion: 'Texto de la suscripción',
+  comunidad_bienvenida: 'Texto de bienvenida', comunidad_invitacion: 'Texto de la invitación', comunidad_video: 'Video (enlace de YouTube)',
   enlace_donacion: 'Enlace del botón para donar', enlace_suscripcion: 'Enlace del botón para suscribirse',
 };
 

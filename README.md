@@ -17,9 +17,10 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
 | **Sitio web** | Dirección y rol Equipo. Edita todo https://spectrumpro.cl: cada título, párrafo, botón e imagen de las 8 páginas y del pie, títulos para Google, secciones visibles, aviso superior, contacto y las listas (equipo, talleres, producciones, clientes…), con vista previa en vivo. Ver «Editar el sitio desde la plataforma» más abajo |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
+| **Comunidad** | Dirección y rol Equipo. Boletines por correo para quienes se suscriben en https://spectrumpro.cl/comunidad: escribirlos con vista previa, enviarse una prueba y mandarlos a todas las personas suscritas; lista de suscriptores con baja y CSV. Ver «Comunidad» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
-En el menú, **Posts**, **Tienda** y **Sitio web** están juntos en el submenú **Edición** (se despliega en el menú lateral; con el menú plegado o en el celular se abre como una ventanita). Cada persona ve solo las secciones que su rol permite, y si no puede abrir ninguna, el submenú no aparece.
+En el menú, **Posts**, **Tienda**, **Sitio web** y **Comunidad** están juntos en el submenú **Edición** (se despliega en el menú lateral; con el menú plegado o en el celular se abre como una ventanita). Cada persona ve solo las secciones que su rol permite, y si no puede abrir ninguna, el submenú no aparece.
 
 ### Roles
 
@@ -71,6 +72,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261127010000_recordatorio_cumpleanos.sql` | Aviso de cumpleaños por correo: quién lo recibe y el reloj diario (pg_cron) |
    | `20261127020000_sitio_web.sql` | Contenido del sitio público editable desde la plataforma (tablas `sitio_textos` y `sitio_elementos`, bucket público `sitio`) con el contenido actual ya cargado |
    | `20261128000000_sitio_web_completo.sql` | Listas «Cinta de la portada» y «Clientes» con su contenido actual |
+   | `20261129000000_comunidad.sql` | Comunidad: listas «Recursos» y «Podcasts» del sitio, suscriptores, boletines y bucket público `documentos` (ver «Comunidad») |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -171,7 +173,7 @@ Son archivos estáticos y se publican en Vercel. El dominio oficial es **https:/
 
 ## Sitio web público (spectrumpro.cl)
 
-`sitio-web/` es el sitio público que reemplaza al WordPress de https://spectrumpro.cl: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Tienda, Colabora y Contacto. Son archivos estáticos, separados de la plataforma: se publican como un **segundo proyecto de Vercel** desde este mismo repositorio, así gestionspectrumpro.cl no cambia.
+`sitio-web/` es el sitio público que reemplaza al WordPress de https://spectrumpro.cl: Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Comunidad, Tienda, Colabora y Contacto. Son archivos estáticos, separados de la plataforma: se publican como un **segundo proyecto de Vercel** desde este mismo repositorio, así gestionspectrumpro.cl no cambia.
 
 1. En Vercel: **Add New → Project**, importa este repositorio y en **Root Directory** elige `sitio-web`. Framework: *Other*, sin comando de build.
 2. En ese proyecto nuevo: **Settings → Domains → Add**, escribe `spectrumpro.cl` y también `www.spectrumpro.cl` (Vercel redirige uno al otro).
@@ -216,6 +218,45 @@ node herramientas/campos-sitio.mjs
 ```
 
 Marca lo nuevo con su clave sin tocar lo ya marcado y regenera `sitio-web/sitio/campos.js`, el catálogo que usa la plataforma (etiquetas, secciones, texto original y galería de imágenes). Sube ambos cambios. El diseño y la estructura de las páginas siguen en cada `.html`.
+
+## Comunidad
+
+Reemplaza al Substack de Spectrum Medios sin depender de él. Tiene tres partes:
+
+- **Página** https://spectrumpro.cl/comunidad (`sitio-web/comunidad.html`): bienvenida, invitación, «Enfoque del mes» con documentos para descargar, podcasts recomendados, boletines anteriores y el formulario para suscribirse. Se edita como el resto del sitio en **Sitio web** (página «Comunidad» y listas **Recursos** y **Podcasts**; en Recursos hay un botón **Subir PDF**, hasta 25 MB). Los PDF que venían en el post de Substack quedaron en `sitio-web/sitio/docs/`.
+- **Suscripción con doble confirmación**: el formulario llama a la función `comunidad`, que guarda a la persona como «sin confirmar» y le manda un correo con un enlace. Solo al abrirlo queda suscrita (y recibe una bienvenida). Cada correo trae su enlace para darse de baja, y Gmail y Outlook muestran el botón «Anular suscripción». La función frena abusos (campo trampa, 5 intentos cada 10 minutos por conexión, no reenvía la confirmación antes de 10 minutos) y no revela si un correo ya estaba suscrito. Las suscripciones sin confirmar se borran solas a los 30 días.
+- **Plataforma → Edición → Comunidad**: escribir boletines (título, resumen, texto, imagen y botón) viendo cómo llegarán, **Enviarme una prueba** y **Enviar a N personas**. El envío va en tandas de 100 con la función `enviar-boletin`, un correo por persona; si se corta, el boletín queda «Enviando…» y **Continuar envío** lo termina sin repetir correos. Con **Publicarlo en la página Comunidad** marcado, el boletín enviado aparece en «Boletines anteriores». En **Suscriptores**: confirmados, sin confirmar y de baja, **Dar de baja**, **Eliminar** y **Descargar CSV**. Desde la plataforma nadie puede reactivar a una persona que se dio de baja: tiene que suscribirse otra vez.
+
+La plantilla del correo está en `supabase/functions/_compartido/correo-boletin.js` y la usan tanto las funciones como la vista previa de la plataforma, así lo que se ve antes de enviar es lo que llega.
+
+### Activarla
+
+1. En **SQL Editor** ejecuta `supabase/migrations/20261129000000_comunidad.sql`.
+2. Publica las dos funciones con la CLI de Supabase (comparten `supabase/functions/_compartido/`, por eso conviene la CLI y no el editor del panel):
+
+   ```bash
+   supabase functions deploy comunidad --no-verify-jwt
+   supabase functions deploy enviar-boletin
+   ```
+
+   `comunidad` va **sin** verificación de JWT porque la usa el público (el formulario no inicia sesión). `enviar-boletin` sí la verifica y además comprueba que quien llama sea dirección o Equipo.
+
+   **Sin la CLI, desde el panel**: en **Edge Functions → Deploy a new function → Via Editor**, crea una función llamada exactamente `comunidad` y pega `supabase/funciones-panel/comunidad.ts`; luego otra llamada `enviar-boletin` con `supabase/funciones-panel/enviar-boletin.ts`. Esos archivos traen la plantilla del correo incluida (los genera `node herramientas/funciones-panel.mjs`; vuelve a ejecutarlo si cambias una función o la plantilla). En los ajustes de `comunidad` desactiva **Verify JWT with legacy secret** / **Enforce JWT verification**; en `enviar-boletin` déjalo activado.
+3. Los correos salen desde **comunidad@spectrumpro.cl** (dominio `spectrumpro.cl` ya verificado en Resend). Usan el secreto `RESEND_API_KEY` del recordatorio de cumpleaños. Si esa API key está limitada al dominio `gestionspectrumpro.cl`, crea en Resend una con permiso para `spectrumpro.cl` y guárdala aparte:
+
+   ```bash
+   supabase secrets set COMUNIDAD_RESEND_API_KEY=re_xxxxxxxx
+   ```
+
+   Opcionales: `COMUNIDAD_REMITENTE` (por defecto `SpectrumPro <comunidad@spectrumpro.cl>`) y `COMUNIDAD_RESPONDER_A` (a dónde llegan las respuestas, por defecto `contacto@spectrumpro.cl`).
+4. Publica el sitio y la plataforma. Prueba: suscríbete en https://spectrumpro.cl/comunidad con tu correo, confirma, y en la plataforma crea un boletín y pulsa **Enviarme una prueba**.
+
+### Quitarla
+
+Si el equipo decide no seguir, se quita en dos pasos:
+
+1. **Código**: revertir el commit «Comunidad: página, suscripción y boletines por correo» (`git revert <commit>`). Desaparecen la página, el enlace del menú y del pie del sitio y la sección de la plataforma.
+2. **Base de datos** (opcional, borra suscriptores y boletines; descarga antes el CSV): ejecutar `supabase/quitar-comunidad.sql` en el SQL Editor y borrar las funciones con `supabase functions delete comunidad` y `supabase functions delete enviar-boletin`.
 
 ## Encuesta de la Muestra Audiovisual
 
@@ -268,6 +309,8 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
 | `js/sitio.js` | Sección Sitio web: editor de todo spectrumpro.cl (páginas, listas, aviso, vista previa) |
+| `js/comunidad.js` | Sección Comunidad: boletines (editor, vista previa, prueba y envío) y suscriptores |
+| `supabase/functions/comunidad`, `enviar-boletin`, `_compartido` | Suscripción con doble confirmación, envío de boletines y plantilla común de los correos |
 | `herramientas/campos-sitio.mjs` | Marca los textos e imágenes de `sitio-web/*.html` y genera el catálogo `sitio-web/sitio/campos.js` |
 | `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
 | `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |

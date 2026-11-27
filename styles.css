@@ -919,3 +919,22 @@ body.con-previa .principal { padding-right: calc(min(560px, 44vw) + 24px); }
   body.imprimiendo-dialogo .h-taller { background: #f4f4f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body.imprimiendo-dialogo .horario tr { break-inside: avoid; }
 }
+
+/* ---------- Comunidad: boletines y suscriptores (js/comunidad.js) ---------- */
+.aviso-info { background: var(--info-soft); color: var(--info); padding: 10px 12px; border-radius: 10px; font-weight: 500; font-size: .88rem; }
+.pestanas-chicas { margin: 4px 0 12px; }
+.pestanas-chicas button { padding: 5px 12px; font-size: .85rem; }
+.acciones-fila { white-space: nowrap; text-align: right; }
+.acciones-fila .btn + .btn { margin-left: 6px; }
+.dialogo-boletin { width: min(1180px, calc(100vw - 32px)); }
+.editor-boletin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.editor-boletin textarea { min-height: 220px; }
+.previa-correo { position: sticky; top: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fbf7ef; }
+.previa-correo .bandeja { display: grid; gap: 2px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: .85rem; }
+.previa-correo .bandeja small { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.previa-correo iframe { width: 100%; height: min(70vh, 720px); border: 0; background: #fbf7ef; }
+@media (max-width: 900px) {
+  .editor-boletin { grid-template-columns: 1fr; }
+  .previa-correo { position: static; }
+  .previa-correo iframe { height: 520px; }
+}
