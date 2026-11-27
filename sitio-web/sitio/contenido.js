@@ -426,6 +426,17 @@ window.SITIO_RESPALDO = {
    "orden": 3
   },
   {
+   "tipo": "modulo",
+   "titulo": "Preparación Física y Habilidades Sociales",
+   "subtitulo": "Gabriela Banderas",
+   "texto": "Fortalecer el autocuidado físico y mental, reducir el tiempo frente a pantallas y potenciar el vínculo social presencial mediante una caminata activa, juegos cooperativos y picnic saludable en plazas cercanas a Spectrum.",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 4
+  },
+  {
    "tipo": "actividad",
    "titulo": "Cine Club",
    "subtitulo": "",
