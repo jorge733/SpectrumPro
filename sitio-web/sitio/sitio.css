@@ -192,6 +192,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .cabeza h1 { font-size: clamp(46px, 8vw, 116px); line-height: .92; letter-spacing: -.035em; }
 .cabeza .intro { color: rgb(23 21 31 / .78); }
 .cabeza .eyebrow { color: var(--sobre); }
+.pipiripiolo { display: block; width: clamp(180px, 20vw, 260px); height: auto; margin-top: 36px; background: var(--c2); border-radius: 26px; padding: 18px; border: 3px solid #fff; box-shadow: 8px 8px 0 #fff; transform: rotate(-4deg); }
 .cabeza .ave { width: clamp(180px, 22vw, 300px); height: auto; aspect-ratio: 1; object-fit: contain; background: #fff; border-radius: 50%; padding: 22px; border: 3px solid var(--sobre); box-shadow: 8px 8px 0 var(--sobre); transform: rotate(-5deg); }
 .cabeza .indice { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
 .cabeza .indice a { text-decoration: none; font-weight: 700; font-size: 15px; padding: 9px 16px; border-radius: 999px; border: 2px solid var(--sobre); transition: background .2s, color .2s; }
