@@ -69,7 +69,7 @@
 }
 </script>
 </head>
-<body class="p-formacion">
+<body class="p-formacion" data-pagina="formacion">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="cabecera"><div class="wrap"><div class="barra">
   <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -102,67 +102,67 @@
   </nav>
 </div></div></header>
 <main id="contenido">
-<section class="cabeza">
+<section class="cabeza" data-seccion="formacion_cabeza">
   <div class="wrap"><div class="caja">
     <div>
-      <p class="eyebrow">Centro de Formación</p>
-      <h1>Aprender creando</h1>
+      <p class="eyebrow" data-texto="formacion_cabeza_antetitulo" data-formato="linea">Centro de Formación</p>
+      <h1 data-texto="formacion_cabeza_titulo" data-formato="linea">Aprender creando</h1>
       <div class="intro" data-texto="formacion_intro"></div>
-      <div class="acciones"><a class="btn oscuro" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener">Inscríbete en los talleres <span class="flecha" aria-hidden="true">↗</span></a></div>
-      <nav class="indice" aria-label="En esta página"><a href="#talleres">Talleres</a><a href="#mentorias">Mentorías</a><a href="#formapro">FormaPro</a><a href="#online">SpectrumOnline</a><a href="#actividades">Actividades</a></nav>
+      <div class="acciones"><a class="btn oscuro" data-enlace="enlace_inscripcion" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener"><span data-texto="formacion_cabeza_boton" data-formato="linea">Inscríbete en los talleres</span> <span class="flecha" aria-hidden="true">↗</span></a></div>
+      <nav class="indice" aria-label="En esta página"><a href="#talleres"><span data-texto="formacion_cabeza_indice" data-formato="linea">Talleres</span></a><a href="#mentorias"><span data-texto="formacion_cabeza_indice2" data-formato="linea">Mentorías</span></a><a href="#formapro"><span data-texto="formacion_cabeza_indice3" data-formato="linea">FormaPro</span></a><a href="#online"><span data-texto="formacion_cabeza_indice4" data-formato="linea">SpectrumOnline</span></a><a href="#actividades"><span data-texto="formacion_cabeza_indice5" data-formato="linea">Actividades</span></a></nav>
     </div>
-    <img class="ave" src="/sitio/img/ta-videojuegos.webp" alt="" width="300" height="300">
+    <img class="ave" src="/sitio/img/ta-videojuegos.webp" alt="" width="300" height="300" data-imagen="formacion_cabeza_imagen">
   </div></div>
 </section>
 
-<section class="banda" id="talleres" data-si-hay>
+<section class="banda" id="talleres" data-si-hay data-seccion="formacion_talleres">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Talleres</p><h2 class="titulo-seccion">Nuestros talleres</h2></div>
-      <div class="acciones"><a class="btn oscuro" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener">Inscríbete <span class="flecha" aria-hidden="true">↗</span></a><a class="btn wa" data-wa="Hola, quiero información sobre los talleres de SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener">Pide información</a></div></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="formacion_talleres_antetitulo" data-formato="linea">Talleres</p><h2 class="titulo-seccion" data-texto="formacion_talleres_titulo" data-formato="linea">Nuestros talleres</h2></div>
+      <div class="acciones"><a class="btn oscuro" data-enlace="enlace_inscripcion" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener"><span data-texto="formacion_talleres_boton" data-formato="linea">Inscríbete</span> <span class="flecha" aria-hidden="true">↗</span></a><a class="btn wa" data-wa="Hola, quiero información sobre los talleres de SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener"><span data-texto="formacion_talleres_boton2" data-formato="linea">Pide información</span></a></div></div>
     <div class="talleres" data-lista="taller"></div>
   </div>
 </section>
 
-<section class="banda papel-2" id="mentorias" data-si-hay>
+<section class="banda papel-2" id="mentorias" data-si-hay data-seccion="formacion_mentorias">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Mentorías</p><h2 class="titulo-seccion">Acompañamiento uno a uno</h2><p class="intro">Una de las principales puertas de entrada a SpectrumPro: guía personalizada según los intereses de cada participante.</p></div></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="formacion_mentorias_antetitulo" data-formato="linea">Mentorías</p><h2 class="titulo-seccion" data-texto="formacion_mentorias_titulo" data-formato="linea">Acompañamiento uno a uno</h2><p class="intro" data-texto="formacion_mentorias_texto" data-formato="linea">Una de las principales puertas de entrada a SpectrumPro: guía personalizada según los intereses de cada participante.</p></div></div>
     <div class="grilla" data-lista="mentoria"></div>
   </div>
 </section>
 
-<section class="banda noche" id="formapro">
+<section class="banda noche" id="formapro" data-seccion="formacion_formapro">
   <div class="wrap">
     <div class="dos-col">
-      <div><p class="eyebrow">Programa</p><h2 class="titulo-seccion">FormaPro</h2><img class="pipiripiolo" src="/sitio/img/ta-pipiripiolo.webp" alt="" width="620" height="640" loading="lazy"></div>
+      <div><p class="eyebrow" data-texto="formacion_formapro_antetitulo" data-formato="linea">Programa</p><h2 class="titulo-seccion" data-texto="formacion_formapro_titulo" data-formato="linea">FormaPro</h2><img class="pipiripiolo" src="/sitio/img/ta-pipiripiolo.webp" alt="" width="620" height="640" loading="lazy" data-imagen="formacion_formapro_imagen"></div>
       <div class="parrafos intro" data-texto="formapro_texto" style="margin-top:0"></div>
     </div>
     <div data-si-hay style="margin-top:56px">
-      <h3 class="eyebrow">Módulos de formación general</h3>
+      <h3 class="eyebrow" data-texto="formacion_formapro_antetitulo2" data-formato="linea">Módulos de formación general</h3>
       <div class="grilla" data-lista="modulo"></div>
     </div>
   </div>
 </section>
 
-<section class="banda" id="online">
+<section class="banda" id="online" data-seccion="formacion_online">
   <div class="wrap dos-col">
-    <div><p class="eyebrow" style="--kk:var(--c6)">SpectrumOnline</p><h2 class="titulo-seccion">Proyecto animado colectivo</h2></div>
+    <div><p class="eyebrow" style="--kk:var(--c6)" data-texto="formacion_online_antetitulo" data-formato="linea">SpectrumOnline</p><h2 class="titulo-seccion" data-texto="formacion_online_titulo" data-formato="linea">Proyecto animado colectivo</h2></div>
     <div class="parrafos intro" data-texto="online_texto" style="margin-top:0"></div>
   </div>
 </section>
 
-<section class="banda papel-2" id="actividades" data-si-hay>
+<section class="banda papel-2" id="actividades" data-si-hay data-seccion="formacion_actividades">
   <div class="wrap">
-    <p class="eyebrow">Actividades complementarias</p>
-    <h2 class="titulo-seccion" style="margin-bottom:32px">Más allá de los talleres</h2>
+    <p class="eyebrow" data-texto="formacion_actividades_antetitulo" data-formato="linea">Actividades complementarias</p>
+    <h2 class="titulo-seccion" style="margin-bottom:32px" data-texto="formacion_actividades_titulo" data-formato="linea">Más allá de los talleres</h2>
     <div class="chips" data-lista="actividad"></div>
   </div>
 </section>
 
-<section class="banda">
+<section class="banda" data-seccion="formacion_inscripciones">
   <div class="wrap"><div class="llamado-caja ">
     <span class="circulo a" aria-hidden="true"></span><span class="circulo b" aria-hidden="true"></span>
-    <div><p class="eyebrow">Inscripciones</p><h2>¿Quieres sumarte?</h2><p class="intro">Completa el formulario de inscripción o escríbenos y te contamos horarios, valores y cómo es la entrevista de ingreso.</p></div>
-    <div class="acciones"><a class="btn claro" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener">Formulario de inscripción <span class="flecha" aria-hidden="true">↗</span></a><a class="btn borde" data-wa="Hola, quiero inscribirme en SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></div>
+    <div><p class="eyebrow" data-texto="formacion_inscripciones_antetitulo" data-formato="linea">Inscripciones</p><h2 data-texto="formacion_inscripciones_titulo" data-formato="linea">¿Quieres sumarte?</h2><p class="intro" data-texto="formacion_inscripciones_texto" data-formato="linea">Completa el formulario de inscripción o escríbenos y te contamos horarios, valores y cómo es la entrevista de ingreso.</p></div>
+    <div class="acciones"><a class="btn claro" data-enlace="enlace_inscripcion" href="https://inscripcion-spectrum.netlify.app/" target="_blank" rel="noopener"><span data-texto="formacion_inscripciones_boton" data-formato="linea">Formulario de inscripción</span> <span class="flecha" aria-hidden="true">↗</span></a><a class="btn borde" data-wa="Hola, quiero inscribirme en SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener"><span data-texto="formacion_inscripciones_boton2" data-formato="linea">Escríbenos por WhatsApp</span></a></div>
   </div></div>
 </section>
 </main>
@@ -170,18 +170,18 @@
 <div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wrap">
   <div>
-    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+    <h2 class="lema" data-texto="pie_titulo" data-formato="resaltado" data-resaltar="span">Transformando la perspectiva <span>del mundo</span></h2>
   </div>
   <div>
-    <h3>Contacto</h3>
+    <h3 data-texto="pie_subtitulo" data-formato="linea">Contacto</h3>
     <ul>
       <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario" data-texto="pie_texto" data-formato="linea">De 9:00 a 19:00 hrs</small></li>
       <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
     </ul>
   </div>
   <div>
-    <h3>Síguenos</h3>
+    <h3 data-texto="pie_subtitulo2" data-formato="linea">Síguenos</h3>
     <ul>
       <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
       <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
@@ -189,7 +189,7 @@
       <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
     </ul>
   </div>
-  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+  <div class="legal"><span data-texto="pie_legal" data-formato="linea">© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
 </div></footer>
 <script src="/config.js"></script>
 <script src="/sitio/contenido.js"></script>

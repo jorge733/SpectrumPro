@@ -15,7 +15,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Talleres semestrales** | Talleres del semestre agrupados por área (FormaPro arriba, luego Centro de Formación, Mentorías, SpectrumOnline, Terapia Ocupacional y al final Arte y Apoyo). Cada taller tiene horario, quién está a cargo y su correo, inscritos, y una ficha con pestañas **Información**, **Programa** (texto y PDF opcional) y **Afiches** (material promocional). Botón **Horario para imprimir**: grilla semanal que se arma sola y se imprime o guarda en PDF (o se descarga para Excel). Dirección crea y edita talleres, sube programa y afiches, y cambia el orden con flechas ↑ ↓ dentro de cada área |
 | **Talleres de verano** | Lo mismo para los talleres de la temporada de verano; su horario imprimible va por fechas |
 | **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
-| **Sitio web** | Dirección y rol Equipo. Edita los textos, el contacto y las listas de https://spectrumpro.cl (equipo, valores, talleres, módulos, mentorías, actividades, Arte y Apoyo, servicios y producciones). Ver «Editar el sitio desde la plataforma» más abajo |
+| **Sitio web** | Dirección y rol Equipo. Edita todo https://spectrumpro.cl: cada título, párrafo, botón e imagen de las 8 páginas y del pie, títulos para Google, secciones visibles, aviso superior, contacto y las listas (equipo, talleres, producciones, clientes…), con vista previa en vivo. Ver «Editar el sitio desde la plataforma» más abajo |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
@@ -68,6 +68,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261127000000_talleres_afiches_programa_correo.sql` | Correo de quien está a cargo, programa escrito, afiches (bucket privado `afiches`) y orden inicial por área |
    | `20261127010000_recordatorio_cumpleanos.sql` | Aviso de cumpleaños por correo: quién lo recibe y el reloj diario (pg_cron) |
    | `20261127020000_sitio_web.sql` | Contenido del sitio público editable desde la plataforma (tablas `sitio_textos` y `sitio_elementos`, bucket público `sitio`) con el contenido actual ya cargado |
+   | `20261128000000_sitio_web_completo.sql` | Listas «Cinta de la portada» y «Clientes» con su contenido actual |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -187,17 +188,32 @@ Son archivos estáticos y se publican en Vercel. El dominio oficial es **https:/
 
 ### Editar el sitio desde la plataforma
 
-Los textos, fotos, talleres y equipo del sitio se editan en https://gestionspectrumpro.cl, sección **Sitio web** (dirección y rol Equipo):
+Todo el sitio se edita en https://gestionspectrumpro.cl, sección **Sitio web** (dirección y rol Equipo):
 
-- **Textos**: los párrafos de cada página (Inicio, Nosotros, Formación, Arte y Apoyo, Productora y Colabora), el video principal y los enlaces para donar y suscribirse. En los cuadros grandes, cada salto de línea es un párrafo.
-- **Contacto y redes**: dirección, WhatsApp, correo, Instagram, YouTube, LinkedIn y Patreon (un enlace vacío oculta su ícono).
-- **Listas**: Equipo, Valores, Talleres, Módulos FormaPro, Mentorías, Actividades, Arte y Apoyo, Servicios y Producciones. Cada elemento se crea, edita, oculta («Mostrar en el sitio»), elimina y ordena con flechas ↑ ↓; el equipo, los talleres y las producciones llevan foto (se reduce en el navegador antes de subirla al bucket `sitio`).
+| Pestaña | Qué se edita |
+| --- | --- |
+| **Páginas** | Una por página (Inicio, Nosotros, Formación, Arte y Apoyo, Productora, Tienda, Colabora, Contacto) más el **Pie de página**, ordenada por secciones: cada antetítulo, título, párrafo, botón, enlace del índice e imagen (con su descripción para lectores de pantalla), el **título y la descripción para Google** (con una muestra de cómo se ve el resultado) y el interruptor **Mostrar esta sección**. Un buscador encuentra cualquier texto en todo el sitio |
+| **Contacto y enlaces** | Dirección, WhatsApp, correo, Instagram, YouTube, LinkedIn, Patreon y el formulario de inscripción (todos los botones «Inscríbete» llevan ahí). Un enlace vacío oculta su ícono o botón |
+| **Aviso** | Franja de color arriba de todas las páginas (texto, enlace y color) para anunciar inscripciones, una muestra o un cambio de horario. Las visitas pueden cerrarla |
+| **Listas** | Equipo, Valores, Talleres, Módulos FormaPro, Mentorías, Actividades, Arte y Apoyo, Servicios, Producciones, **Clientes** (logos) y **Cinta de la portada**. Cada elemento se crea, edita, duplica, oculta (ojo), elimina y ordena con flechas ↑ ↓ |
+| **Copia de seguridad** | Descarga todo el contenido en JSON y lista los últimos textos editados |
 
-Para activarlo, ejecuta en **SQL Editor** `supabase/migrations/20261127020000_sitio_web.sql`: crea las tablas, los permisos y el bucket, y carga el contenido que hoy tiene el sitio. Se puede volver a ejecutar: no duplica nada ni pisa lo ya editado.
+- **Borrador y publicación**: los cambios de texto se juntan en un borrador (no se pierden al cambiar de pestaña o de página) y una barra abajo los **publica todos juntos** o los descarta. Cada campo muestra «Sin guardar» o «Editado» (con la fecha) y tiene **Restaurar original**, que lo devuelve al texto que trae el HTML. La plataforma avisa si se intenta cerrar con cambios sin guardar.
+- **Vista previa en vivo**: abre spectrumpro.cl en un panel al lado (en tamaño computador o celular) y muestra cada cambio mientras se escribe, sin publicarlo; al entrar a un campo, la vista previa salta a ese texto y lo marca. Funciona con el sitio publicado con esta versión de `sitio-web/sitio/sitio.js`.
+- **Imágenes**: se suben desde el computador o el celular (se reducen en el navegador y las PNG o WebP mantienen la transparencia) o se eligen de la **galería**, que reúne las imágenes del sitio y las ya subidas al bucket `sitio`.
+- Se valida lo importante antes de publicar: WhatsApp con código de país, correo, enlaces con `https://` (o una página del sitio, como `/formacion`), videos de YouTube y asteriscos cerrados en las frases con resaltado (`*a tu medida*`).
 
-El sitio lee Supabase con `sitio-web/config.js` (la clave pública). Al abrir una página muestra al instante la última copia guardada en ese navegador (o el respaldo `sitio-web/sitio/contenido.js`) y la reemplaza con lo de Supabase apenas responde; por eso un cambio se ve al recargar. Mientras la migración no se ejecute, el sitio sigue mostrando el respaldo. El público solo puede **leer** los textos y los elementos visibles; cada cambio queda en la auditoría.
+Para activarlo, ejecuta en **SQL Editor**, en orden, `supabase/migrations/20261127020000_sitio_web.sql` (tablas, permisos, bucket y el contenido actual) y `supabase/migrations/20261128000000_sitio_web_completo.sql` (listas de clientes y cinta). Se pueden volver a ejecutar: no duplican nada ni pisan lo editado.
 
-Los títulos grandes de cada página, la estructura y el diseño siguen en cada `.html`. El enlace de acceso del equipo apunta a gestionspectrumpro.cl.
+**Cómo funciona.** Cada texto, botón e imagen de los `.html` lleva una clave (`data-texto`, `data-imagen`, `data-seccion`); lo que trae el HTML es el texto «original». En Supabase solo se guarda lo que se edita (tabla `sitio_textos`), así que una página nueva o un texto sin editar se ve tal como está en el HTML. El sitio lee Supabase con `sitio-web/config.js` (la clave pública): al abrir una página muestra al instante la última copia guardada en ese navegador (o el respaldo `sitio-web/sitio/contenido.js`) y la reemplaza con lo de Supabase apenas responde. El público solo puede **leer** los textos y los elementos visibles; cada cambio queda en la auditoría. Los títulos para Google se aplican al cargar la página (Google los lee, pero puede tardar días en actualizarlos).
+
+**Si cambias el HTML del sitio** (un texto nuevo, una sección nueva), ejecuta:
+
+```bash
+node herramientas/campos-sitio.mjs
+```
+
+Marca lo nuevo con su clave sin tocar lo ya marcado y regenera `sitio-web/sitio/campos.js`, el catálogo que usa la plataforma (etiquetas, secciones, texto original y galería de imágenes). Sube ambos cambios. El diseño y la estructura de las páginas siguen en cada `.html`.
 
 ## Encuesta de la Muestra Audiovisual
 
@@ -249,7 +265,8 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
-| `js/sitio.js` | Sección Sitio web: editor de los textos y listas de spectrumpro.cl |
+| `js/sitio.js` | Sección Sitio web: editor de todo spectrumpro.cl (páginas, listas, aviso, vista previa) |
+| `herramientas/campos-sitio.mjs` | Marca los textos e imágenes de `sitio-web/*.html` y genera el catálogo `sitio-web/sitio/campos.js` |
 | `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
 | `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |
 | `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |

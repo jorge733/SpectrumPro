@@ -69,7 +69,7 @@
 }
 </script>
 </head>
-<body class="p-nosotros">
+<body class="p-nosotros" data-pagina="nosotros">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="cabecera"><div class="wrap"><div class="barra">
   <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -102,42 +102,42 @@
   </nav>
 </div></div></header>
 <main id="contenido">
-<section class="cabeza">
+<section class="cabeza" data-seccion="nosotros_cabeza">
   <div class="wrap"><div class="caja">
     <div>
-      <p class="eyebrow">Nosotros</p>
+      <p class="eyebrow" data-texto="nosotros_cabeza_antetitulo" data-formato="linea">Nosotros</p>
       <h1 data-texto="proposito_titulo" data-formato="linea">Transformar la perspectiva del mundo</h1>
-      <p class="intro">Una productora y centro de formación donde el talento neurodivergente es el centro de todo lo que hacemos.</p>
-      <nav class="indice" aria-label="En esta página"><a href="#proposito">Propósito</a><a href="#valores">Valores</a><a href="#equipo">Equipo</a></nav>
+      <p class="intro" data-texto="nosotros_cabeza_texto" data-formato="linea">Una productora y centro de formación donde el talento neurodivergente es el centro de todo lo que hacemos.</p>
+      <nav class="indice" aria-label="En esta página"><a href="#proposito"><span data-texto="nosotros_cabeza_indice" data-formato="linea">Propósito</span></a><a href="#valores"><span data-texto="nosotros_cabeza_indice2" data-formato="linea">Valores</span></a><a href="#equipo"><span data-texto="nosotros_cabeza_indice3" data-formato="linea">Equipo</span></a></nav>
     </div>
-    <img class="ave" src="/sitio/img/ta-dibujo.webp" alt="" width="300" height="300">
+    <img class="ave" src="/sitio/img/ta-dibujo.webp" alt="" width="300" height="300" data-imagen="nosotros_cabeza_imagen">
   </div></div>
 </section>
 
-<section class="banda" id="proposito">
+<section class="banda" id="proposito" data-seccion="nosotros_proposito">
   <div class="wrap dos-col">
-    <p class="cita">¿Qué pasaría si pudiéramos habitar el mundo desde <em>otra lógica</em>?</p>
+    <p class="cita" data-texto="nosotros_proposito_cita" data-formato="resaltado" data-resaltar="em">¿Qué pasaría si pudiéramos habitar el mundo desde <em>otra lógica</em>?</p>
     <div class="parrafos intro" data-texto="proposito_texto" style="margin-top:0"></div>
   </div>
   <div class="wrap" style="margin-top:clamp(48px,6vw,80px)">
     <div class="pilares">
-      <article class="pilar revelar" style="--i:0"><h3>Misión</h3><div data-texto="mision"></div></article>
-      <article class="pilar revelar" style="--i:1"><h3>Visión</h3><div data-texto="vision"></div></article>
-      <article class="pilar revelar" style="--i:2"><h3>Cultura de trabajo</h3><div data-texto="cultura"></div></article>
+      <article class="pilar revelar" style="--i:0"><h3 data-texto="nosotros_proposito_subtitulo" data-formato="linea">Misión</h3><div data-texto="mision"></div></article>
+      <article class="pilar revelar" style="--i:1"><h3 data-texto="nosotros_proposito_subtitulo2" data-formato="linea">Visión</h3><div data-texto="vision"></div></article>
+      <article class="pilar revelar" style="--i:2"><h3 data-texto="nosotros_proposito_subtitulo3" data-formato="linea">Cultura de trabajo</h3><div data-texto="cultura"></div></article>
     </div>
   </div>
 </section>
 
-<section class="banda papel-2" id="valores" data-si-hay>
+<section class="banda papel-2" id="valores" data-si-hay data-seccion="nosotros_valores">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Valores</p><h2 class="titulo-seccion">Lo que nos mueve</h2></div></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="nosotros_valores_antetitulo" data-formato="linea">Valores</p><h2 class="titulo-seccion" data-texto="nosotros_valores_titulo" data-formato="linea">Lo que nos mueve</h2></div></div>
     <div class="valores" data-lista="valor"></div>
   </div>
 </section>
 
-<section class="banda" id="equipo" data-si-hay>
+<section class="banda" id="equipo" data-si-hay data-seccion="nosotros_equipo">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Equipo</p><h2 class="titulo-seccion">Las personas detrás</h2><p class="intro">Artistas, terapeutas, docentes y profesionales del audiovisual. Varios se formaron en SpectrumPro.</p></div></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="nosotros_equipo_antetitulo" data-formato="linea">Equipo</p><h2 class="titulo-seccion" data-texto="nosotros_equipo_titulo" data-formato="linea">Las personas detrás</h2><p class="intro" data-texto="nosotros_equipo_texto" data-formato="linea">Artistas, terapeutas, docentes y profesionales del audiovisual. Varios se formaron en SpectrumPro.</p></div></div>
     <div class="equipo" data-lista="equipo"></div>
   </div>
 </section>
@@ -146,18 +146,18 @@
 <div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wrap">
   <div>
-    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+    <h2 class="lema" data-texto="pie_titulo" data-formato="resaltado" data-resaltar="span">Transformando la perspectiva <span>del mundo</span></h2>
   </div>
   <div>
-    <h3>Contacto</h3>
+    <h3 data-texto="pie_subtitulo" data-formato="linea">Contacto</h3>
     <ul>
       <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario" data-texto="pie_texto" data-formato="linea">De 9:00 a 19:00 hrs</small></li>
       <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
     </ul>
   </div>
   <div>
-    <h3>Síguenos</h3>
+    <h3 data-texto="pie_subtitulo2" data-formato="linea">Síguenos</h3>
     <ul>
       <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
       <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
@@ -165,7 +165,7 @@
       <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
     </ul>
   </div>
-  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+  <div class="legal"><span data-texto="pie_legal" data-formato="linea">© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
 </div></footer>
 <script src="/config.js"></script>
 <script src="/sitio/contenido.js"></script>

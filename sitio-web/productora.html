@@ -69,7 +69,7 @@
 }
 </script>
 </head>
-<body class="p-productora">
+<body class="p-productora" data-pagina="productora">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="cabecera"><div class="wrap"><div class="barra">
   <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -102,45 +102,45 @@
   </nav>
 </div></div></header>
 <main id="contenido">
-<section class="cabeza">
+<section class="cabeza" data-seccion="productora_cabeza">
   <div class="wrap"><div class="caja">
     <div>
-      <p class="eyebrow">Productora</p>
-      <h1>Servicios audiovisuales</h1>
+      <p class="eyebrow" data-texto="productora_cabeza_antetitulo" data-formato="linea">Productora</p>
+      <h1 data-texto="productora_cabeza_titulo" data-formato="linea">Servicios audiovisuales</h1>
       <div class="intro" data-texto="productora_texto"></div>
-      <nav class="indice" aria-label="En esta página"><a href="#servicios">Servicios</a><a href="#producciones">Producciones</a><a href="#clientes">Clientes</a></nav>
+      <nav class="indice" aria-label="En esta página"><a href="#servicios"><span data-texto="productora_cabeza_indice" data-formato="linea">Servicios</span></a><a href="#producciones"><span data-texto="productora_cabeza_indice2" data-formato="linea">Producciones</span></a><a href="#clientes"><span data-texto="productora_cabeza_indice3" data-formato="linea">Clientes</span></a></nav>
     </div>
-    <img class="ave" src="/sitio/img/ta-stopmotion.webp" alt="" width="300" height="300">
+    <img class="ave" src="/sitio/img/ta-stopmotion.webp" alt="" width="300" height="300" data-imagen="productora_cabeza_imagen">
   </div></div>
 </section>
 
-<section class="banda noche" id="servicios" data-si-hay>
+<section class="banda noche" id="servicios" data-si-hay data-seccion="productora_servicios">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Servicios</p><h2 class="titulo-seccion">Qué podemos hacer por ti</h2></div>
-      <a class="btn claro" data-correo href="mailto:contacto@spectrumpro.cl">Cotiza tu proyecto <span class="flecha" aria-hidden="true">→</span></a></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="productora_servicios_antetitulo" data-formato="linea">Servicios</p><h2 class="titulo-seccion" data-texto="productora_servicios_titulo" data-formato="linea">Qué podemos hacer por ti</h2></div>
+      <a class="btn claro" data-correo href="mailto:contacto@spectrumpro.cl"><span data-texto="productora_servicios_boton" data-formato="linea">Cotiza tu proyecto</span> <span class="flecha" aria-hidden="true">→</span></a></div>
     <div class="servicios" data-lista="servicio"></div>
   </div>
 </section>
 
-<section class="banda" id="producciones" data-si-hay>
+<section class="banda" id="producciones" data-si-hay data-seccion="productora_producciones">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Producciones</p><h2 class="titulo-seccion">Nuestro trabajo</h2></div></div>
+    <div class="cab"><div><p class="eyebrow" data-texto="productora_producciones_antetitulo" data-formato="linea">Producciones</p><h2 class="titulo-seccion" data-texto="productora_producciones_titulo" data-formato="linea">Nuestro trabajo</h2></div></div>
     <div class="producciones" data-lista="produccion"></div>
   </div>
 </section>
 
-<section class="banda papel-2" id="clientes">
+<section class="banda papel-2" id="clientes" data-seccion="productora_clientes">
   <div class="wrap">
-    <div class="cab"><div><p class="eyebrow">Clientes</p><h2 class="titulo-seccion">Han confiado en nosotros</h2></div></div>
-    <ul class="clientes" role="list"><li><img src="/sitio/img/logos/fundacion-serinclusivo.webp" alt="Fundación Serinclusivo" width="179" height="180" loading="lazy"></li><li><img src="/sitio/img/logos/corporacion-apertus.webp" alt="Corporación Apertus" width="460" height="148" loading="lazy"></li><li><img src="/sitio/img/logos/fau-universidad-de-chile.webp" alt="Facultad de Arquitectura y Urbanismo, Universidad de Chile" width="282" height="180" loading="lazy"></li><li><img src="/sitio/img/logos/orica.webp" alt="Orica" width="460" height="147" loading="lazy"></li><li><img src="/sitio/img/logos/festival-aprender.webp" alt="Festival Aprender" width="417" height="166" loading="lazy"></li><li><img src="/sitio/img/logos/red-salas-de-teatro.webp" alt="Red Salas de Teatro Metropolitana" width="210" height="73" loading="lazy"></li><li><img src="/sitio/img/logos/ilusion-country.webp" alt="Ilusión Country" width="147" height="100" loading="lazy"></li><li><img src="/sitio/img/logos/panoramas-accesibles.webp" alt="Panoramas Accesibles" width="325" height="71" loading="lazy"></li><li><img src="/sitio/img/logos/rla.webp" alt="RLA Event Technologies" width="226" height="102" loading="lazy"></li><li><img src="/sitio/img/logos/lustro.webp" alt="Lustro Gestión Cultural" width="173" height="109" loading="lazy"></li><li><img src="/sitio/img/logos/ogilvy.webp" alt="Ogilvy" width="255" height="100" loading="lazy"></li><li><img src="/sitio/img/logos/ingeroc.webp" alt="Ingeroc, Ingeniería de Rocas" width="296" height="66" loading="lazy"></li><li><img src="/sitio/img/logos/fundacion-vida-independiente.webp" alt="Fundación Vida Independiente Chile" width="196" height="101" loading="lazy"></li><li><img src="/sitio/img/logos/lotus.webp" alt="Lotus" width="201" height="62" loading="lazy"></li></ul>
+    <div class="cab"><div><p class="eyebrow" data-texto="productora_clientes_antetitulo" data-formato="linea">Clientes</p><h2 class="titulo-seccion" data-texto="productora_clientes_titulo" data-formato="linea">Han confiado en nosotros</h2></div></div>
+    <ul class="clientes" role="list" data-lista="cliente"><li><img src="/sitio/img/logos/fundacion-serinclusivo.webp" alt="Fundación Serinclusivo" width="179" height="180" loading="lazy"></li><li><img src="/sitio/img/logos/corporacion-apertus.webp" alt="Corporación Apertus" width="460" height="148" loading="lazy"></li><li><img src="/sitio/img/logos/fau-universidad-de-chile.webp" alt="Facultad de Arquitectura y Urbanismo, Universidad de Chile" width="282" height="180" loading="lazy"></li><li><img src="/sitio/img/logos/orica.webp" alt="Orica" width="460" height="147" loading="lazy"></li><li><img src="/sitio/img/logos/festival-aprender.webp" alt="Festival Aprender" width="417" height="166" loading="lazy"></li><li><img src="/sitio/img/logos/red-salas-de-teatro.webp" alt="Red Salas de Teatro Metropolitana" width="210" height="73" loading="lazy"></li><li><img src="/sitio/img/logos/ilusion-country.webp" alt="Ilusión Country" width="147" height="100" loading="lazy"></li><li><img src="/sitio/img/logos/panoramas-accesibles.webp" alt="Panoramas Accesibles" width="325" height="71" loading="lazy"></li><li><img src="/sitio/img/logos/rla.webp" alt="RLA Event Technologies" width="226" height="102" loading="lazy"></li><li><img src="/sitio/img/logos/lustro.webp" alt="Lustro Gestión Cultural" width="173" height="109" loading="lazy"></li><li><img src="/sitio/img/logos/ogilvy.webp" alt="Ogilvy" width="255" height="100" loading="lazy"></li><li><img src="/sitio/img/logos/ingeroc.webp" alt="Ingeroc, Ingeniería de Rocas" width="296" height="66" loading="lazy"></li><li><img src="/sitio/img/logos/fundacion-vida-independiente.webp" alt="Fundación Vida Independiente Chile" width="196" height="101" loading="lazy"></li><li><img src="/sitio/img/logos/lotus.webp" alt="Lotus" width="201" height="62" loading="lazy"></li></ul>
   </div>
 </section>
 
-<section class="banda">
+<section class="banda" data-seccion="productora_cotiza">
   <div class="wrap"><div class="llamado-caja ">
     <span class="circulo a" aria-hidden="true"></span><span class="circulo b" aria-hidden="true"></span>
-    <div><p class="eyebrow">Cotiza</p><h2>Hagamos tu próximo proyecto</h2><p class="intro">Todos los ingresos de la productora se destinan a becas, equipos y formación de nuestros artistas.</p></div>
-    <div class="acciones"><a class="btn claro" data-correo href="mailto:contacto@spectrumpro.cl">Escríbenos un correo</a><a class="btn borde" data-wa="Hola, quiero cotizar un servicio audiovisual con SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp</a></div>
+    <div><p class="eyebrow" data-texto="productora_cotiza_antetitulo" data-formato="linea">Cotiza</p><h2 data-texto="productora_cotiza_titulo" data-formato="linea">Hagamos tu próximo proyecto</h2><p class="intro" data-texto="productora_cotiza_texto" data-formato="linea">Todos los ingresos de la productora se destinan a becas, equipos y formación de nuestros artistas.</p></div>
+    <div class="acciones"><a class="btn claro" data-correo href="mailto:contacto@spectrumpro.cl"><span data-texto="productora_cotiza_boton" data-formato="linea">Escríbenos un correo</span></a><a class="btn borde" data-wa="Hola, quiero cotizar un servicio audiovisual con SpectrumPro" data-icono-wa href="https://wa.me/56996389673" target="_blank" rel="noopener"><span data-texto="productora_cotiza_boton2" data-formato="linea">WhatsApp</span></a></div>
   </div></div>
 </section>
 </main>
@@ -148,18 +148,18 @@
 <div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wrap">
   <div>
-    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+    <h2 class="lema" data-texto="pie_titulo" data-formato="resaltado" data-resaltar="span">Transformando la perspectiva <span>del mundo</span></h2>
   </div>
   <div>
-    <h3>Contacto</h3>
+    <h3 data-texto="pie_subtitulo" data-formato="linea">Contacto</h3>
     <ul>
       <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario" data-texto="pie_texto" data-formato="linea">De 9:00 a 19:00 hrs</small></li>
       <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
     </ul>
   </div>
   <div>
-    <h3>Síguenos</h3>
+    <h3 data-texto="pie_subtitulo2" data-formato="linea">Síguenos</h3>
     <ul>
       <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
       <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
@@ -167,7 +167,7 @@
       <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
     </ul>
   </div>
-  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+  <div class="legal"><span data-texto="pie_legal" data-formato="linea">© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
 </div></footer>
 <script src="/config.js"></script>
 <script src="/sitio/contenido.js"></script>

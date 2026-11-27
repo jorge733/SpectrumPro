@@ -141,7 +141,7 @@
 }
 </script>
 </head>
-<body class="p-contacto">
+<body class="p-contacto" data-pagina="contacto">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="cabecera"><div class="wrap"><div class="barra">
   <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -174,24 +174,24 @@
   </nav>
 </div></div></header>
 <main id="contenido">
-<section class="cabeza">
+<section class="cabeza" data-seccion="contacto_cabeza">
   <div class="wrap"><div class="caja">
     <div>
-      <p class="eyebrow">Contacto</p>
-      <h1>Conversemos</h1>
-      <p class="intro">Para inscripciones, cotizaciones o cualquier duda, escríbenos por el canal que prefieras.</p>
+      <p class="eyebrow" data-texto="contacto_cabeza_antetitulo" data-formato="linea">Contacto</p>
+      <h1 data-texto="contacto_cabeza_titulo" data-formato="linea">Conversemos</h1>
+      <p class="intro" data-texto="contacto_cabeza_texto" data-formato="linea">Para inscripciones, cotizaciones o cualquier duda, escríbenos por el canal que prefieras.</p>
       
     </div>
-    <img class="ave" src="/sitio/img/ta-titeres.webp" alt="" width="300" height="300">
+    <img class="ave" src="/sitio/img/ta-titeres.webp" alt="" width="300" height="300" data-imagen="contacto_cabeza_imagen">
   </div></div>
 </section>
 
-<section class="banda">
+<section class="banda" data-seccion="contacto_s2">
   <div class="wrap">
     <div class="contactos">
-      <a class="contacto-item revelar" style="--k:var(--p3);--i:0" data-wa="Hola, quiero hacer una consulta a SpectrumPro" href="https://wa.me/56996389673" target="_blank" rel="noopener"><b>WhatsApp</b><span data-telefono>+56 9 9638 9673</span><small class="horario">Atención de 9:00 a 19:00 hrs</small></a>
-      <a class="contacto-item revelar" style="--k:var(--p5);--i:1" data-correo href="mailto:contacto@spectrumpro.cl"><b>Correo</b><span data-correo-texto>contacto@<wbr>spectrumpro.cl</span></a>
-      <a class="contacto-item revelar" style="--k:var(--p2);--i:2" data-mapa href="https://www.google.com/maps/search/?api=1&amp;query=Doctor%20Roberto%20del%20R%C3%ADo%201137%2C%20Providencia" target="_blank" rel="noopener"><b>Dirección</b><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a>
+      <a class="contacto-item revelar" style="--k:var(--p3);--i:0" data-wa="Hola, quiero hacer una consulta a SpectrumPro" href="https://wa.me/56996389673" target="_blank" rel="noopener"><b data-texto="contacto_s2_boton" data-formato="linea">WhatsApp</b><span data-telefono>+56 9 9638 9673</span><small class="horario" data-texto="contacto_s2_texto" data-formato="linea">Atención de 9:00 a 19:00 hrs</small></a>
+      <a class="contacto-item revelar" style="--k:var(--p5);--i:1" data-correo href="mailto:contacto@spectrumpro.cl"><b data-texto="contacto_s2_boton2" data-formato="linea">Correo</b><span data-correo-texto>contacto@<wbr>spectrumpro.cl</span></a>
+      <a class="contacto-item revelar" style="--k:var(--p2);--i:2" data-mapa href="https://www.google.com/maps/search/?api=1&amp;query=Doctor%20Roberto%20del%20R%C3%ADo%201137%2C%20Providencia" target="_blank" rel="noopener"><b data-texto="contacto_s2_boton3" data-formato="linea">Dirección</b><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a>
     </div>
     <div class="mapa revelar">
       <iframe src="https://www.google.com/maps?q=Doctor%20Roberto%20del%20R%C3%ADo%201137%2C%20Providencia%2C%20Santiago&amp;z=16&amp;hl=es&amp;output=embed" title="Mapa: SpectrumPro en Doctor Roberto del Río 1137, Providencia" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
@@ -199,10 +199,10 @@
   </div>
 </section>
 
-<section class="banda papel-2">
+<section class="banda papel-2" data-seccion="contacto_redes">
   <div class="wrap">
-    <p class="eyebrow">Redes</p>
-    <h2 class="titulo-seccion" style="margin-bottom:32px">Síguenos</h2>
+    <p class="eyebrow" data-texto="contacto_redes_antetitulo" data-formato="linea">Redes</p>
+    <h2 class="titulo-seccion" style="margin-bottom:32px" data-texto="contacto_redes_titulo" data-formato="linea">Síguenos</h2>
     <div class="redes">
       <a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a>
       <a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a>
@@ -216,18 +216,18 @@
 <div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wrap">
   <div>
-    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+    <h2 class="lema" data-texto="pie_titulo" data-formato="resaltado" data-resaltar="span">Transformando la perspectiva <span>del mundo</span></h2>
   </div>
   <div>
-    <h3>Contacto</h3>
+    <h3 data-texto="pie_subtitulo" data-formato="linea">Contacto</h3>
     <ul>
       <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario" data-texto="pie_texto" data-formato="linea">De 9:00 a 19:00 hrs</small></li>
       <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
     </ul>
   </div>
   <div>
-    <h3>Síguenos</h3>
+    <h3 data-texto="pie_subtitulo2" data-formato="linea">Síguenos</h3>
     <ul>
       <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
       <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
@@ -235,7 +235,7 @@
       <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
     </ul>
   </div>
-  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+  <div class="legal"><span data-texto="pie_legal" data-formato="linea">© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
 </div></footer>
 <script src="/config.js"></script>
 <script src="/sitio/contenido.js"></script>

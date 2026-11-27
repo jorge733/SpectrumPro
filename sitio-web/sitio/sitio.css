@@ -410,3 +410,16 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
   .btn, .camino, .taller, .contacto-item, .tarjeta { transition: none; }
 }
 .valor > div { display: grid; gap: 8px; }
+
+/* ---------- Aviso arriba de todas las páginas (se edita en la plataforma) ---------- */
+.aviso-sitio { background: var(--aviso, var(--c2)); color: var(--sobre); font-size: 15px; font-weight: 600; position: relative; z-index: 60; }
+.aviso-sitio.oscuro { color: #ffffff; }
+.aviso-sitio .wrap { display: flex; align-items: center; gap: 12px; padding-block: 10px; }
+.aviso-sitio p { margin: 0; flex: 1; text-align: center; line-height: 1.4; }
+.aviso-sitio a { color: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.aviso-sitio button { flex: none; border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 8px; opacity: .75; }
+.aviso-sitio button:hover { opacity: 1; background: rgb(0 0 0 / .08); }
+
+/* Vista previa desde la plataforma: marca el texto que se está editando. */
+.resaltado-previa { animation: resaltar-previa 1.6s var(--ease); border-radius: 6px; }
+@keyframes resaltar-previa { 0%, 60% { outline: 3px solid var(--c6); outline-offset: 4px; } 100% { outline: 3px solid transparent; outline-offset: 8px; } }

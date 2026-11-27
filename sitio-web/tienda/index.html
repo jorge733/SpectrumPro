@@ -103,7 +103,7 @@
 }
 </script>
 </head>
-<body class="p-tienda">
+<body class="p-tienda" data-pagina="tienda">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="cabecera"><div class="wrap"><div class="barra">
   <a class="marca" href="/" aria-label="SpectrumPro, ir al inicio"><svg aria-hidden="true" width="75" height="73" viewBox="0 0 75 73" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -136,25 +136,25 @@
   </nav>
 </div></div></header>
 <main id="contenido">
-<section class="cabeza">
+<section class="cabeza" data-seccion="tienda_cabeza">
   <div class="wrap"><div class="caja">
     <div>
-      <p class="eyebrow">Tienda oficial</p>
-      <h1>Lleva puesto el talento</h1>
-      <p class="intro">Poleras, polerones, cuadernos, chapitas y más, con el logo y los personajes de SpectrumPro. Cada compra apoya los talleres.</p>
-      <nav class="indice" aria-label="En esta página"><a href="#productos" id="ver-productos">Ver los productos</a><a href="#pedir">Cómo pedir</a></nav>
+      <p class="eyebrow" data-texto="tienda_cabeza_antetitulo" data-formato="linea">Tienda oficial</p>
+      <h1 data-texto="tienda_cabeza_titulo" data-formato="linea">Lleva puesto el talento</h1>
+      <p class="intro" data-texto="tienda_cabeza_texto" data-formato="linea">Poleras, polerones, cuadernos, chapitas y más, con el logo y los personajes de SpectrumPro. Cada compra apoya los talleres.</p>
+      <nav class="indice" aria-label="En esta página"><a href="#productos" id="ver-productos">Ver los productos</a><a href="#pedir"><span data-texto="tienda_cabeza_indice" data-formato="linea">Cómo pedir</span></a></nav>
     </div>
-    <img class="cartel" src="/tienda/img/hero.jpg" alt="Ilustración de SpectrumPro: un niño con una claqueta junto a un equipo de rodaje. Texto: La Primera Productora Audiovisual Neurodivergente de Chile." width="760" height="598">
+    <img class="cartel" src="/tienda/img/hero.jpg" alt="Ilustración de SpectrumPro: un niño con una claqueta junto a un equipo de rodaje. Texto: La Primera Productora Audiovisual Neurodivergente de Chile." width="760" height="598" data-imagen="tienda_cabeza_imagen">
   </div></div>
 </section>
 
-<section class="banda" id="productos">
+<section class="banda" id="productos" data-seccion="tienda_productos">
   <div class="wrap">
     <div class="cab">
       <div>
-        <p class="eyebrow">Catálogo</p>
-        <h2 class="titulo-seccion">Nuestros productos</h2>
-        <p class="intro">Elige el que te guste y pídelo por WhatsApp: el mensaje ya va escrito.</p>
+        <p class="eyebrow" data-texto="tienda_productos_antetitulo" data-formato="linea">Catálogo</p>
+        <h2 class="titulo-seccion" data-texto="tienda_productos_titulo" data-formato="linea">Nuestros productos</h2>
+        <p class="intro" data-texto="tienda_productos_texto" data-formato="linea">Elige el que te guste y pídelo por WhatsApp: el mensaje ya va escrito.</p>
       </div>
       <div class="filtros" role="group" aria-label="Filtrar por tipo">
         <button type="button" data-f="todo" aria-pressed="true">Todo</button>
@@ -167,25 +167,25 @@
   </div>
 </section>
 
-<section class="banda papel-2" id="pedir">
+<section class="banda papel-2" id="pedir" data-seccion="tienda_pedir">
   <div class="wrap">
-    <p class="eyebrow">Cómo pedir</p>
-    <h2 class="titulo-seccion" style="margin-bottom:40px">En tres pasos</h2>
+    <p class="eyebrow" data-texto="tienda_pedir_antetitulo" data-formato="linea">Cómo pedir</p>
+    <h2 class="titulo-seccion" style="margin-bottom:40px" data-texto="tienda_pedir_titulo" data-formato="linea">En tres pasos</h2>
     <div class="pasos">
-      <div class="paso revelar" style="--kc:var(--c5);--i:0"><h3>Elige</h3><p>Mira el catálogo y anota el producto, el color y la talla o cantidad.</p></div>
-      <div class="paso revelar" style="--kc:var(--c4);--i:1"><h3>Escríbenos</h3><p>Toca «Pedir por WhatsApp» en el producto. El mensaje ya va escrito con su nombre.</p></div>
-      <div class="paso revelar" style="--kc:var(--c3);--i:2"><h3>Paga y recibe</h3><p id="paso-pago">Te confirmamos precio y disponibilidad, y acordamos el pago y la entrega.</p></div>
+      <div class="paso revelar" style="--kc:var(--c5);--i:0"><h3 data-texto="tienda_pedir_subtitulo" data-formato="linea">Elige</h3><p data-texto="tienda_pedir_texto" data-formato="linea">Mira el catálogo y anota el producto, el color y la talla o cantidad.</p></div>
+      <div class="paso revelar" style="--kc:var(--c4);--i:1"><h3 data-texto="tienda_pedir_subtitulo2" data-formato="linea">Escríbenos</h3><p data-texto="tienda_pedir_texto2" data-formato="linea">Toca «Pedir por WhatsApp» en el producto. El mensaje ya va escrito con su nombre.</p></div>
+      <div class="paso revelar" style="--kc:var(--c3);--i:2"><h3 data-texto="tienda_pedir_subtitulo3" data-formato="linea">Paga y recibe</h3><p id="paso-pago">Te confirmamos precio y disponibilidad, y acordamos el pago y la entrega.</p></div>
     </div>
   </div>
 </section>
 
-<section class="banda">
+<section class="banda" data-seccion="tienda_dudas">
   <div class="wrap">
     <div class="llamado-caja revelar">
       <span class="circulo a" aria-hidden="true"></span><span class="circulo b" aria-hidden="true"></span>
       <div>
-        <p class="eyebrow">¿Dudas?</p>
-        <h2>¿Un pedido grande o algo especial?</h2>
+        <p class="eyebrow" data-texto="tienda_dudas_antetitulo" data-formato="linea">¿Dudas?</p>
+        <h2 data-texto="tienda_dudas_titulo" data-formato="linea">¿Un pedido grande o algo especial?</h2>
         <p class="intro">Escríbenos al WhatsApp <b id="wa-numero">+56 9 9638 9673</b> y lo conversamos.</p>
       </div>
       <div class="acciones"><a class="btn claro" id="wa-banda" href="https://wa.me/56996389673?text=Hola%2C%20tengo%20una%20consulta%20sobre%20los%20productos%20de%20SpectrumPro" target="_blank" rel="noopener" data-icono-wa>Abrir WhatsApp</a></div>
@@ -197,18 +197,18 @@
 <div class="arcoiris" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="wrap">
   <div>
-    <h2 class="lema">Transformando la perspectiva <span>del mundo</span></h2>
+    <h2 class="lema" data-texto="pie_titulo" data-formato="resaltado" data-resaltar="span">Transformando la perspectiva <span>del mundo</span></h2>
   </div>
   <div>
-    <h3>Contacto</h3>
+    <h3 data-texto="pie_subtitulo" data-formato="linea">Contacto</h3>
     <ul>
       <li><a data-mapa href="/contacto" target="_blank" rel="noopener"><span data-texto="direccion" data-formato="linea">Doctor Roberto del Río 1137, Providencia, Santiago, Chile</span></a></li>
-      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario">De 9:00 a 19:00 hrs</small></li>
+      <li><a data-wa="" href="https://wa.me/56996389673" target="_blank" rel="noopener">WhatsApp <span data-telefono>+56 9 9638 9673</span></a><br><small class="horario" data-texto="pie_texto" data-formato="linea">De 9:00 a 19:00 hrs</small></li>
       <li><a data-correo="texto" href="mailto:contacto@spectrumpro.cl">contacto@spectrumpro.cl</a></li>
     </ul>
   </div>
   <div>
-    <h3>Síguenos</h3>
+    <h3 data-texto="pie_subtitulo2" data-formato="linea">Síguenos</h3>
     <ul>
       <li><a data-instagram href="https://instagram.com/spectrumpro.cl" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram</a></li>
       <li><a data-enlace="youtube" href="https://www.youtube.com/@spectrumpro1710" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.8 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg>YouTube</a></li>
@@ -216,7 +216,7 @@
       <li><a data-enlace="patreon" href="https://www.patreon.com/cw/spectrumpro" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="15" cy="9.5" r="6.5"/><rect x="2.5" y="3" width="4" height="18" rx="1"/></svg>Patreon</a></li>
     </ul>
   </div>
-  <div class="legal"><span>© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
+  <div class="legal"><span data-texto="pie_legal" data-formato="linea">© SpectrumPro · Providencia, Santiago de Chile</span><span><a href="/tienda">Tienda</a> · <a href="/colabora">Colabora</a> · <a href="https://gestionspectrumpro.cl/">Acceso equipo</a></span></div>
 </div></footer>
 <script src="/config.js"></script>
 <script src="/sitio/contenido.js"></script>

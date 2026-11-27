@@ -1,4 +1,4 @@
-// Generado por sitio/contenido-inicial.py. Respaldo del contenido para cuando Supabase no responde.
+// Respaldo del contenido para cuando Supabase no responde (y contenido inicial de las migraciones del sitio).
 // El contenido real se edita en la plataforma, sección «Sitio web» (tablas sitio_textos y sitio_elementos).
 window.SITIO_RESPALDO = {
  "textos": {
@@ -645,6 +645,292 @@ window.SITIO_RESPALDO = {
    "imagen": "/sitio/img/fo-teatro.webp",
    "enlace": "https://youtu.be/yl8qVgpDaTY",
    "orden": 5
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Dibujo",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 1
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Animación",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 2
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Stop motion",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 3
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Videojuegos",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 4
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Modelado 3D",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 5
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Teatro",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 6
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Títeres",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 7
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Juegos de rol",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 8
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Edición",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 9
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Arte terapia",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 10
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Humor absurdo",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 11
+  },
+  {
+   "tipo": "cinta",
+   "titulo": "Ilustración digital",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 12
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Fundación Serinclusivo",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/fundacion-serinclusivo.webp",
+   "enlace": "",
+   "orden": 1
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Corporación Apertus",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/corporacion-apertus.webp",
+   "enlace": "",
+   "orden": 2
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Facultad de Arquitectura y Urbanismo, Universidad de Chile",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/fau-universidad-de-chile.webp",
+   "enlace": "",
+   "orden": 3
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Orica",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/orica.webp",
+   "enlace": "",
+   "orden": 4
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Festival Aprender",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/festival-aprender.webp",
+   "enlace": "",
+   "orden": 5
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Red Salas de Teatro Metropolitana",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/red-salas-de-teatro.webp",
+   "enlace": "",
+   "orden": 6
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Ilusión Country",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/ilusion-country.webp",
+   "enlace": "",
+   "orden": 7
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Panoramas Accesibles",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/panoramas-accesibles.webp",
+   "enlace": "",
+   "orden": 8
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "RLA Event Technologies",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/rla.webp",
+   "enlace": "",
+   "orden": 9
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Lustro Gestión Cultural",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/lustro.webp",
+   "enlace": "",
+   "orden": 10
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Ogilvy",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/ogilvy.webp",
+   "enlace": "",
+   "orden": 11
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Ingeroc, Ingeniería de Rocas",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/ingeroc.webp",
+   "enlace": "",
+   "orden": 12
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Fundación Vida Independiente Chile",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/fundacion-vida-independiente.webp",
+   "enlace": "",
+   "orden": 13
+  },
+  {
+   "tipo": "cliente",
+   "titulo": "Lotus",
+   "subtitulo": "",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/logos/lotus.webp",
+   "enlace": "",
+   "orden": 14
   }
  ]
 };

@@ -101,7 +101,8 @@
     if (/maximum allowed size|Payload too large|exceeded the maximum/i.test(m)) return new Error('El PDF es demasiado grande (máximo 10 MB).');
     if (/mime type|invalid_mime/i.test(m)) return new Error('El programa debe ser un archivo PDF.');
     if (/sitio_(textos|elementos)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_SITIO);
-    if (/sitio_tipo_valido|sitio_titulo_largo/i.test(m)) return new Error('Revisa el título: es obligatorio y puede tener hasta 120 caracteres.');
+    if (/sitio_tipo_valido/i.test(m)) return new Error('Falta actualizar el sitio web en Supabase: ejecuta supabase/migrations/20261128000000_sitio_web_completo.sql en el SQL Editor.');
+    if (/sitio_titulo_largo/i.test(m)) return new Error('Revisa el título: es obligatorio y puede tener hasta 120 caracteres.');
     if (/sitio_\w+_largo/i.test(m)) return new Error('Uno de los textos es demasiado largo. Acórtalo e inténtalo de nuevo.');
     if (/Bucket not found/i.test(m)) return new Error('Falta crear el espacio de archivos «programas» en Supabase (ver README).');
     if (/talleres_encargado_email_formato/i.test(m)) return new Error('Revisa el correo de la persona a cargo (si son varios, sepáralos con coma).');
@@ -374,14 +375,27 @@
       /* ----- sitio web (spectrumpro.cl) ----- */
       async sitio() {
         const [textos, elementos] = await Promise.all([
-          sb.from('sitio_textos').select('clave,valor').then(ok),
+          todo(() => sb.from('sitio_textos').select('clave,valor,actualizado').order('clave')),
           todo(() => sb.from('sitio_elementos').select('*').order('tipo').order('orden').order('id')),
         ]);
-        return { textos: Object.fromEntries(textos.map(t => [t.clave, t.valor])), elementos };
+        return {
+          textos: Object.fromEntries(textos.map(t => [t.clave, t.valor])),
+          fechas: Object.fromEntries(textos.map(t => [t.clave, t.actualizado])),
+          elementos,
+        };
       },
       async guardarTextosSitio(cambios) {
         const filas = Object.entries(cambios).map(([clave, valor]) => ({ clave, valor: String(valor ?? '') }));
         if (filas.length) ok(await sb.from('sitio_textos').upsert(filas, { onConflict: 'clave' }));
+      },
+      // Borrar la fila devuelve el campo a lo que trae el HTML del sitio («Restaurar original»).
+      async borrarTextosSitio(claves) {
+        if (claves.length) ok(await sb.from('sitio_textos').delete().in('clave', claves));
+      },
+      async fotosSitio() {
+        const { data, error } = await sb.storage.from('sitio').list('fotos', { limit: 500, sortBy: { column: 'created_at', order: 'desc' } });
+        if (error) return [];
+        return (data || []).filter(f => f.name && !f.name.startsWith('.')).map(f => sb.storage.from('sitio').getPublicUrl('fotos/' + f.name).data.publicUrl);
       },
       async guardarElementoSitio(e) {
         if (e.id) { ok(await sb.from('sitio_elementos').update(elementoAFila(e)).eq('id', e.id)); return e.id; }
@@ -392,8 +406,9 @@
         await Promise.all(ids.map((id, i) => sb.from('sitio_elementos').update({ orden: i + 1 }).eq('id', id).then(ok)));
       },
       async subirFotoSitio(blob) {
-        const ruta = `fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-        const { error } = await sb.storage.from('sitio').upload(ruta, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+        const tipo = ['image/webp', 'image/png'].includes(blob.type) ? blob.type : 'image/jpeg';
+        const ruta = `fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${tipo.split('/')[1].replace('jpeg', 'jpg')}`;
+        const { error } = await sb.storage.from('sitio').upload(ruta, blob, { contentType: tipo, cacheControl: '31536000', upsert: false });
         if (error) throw /bucket not found/i.test(error.message) ? new Error(ERROR_SITIO) : traducir(error);
         return sb.storage.from('sitio').getPublicUrl(ruta).data.publicUrl;
       },
@@ -842,19 +857,28 @@
             const txt = await (await fetch('sitio-web/sitio/contenido.js')).text();
             base = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
           } catch { /* sin respaldo: se parte vacío */ }
-          db.sitio = { textos: base.textos || {}, elementos: (base.elementos || []).map(e => ({ ...elementoAFila(e), id: nuevoId() })) };
+          db.sitio = { textos: { ...(base.textos || {}), version_contenido: '2' }, fechas: {}, elementos: (base.elementos || []).map(e => ({ ...elementoAFila(e), id: nuevoId() })) };
           guardar();
         }
+        db.sitio.fechas ??= {};
         await espera();
         return copia(db.sitio);
       },
       async guardarTextosSitio(cambios) {
         if (!editaTienda()) prohibido();
         await espera();
-        Object.assign(db.sitio.textos, cambios);
+        const ahora = new Date().toISOString();
+        for (const [k, v] of Object.entries(cambios)) { db.sitio.textos[k] = String(v ?? ''); db.sitio.fechas[k] = ahora; }
         auditar('update', 'sitio_textos', {});
         guardar();
       },
+      async borrarTextosSitio(claves) {
+        if (!editaTienda()) prohibido();
+        for (const k of claves) { delete db.sitio.textos[k]; delete db.sitio.fechas[k]; }
+        auditar('delete', 'sitio_textos', {});
+        guardar();
+      },
+      async fotosSitio() { return []; },
       async guardarElementoSitio(e) {
         if (!editaTienda()) prohibido();
         await espera();

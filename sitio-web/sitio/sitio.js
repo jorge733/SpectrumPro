@@ -42,6 +42,11 @@
     apoyo: (x, i) => `<article class="tarjeta revelar" style="--i:${i}">${x.subtitulo ? `<span class="quien">${esc(x.subtitulo)}</span>` : ''}<h3>${esc(x.titulo)}</h3>${x.nota ? `<span class="encargada">Con ${esc(x.nota)}</span>` : ''}${parrafos(x.texto)}</article>`,
     actividad: (x, i) => `<span class="chip revelar" style="--k:${SUAVES[i % SUAVES.length]};--i:${i}">${esc(x.titulo)}</span>`,
     servicio: (x, i) => `<article class="servicio revelar" style="--i:${i % 2}"><span class="n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></article>`,
+    cinta: x => `<li>${esc(x.titulo)}</li>`,
+    cliente: x => {
+      const img = `<img src="${esc(x.imagen)}" alt="${esc(x.titulo)}" loading="lazy">`;
+      return `<li>${x.enlace ? `<a href="${esc(x.enlace)}" target="_blank" rel="noopener" title="${esc(x.titulo)}">${img}</a>` : img}</li>`;
+    },
     produccion: (x, i) => `<a class="video revelar" style="--i:${i % 3}" href="${esc(x.enlace)}" target="_blank" rel="noopener">
         <img src="${esc(x.imagen || ytMiniatura(x.enlace))}" alt="" loading="lazy">
         <span class="play">${ICONO_PLAY}</span>
@@ -49,16 +54,43 @@
   };
 
   /* ---------- Pintar ---------- */
+  // Lo que trae el HTML es el «original»: se vuelve a él cuando un texto no tiene valor guardado
+  // (por ejemplo, al restaurar un campo en la vista previa de la plataforma).
+  const originales = new WeakMap();
+  const original = (el, f) => { if (!originales.has(el)) originales.set(el, f()); return originales.get(el); };
+  const MARCAS = ['', 'var(--p4)', 'var(--p3)', 'var(--p2)', 'var(--p1)', 'var(--p5)'];
+  // «*texto*» → resaltado con la etiqueta que usa ese elemento (mark, em o span).
+  function resaltado(v, tag) {
+    let i = 0;
+    return esc(v).replace(/\*([^*]+)\*/g, (_, t) => {
+      const st = tag === 'mark' && MARCAS[i % MARCAS.length] ? ` style="--m:${MARCAS[i % MARCAS.length]}"` : '';
+      i++;
+      return `<${tag}${st}>${t}</${tag}>`;
+    });
+  }
   function pintar(datos) {
     const T = datos.textos || {};
     const porTipo = {};
     for (const x of [...(datos.elementos || [])].sort((a, b) => (a.orden - b.orden))) (porTipo[x.tipo] ??= []).push(x);
 
     document.querySelectorAll('[data-texto]').forEach(el => {
+      const html0 = original(el, () => el.innerHTML);
       const v = T[el.dataset.texto];
-      if (v == null) return;
+      // Un botón cuyo texto se dejó vacío desaparece entero.
+      const caja = el.parentElement?.matches('a.btn, nav.indice a') ? el.parentElement : el;
+      if (v == null) { if (el.innerHTML !== html0) el.innerHTML = html0; caja.hidden = false; return; }
+      caja.hidden = !String(v).trim();
       if (el.dataset.formato === 'linea') el.textContent = v;
+      else if (el.dataset.formato === 'resaltado') el.innerHTML = resaltado(v, el.dataset.resaltar || 'mark');
       else el.innerHTML = parrafos(v);
+    });
+    document.querySelectorAll('img[data-imagen]').forEach(img => {
+      const [src0, alt0] = original(img, () => [img.getAttribute('src'), img.getAttribute('alt')]);
+      const k = img.dataset.imagen;
+      const src = T[k] || src0;
+      if (img.getAttribute('src') !== src) { img.removeAttribute('srcset'); img.src = src; }
+      const alt = T[k + '_alt'] ?? alt0;
+      if (alt != null) img.alt = alt;
     });
     document.querySelectorAll('[data-lista]').forEach(el => {
       const tipo = el.dataset.lista;
@@ -71,6 +103,13 @@
       const caja = el.closest('[data-si-hay]');
       if (caja) caja.hidden = !items.length;
     });
+    // Secciones ocultadas desde la plataforma.
+    document.querySelectorAll('[data-seccion]').forEach(sec => {
+      if (T['seccion_' + sec.dataset.seccion] === 'oculta') sec.hidden = true;
+      else if (!sec.matches('[data-si-hay]')) sec.hidden = false;
+    });
+    seo(T);
+    aviso(T);
     // Enlaces y datos de contacto.
     const num = /^[0-9]{8,15}$/.test(T.whatsapp || '') ? T.whatsapp : '56996389673';
     document.querySelectorAll('[data-wa]').forEach(a => { a.href = waLink(num, a.dataset.wa); });
@@ -79,7 +118,15 @@
       document.querySelectorAll('[data-correo]').forEach(a => { a.href = 'mailto:' + T.correo; if (a.dataset.correo === 'texto') a.textContent = T.correo; });
       document.querySelectorAll('[data-correo-texto]').forEach(el => { el.innerHTML = esc(T.correo).replace('@', '@<wbr>'); });
     }
-    document.querySelectorAll('[data-enlace]').forEach(a => { const v = T[a.dataset.enlace]; if (v) a.href = v; a.hidden = !v; });
+    // Enlaces editables: sin valor guardado se queda el del HTML; vacío oculta el botón o el ícono.
+    document.querySelectorAll('[data-enlace]').forEach(a => {
+      const h0 = original(a, () => a.getAttribute('href'));
+      const v = T[a.dataset.enlace];
+      if (v == null) { a.href = h0; if (!a.querySelector('[data-texto]')) a.hidden = false; return; }
+      if (!String(v).trim()) { a.hidden = true; return; }
+      a.href = v;
+      if (!a.querySelector('[data-texto]')) a.hidden = false;
+    });
     document.querySelectorAll('[data-instagram]').forEach(a => { const v = (T.instagram || '').trim(); a.hidden = !v; if (v) a.href = 'https://instagram.com/' + encodeURIComponent(v); });
     document.querySelectorAll('[data-mapa]').forEach(a => { if (T.direccion) a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(T.direccion); });
     document.querySelectorAll('[data-video]').forEach(a => {
@@ -88,6 +135,64 @@
       const img = a.querySelector('img'); if (img && !img.dataset.fija) img.src = ytMiniatura(v);
     });
     observarRevelado();
+  }
+
+  /* ---------- Google y redes sociales ---------- */
+  function seo(T) {
+    const pag = document.body.dataset.pagina;
+    if (!pag) return;
+    const meta = (sel, v) => { const m = document.querySelector(sel); if (m && v) m.setAttribute('content', v); };
+    const t = (T[`seo_${pag}_titulo`] || '').trim(), d = (T[`seo_${pag}_descripcion`] || '').trim();
+    if (t) { document.title = t; meta('meta[property="og:title"]', t); meta('meta[name="twitter:title"]', t); }
+    if (d) { meta('meta[name="description"]', d); meta('meta[property="og:description"]', d); meta('meta[name="twitter:description"]', d); }
+  }
+
+  /* ---------- Aviso arriba de todas las páginas ---------- */
+  const COLORES_AVISO = { amarillo: 'var(--c2)', rosado: 'var(--c6)', celeste: 'var(--c4)', verde: 'var(--c3)', rojo: 'var(--c1)', morado: 'var(--c5)', negro: 'var(--tinta)' };
+  function aviso(T) {
+    let bar = document.querySelector('.aviso-sitio');
+    const txt = (T.aviso_texto || '').trim();
+    let cerrado = '';
+    try { cerrado = sessionStorage.getItem('spectrumpro:aviso-cerrado') || ''; } catch { /* sin almacenamiento */ }
+    if (!txt || T.aviso_activo === 'no' || (cerrado === txt && !enVistaPrevia)) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'aviso-sitio';
+      bar.setAttribute('role', 'region');
+      bar.setAttribute('aria-label', 'Aviso');
+      document.body.prepend(bar);
+    }
+    const color = COLORES_AVISO[T.aviso_color] || COLORES_AVISO.amarillo;
+    bar.style.setProperty('--aviso', color);
+    bar.classList.toggle('oscuro', T.aviso_color === 'negro' || T.aviso_color === 'morado' || T.aviso_color === 'rojo');
+    const enlace = (T.aviso_enlace || '').trim();
+    bar.innerHTML = `<div class="wrap"><p>${esc(txt)}${enlace ? ` <a href="${esc(enlace)}"${/^https?:/.test(enlace) ? ' target="_blank" rel="noopener"' : ''}>${esc(T.aviso_boton || 'Ver más')} →</a>` : ''}</p>
+      <button type="button" aria-label="Cerrar aviso">✕</button></div>`;
+    bar.querySelector('button').onclick = () => { try { sessionStorage.setItem('spectrumpro:aviso-cerrado', txt); } catch { /* sin almacenamiento */ } bar.remove(); };
+  }
+
+  /* ---------- Vista previa desde la plataforma ----------
+     La sección «Sitio web» de gestionspectrumpro.cl abre esta página en un marco con ?vista-previa
+     y le envía el borrador: se pinta sin guardar nada. Solo se aceptan mensajes de la plataforma. */
+  const ORIGENES = /^https:\/\/(www\.)?gestionspectrumpro\.cl$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+  let enVistaPrevia = false;
+  if (window.parent !== window && new URLSearchParams(location.search).has('vista-previa')) {
+    window.addEventListener('message', e => {
+      if (!ORIGENES.test(e.origin) || !e.data || typeof e.data !== 'object') return;
+      if (e.data.tipo === 'sitio-vista-previa' && e.data.datos) { enVistaPrevia = true; pintar(e.data.datos); }
+      if (e.data.tipo === 'sitio-resaltar' && typeof e.data.clave === 'string') {
+        const el = document.querySelector(`[data-texto="${CSS.escape(e.data.clave)}"], [data-imagen="${CSS.escape(e.data.clave)}"], [data-seccion="${CSS.escape(e.data.clave)}"], [data-enlace="${CSS.escape(e.data.clave)}"]`);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.remove('resaltado-previa'); void el.offsetWidth; el.classList.add('resaltado-previa');
+      }
+    });
+    // Los enlaces dentro de la vista previa siguen en modo vista previa.
+    document.addEventListener('click', e => {
+      const a = e.target.closest('a[href^="/"]');
+      if (a && !a.target) { e.preventDefault(); const u = new URL(a.href); u.searchParams.set('vista-previa', '1'); location.href = u; }
+    });
+    window.parent.postMessage({ tipo: 'sitio-lista', pagina: document.body.dataset.pagina || '' }, '*');
   }
 
   /* ---------- Cargar ---------- */
@@ -183,11 +288,17 @@
   // Íconos de WhatsApp en los botones que lo piden.
   document.querySelectorAll('[data-icono-wa]').forEach(el => el.insertAdjacentHTML('afterbegin', ICONO_WA));
 
-  pintar(guardado() || window.SITIO_RESPALDO || { textos: {}, elementos: [] });
+  const RESPALDO = window.SITIO_RESPALDO || { textos: {}, elementos: [] };
+  pintar(guardado() || RESPALDO);
   desdeSupabase().then(d => {
     if (!d.elementos.length && !Object.keys(d.textos).length) return; // migración sin ejecutar aún
+    // Listas nuevas (cinta, clientes) mientras no se ejecute la migración que las carga: se usa el respaldo.
+    if (Number(d.textos.version_contenido || 0) < 2) {
+      const hay = new Set(d.elementos.map(x => x.tipo));
+      d.elementos.push(...RESPALDO.elementos.filter(x => !hay.has(x.tipo)));
+    }
     try { localStorage.setItem(CLAVE, JSON.stringify(d)); } catch { /* sin almacenamiento */ }
-    pintar(d);
+    if (!enVistaPrevia) pintar(d);
   }).catch(() => { /* se queda con lo ya pintado */ });
   vitrina();
 })();
