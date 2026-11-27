@@ -100,6 +100,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav a:hover { background: var(--surface-2); color: var(--ink); }
 .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .nav a .corto { display: none; }
+/* Submenú (Edición) */
+.nav-grupo { display: flex; flex-direction: column; gap: 2px; position: relative; }
+.nav-grupo-btn {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; width: 100%;
+  border: 0; background: none; cursor: pointer; text-align: left; font: inherit;
+  color: var(--muted); font-family: var(--f-display); font-weight: 500;
+}
+.nav-grupo-btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+.nav-grupo-btn > span { flex: 1; }
+.nav-grupo-btn .nav-grupo-flecha { width: 18px; height: 18px; transition: transform .2s; }
+.nav-grupo.abierto .nav-grupo-flecha { transform: rotate(180deg); }
+.nav-grupo-btn:hover { background: var(--surface-2); color: var(--ink); }
+.nav-grupo.activo:not(.abierto) .nav-grupo-btn { background: var(--accent-soft); color: var(--accent); }
+.nav-grupo.activo .nav-grupo-btn { color: var(--ink); }
+.nav-sub { display: none; flex-direction: column; gap: 2px; margin-left: 22px; padding-left: 8px; border-left: 2px solid var(--line); }
+.nav-grupo.abierto .nav-sub { display: flex; }
+.nav-sub a { padding-block: 8px; }
 
 .lateral-cab { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .icono-btn {
@@ -133,6 +150,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
   body.menu-plegado .usuario { flex-direction: column; padding-inline: 0; }
   body.menu-plegado .usuario-btn { flex: 0 0 auto; }
   body.menu-plegado .plegar svg { transform: rotate(180deg); }
+  body.menu-plegado .nav-grupo-btn { justify-content: center; padding: 12px 0; }
+  body.menu-plegado .nav-grupo-btn > span, body.menu-plegado .nav-grupo-flecha { display: none; }
+  body.menu-plegado .nav-grupo.activo .nav-grupo-btn, body.menu-plegado .nav-grupo.abierto .nav-grupo-btn { background: var(--accent-soft); color: var(--accent); }
+  /* Plegado: el submenú flota a la derecha del ícono, con nombres. */
+  body.menu-plegado .lateral:has(.nav-grupo.abierto) { z-index: 45; overflow: visible; }
+  body.menu-plegado .nav-sub { position: fixed; left: 86px; top: var(--arriba, 50%); z-index: 30; margin: 0; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); min-width: 180px; }
+  body.menu-plegado .nav-sub a { justify-content: flex-start; padding: 10px 12px; }
+  body.menu-plegado .nav-sub a span { display: inline; }
 }
 
 .principal {
@@ -524,6 +549,17 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
   .nav a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   .nav a .largo { display: none; }
   .nav a .corto { display: inline; }
+  /* Celular: «Edición» es un botón más de la barra y su submenú se abre hacia arriba. */
+  .nav-grupo { flex: 1; min-width: 0; position: static; }
+  .nav-grupo-btn { flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .66rem; text-align: center; justify-content: center; }
+  .nav-grupo-btn > span { flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .nav-grupo-flecha { display: none; }
+  .nav-grupo.activo .nav-grupo-btn, .nav-grupo.abierto .nav-grupo-btn { background: var(--accent-soft); color: var(--accent); }
+  .nav-sub {
+    position: absolute; right: max(8px, env(safe-area-inset-right, 0px)); bottom: calc(100% + 8px); z-index: 30;
+    margin: 0; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); min-width: 200px;
+  }
+  .nav-sub a { flex-direction: row; gap: 12px; padding: 12px; font-size: .9rem; text-align: left; flex: none; }
   .lateral { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .lateral .espectro { flex-basis: calc(100% + 2 * max(16px, env(safe-area-inset-left, 0px))); }
   .plegar { display: none; }

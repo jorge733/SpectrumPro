@@ -19,6 +19,8 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
+En el menú, **Posts**, **Tienda** y **Sitio web** están juntos en el submenú **Edición** (se despliega en el menú lateral; con el menú plegado o en el celular se abre como una ventanita). Cada persona ve solo las secciones que su rol permite, y si no puede abrir ninguna, el submenú no aparece.
+
 ### Roles
 
 | Rol | Qué ve y qué puede hacer |

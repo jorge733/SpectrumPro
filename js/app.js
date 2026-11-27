@@ -369,6 +369,8 @@ function mostrarApp() {
   $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
   $$('[data-solo="sitio"]').forEach(el => { el.hidden = !puede.sitio(); });
   $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
+  // Un grupo del menú se muestra solo si la persona puede abrir al menos una de sus secciones.
+  $$('.nav-grupo').forEach(g => { g.hidden = !$$('.nav-sub a', g).some(a => !a.hidden); });
   render();
 }
 
@@ -450,7 +452,57 @@ function aplicarPlegado(valor) {
   b.title = plegado ? 'Expandir menú' : 'Plegar menú';
   if (valor !== undefined) { try { localStorage.setItem(CLAVE_PLEGADO, plegado ? '1' : '0'); } catch { /* sin almacenamiento */ } }
 }
-$('#plegar').addEventListener('click', () => aplicarPlegado(!document.body.classList.contains('menu-plegado')));
+$('#plegar').addEventListener('click', () => { cerrarGrupos(); aplicarPlegado(!document.body.classList.contains('menu-plegado')); });
+
+/* ---------- submenús del menú lateral (Edición: Posts, Tienda y Sitio web) ----------
+   En el menú abierto se despliegan hacia abajo y recuerdan si quedaron abiertos.
+   Con el menú plegado y en la barra inferior del celular se abren como una ventanita flotante. */
+const CLAVE_GRUPOS = 'spectrumpro:menu-grupos';
+const flotante = () => document.body.classList.contains('menu-plegado') || matchMedia('(max-width: 860px)').matches;
+function gruposAbiertos() { try { return JSON.parse(localStorage.getItem(CLAVE_GRUPOS)) || {}; } catch { return {}; } }
+function abrirGrupo(g, abierto, recordar = true) {
+  g.classList.toggle('abierto', abierto);
+  $('.nav-grupo-btn', g).setAttribute('aria-expanded', String(abierto));
+  // Menú plegado: el submenú flota junto al botón (fuera de la barra lateral, que tiene su propio scroll).
+  if (abierto && document.body.classList.contains('menu-plegado')) {
+    const r = $('.nav-grupo-btn', g).getBoundingClientRect();
+    $('.nav-sub', g).style.setProperty('--arriba', Math.min(r.top, innerHeight - 200) + 'px');
+  }
+  if (recordar && !flotante()) {
+    const a = gruposAbiertos(); a[g.dataset.grupo] = abierto;
+    try { localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(a)); } catch { /* sin almacenamiento */ }
+  }
+}
+function cerrarGrupos() { if (flotante()) $$('.nav-grupo.abierto').forEach(g => abrirGrupo(g, false, false)); }
+// Al pintar: marca el grupo de la sección actual y, en el menú abierto, lo despliega.
+function marcarGrupos(v) {
+  const recordados = gruposAbiertos();
+  $$('.nav-grupo').forEach(g => {
+    const activo = $$('.nav-sub a', g).some(a => a.dataset.vista === v);
+    g.classList.toggle('activo', activo);
+    if (flotante()) abrirGrupo(g, false, false);
+    else abrirGrupo(g, activo || recordados[g.dataset.grupo] === true, false);
+  });
+}
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('.nav-grupo-btn');
+  if (b) {
+    const g = b.closest('.nav-grupo');
+    const abrir = !g.classList.contains('abierto');
+    if (flotante()) cerrarGrupos();
+    abrirGrupo(g, abrir);
+    if (abrir && flotante()) $('.nav-sub a:not([hidden])', g)?.focus({ preventScroll: true });
+    return;
+  }
+  // En modo flotante, un clic fuera del submenú o en una de sus secciones lo cierra.
+  if (flotante() && (!ev.target.closest('.nav-grupo') || ev.target.closest('.nav-sub a'))) cerrarGrupos();
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Escape' || !flotante()) return;
+  const g = $('.nav-grupo.abierto');
+  if (g) { abrirGrupo(g, false, false); $('.nav-grupo-btn', g).focus(); }
+});
+matchMedia('(max-width: 860px)').addEventListener?.('change', () => marcarGrupos(vistaActual()));
 
 /* =====================================================================
    Vistas
@@ -1981,6 +2033,7 @@ function render() {
   if (!S.perfil) return;
   const v = vistaActual();
   $$('.nav a').forEach(a => a.dataset.vista === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  if (v !== vistaPintada) marcarGrupos(v);
   const caja = $('#vista');
   VISTAS[v](caja);
   aplicarBuscadores(caja);
