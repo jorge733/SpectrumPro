@@ -437,6 +437,17 @@ window.SITIO_RESPALDO = {
    "orden": 4
   },
   {
+   "tipo": "modulo",
+   "titulo": "Habilidades para la vida diaria con Cocina",
+   "subtitulo": "Gabriela Banderas",
+   "texto": "Taller práctico para avanzar hacia la autonomía y la vida independiente a través de la cocina: planificar un menú, preparar recetas paso a paso, cuidar la higiene y el autocuidado, y colaborar en equipo para compartir lo cocinado.",
+   "lista": "",
+   "nota": "",
+   "imagen": "",
+   "enlace": "",
+   "orden": 5
+  },
+  {
    "tipo": "actividad",
    "titulo": "Cine Club",
    "subtitulo": "",
@@ -468,17 +479,6 @@ window.SITIO_RESPALDO = {
    "imagen": "",
    "enlace": "",
    "orden": 1
-  },
-  {
-   "tipo": "apoyo",
-   "titulo": "Habilidades para la vida diaria con Cocina",
-   "subtitulo": "Terapia Ocupacional",
-   "texto": "",
-   "lista": "",
-   "nota": "",
-   "imagen": "",
-   "enlace": "",
-   "orden": 2
   },
   {
    "tipo": "apoyo",
