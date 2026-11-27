@@ -209,6 +209,24 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .p-colabora { --k: var(--p2); --kk: var(--c2); }
 .p-contacto { --k: var(--p6); --kk: var(--c6); }
 .p-comunidad { --k: var(--p4); --kk: var(--c6); }
+/* Comunidad tiene su propia paleta (violeta nocturno, rosa y menta), igual en modo claro y oscuro,
+   para que se distinga del resto del sitio. */
+body.p-comunidad {
+  --papel: #1a1240; --papel-2: #231a55; --blanco: #2b2163;
+  --tinta: #f5f1ff; --suave: #c8bfe6; --linea: #3d3380;
+  --noche: #0e0a28; --noche-2: #1a1240; --noche-suave: #b9b0da;
+  --acento: #ff8fc8; --sombra: 0 0 0;
+  --k: #ffb3d9; --kk: #5fe3c4;
+  color-scheme: dark;
+}
+.p-comunidad .barra { background: rgb(35 26 85 / .85); }
+.p-comunidad ::selection { background: var(--kk); }
+.p-comunidad .suscripcion { background: #5fe3c4; }
+.p-comunidad .suscripcion .circulo.a { background: #ffb3d9; } .p-comunidad .suscripcion .circulo.b { background: #8f7cff; }
+.p-comunidad .declaracion .video { box-shadow: 10px 10px 0 var(--kk); }
+/* Sobre las cajas claras (cabecera y suscripción) los botones vuelven a ser tinta oscura. */
+.p-comunidad .cabeza .btn.oscuro, .p-comunidad .suscripcion .btn.oscuro { background: var(--sobre); color: #fff; }
+.p-comunidad .cabeza .btn.borde { border-color: var(--sobre); color: var(--sobre); }
 
 /* Tarjetas genéricas */
 .grilla { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
