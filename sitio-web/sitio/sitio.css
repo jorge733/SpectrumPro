@@ -300,6 +300,9 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40px rgb(var(--sombra) / .16); }
 .contacto-item b { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; }
 .contacto-item b::after { content: "↗"; font-size: 22px; letter-spacing: 0; }
+.horario { font-size: 14px; opacity: .75; }
+.contacto-item [data-correo-texto] { word-break: normal; overflow-wrap: anywhere; }
+.contacto-item .horario { display: block; margin-top: -18px; font-size: 15px; font-weight: 600; opacity: .8; }
 .contacto-item span { font: 400 clamp(22px, 2.2vw, 30px)/1.1 var(--display); letter-spacing: -.02em; word-break: break-word; }
 .redes { display: flex; flex-wrap: wrap; gap: 12px; }
 .redes a { display: inline-flex; align-items: center; gap: 10px; padding: 16px 26px; border-radius: 999px; border: 2px solid var(--tinta); text-decoration: none; font: 400 22px/1 var(--display); letter-spacing: -.02em; transition: background .2s, color .2s; }

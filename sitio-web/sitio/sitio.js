@@ -77,7 +77,7 @@
     document.querySelectorAll('[data-telefono]').forEach(el => { el.textContent = telefono(num); });
     if (T.correo) {
       document.querySelectorAll('[data-correo]').forEach(a => { a.href = 'mailto:' + T.correo; if (a.dataset.correo === 'texto') a.textContent = T.correo; });
-      document.querySelectorAll('[data-correo-texto]').forEach(el => { el.textContent = T.correo; });
+      document.querySelectorAll('[data-correo-texto]').forEach(el => { el.innerHTML = esc(T.correo).replace('@', '@<wbr>'); });
     }
     document.querySelectorAll('[data-enlace]').forEach(a => { const v = T[a.dataset.enlace]; if (v) a.href = v; a.hidden = !v; });
     document.querySelectorAll('[data-instagram]').forEach(a => { const v = (T.instagram || '').trim(); a.hidden = !v; if (v) a.href = 'https://instagram.com/' + encodeURIComponent(v); });
