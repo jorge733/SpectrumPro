@@ -10,10 +10,10 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | --- | --- |
 | **Panel** | Sesiones del día, próximos cumpleaños, asistencia semanal y jóvenes con menos de 75% de asistencia |
 | **Asistencia** | Pasar lista por sesión de taller (Presente, Retraso, Ausente, Justificada) y resumen mensual por taller |
-| **Cumpleaños** | Separados en **Jóvenes** y **Profesores**: cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses. Cada profesor añade su propia fecha (en la pestaña Profesores o pulsando su nombre en el menú); dirección también puede ponerla al editar una cuenta |
+| **Cumpleaños** | Aviso por correo cada mañana con los cumpleaños de hoy y de dentro de 3 días (ver «Recordatorio de cumpleaños»). Separados en **Jóvenes** y **Profesores**: cumpleaños de hoy, de los próximos 30 días y calendario de 12 meses. Cada profesor añade su propia fecha (en la pestaña Profesores o pulsando su nombre en el menú); dirección también puede ponerla al editar una cuenta |
 | **Fichas** | Datos personales, programa, talleres, beca, familia, apoyos, datos privados de salud e historial de asistencia |
-| **Talleres semestrales** | Horario semanal, equipo a cargo, inscritos y programa en PDF de los talleres del semestre. Dirección crea y edita talleres y sube el programa |
-| **Talleres de verano** | Lo mismo para los talleres de la temporada de verano |
+| **Talleres semestrales** | Talleres del semestre agrupados por área (FormaPro arriba, luego Centro de Formación, Mentorías, SpectrumOnline, Terapia Ocupacional y al final Arte y Apoyo). Cada taller tiene horario, quién está a cargo y su correo, inscritos, y una ficha con pestañas **Información**, **Programa** (texto y PDF opcional) y **Afiches** (material promocional). Botón **Horario para imprimir**: grilla semanal que se arma sola y se imprime o guarda en PDF (o se descarga para Excel). Dirección crea y edita talleres, sube programa y afiches, y cambia el orden con flechas ↑ ↓ dentro de cada área |
+| **Talleres de verano** | Lo mismo para los talleres de la temporada de verano; su horario imprimible va por fechas |
 | **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
@@ -64,6 +64,8 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261126010000_talleres_temporada.sql` | Separa los talleres en semestrales y de verano |
    | `20261126020000_talleres_verano_2026.sql` | Fechas, objetivo, edad y nota de los talleres; carga los talleres de verano de diciembre 2026 y enero 2027 |
    | `20261126030000_talleres_online.sql` | Modalidad (presencial u online) y enlace de la videollamada; los talleres de SpectrumOnline pasan a online |
+   | `20261127000000_talleres_afiches_programa_correo.sql` | Correo de quien está a cargo, programa escrito, afiches (bucket privado `afiches`) y orden inicial por área |
+   | `20261127010000_recordatorio_cumpleanos.sql` | Aviso de cumpleaños por correo: quién lo recibe y el reloj diario (pg_cron) |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -123,6 +125,27 @@ supabase functions deploy gestionar-usuario
 ```
 
 O desde el panel: **Edge Functions → Deploy a new function → Via Editor**, con el nombre `gestionar-usuario` y el contenido de `supabase/functions/gestionar-usuario/index.ts`.
+
+### 4b. Recordatorio de cumpleaños por correo
+
+1. Ejecuta `supabase/migrations/20261127010000_recordatorio_cumpleanos.sql` (activa `pg_cron` y `pg_net`, genera sola la clave del reloj en Vault y programa el envío diario a las 11:00 UTC, es decir 08:00 de Chile en verano y 07:00 en invierno).
+2. Guarda la API key de Resend como secreto de las funciones (es la misma que se usa como contraseña en **SMTP Settings**; o crea una nueva en resend.com → API Keys):
+
+   ```bash
+   supabase secrets set RESEND_API_KEY=re_xxxxxxxx
+   ```
+
+   (Desde el panel: **Edge Functions → Secrets**.)
+3. Publica la función **sin** verificación de JWT, porque el reloj no inicia sesión (la función comprueba ella misma la clave del reloj o que quien la llama sea de dirección):
+
+   ```bash
+   supabase functions deploy recordatorio-cumpleanos --no-verify-jwt
+   ```
+
+   Desde el panel: crea la función `recordatorio-cumpleanos` con el contenido de `supabase/functions/recordatorio-cumpleanos/index.ts` y desactiva **Enforce JWT verification** en sus ajustes.
+4. En la plataforma, **Cumpleaños → Enviarme una prueba** envía un correo de prueba a tu cuenta.
+
+Lo reciben las cuentas activas que tengan marcado **Recibir por correo el aviso de cumpleaños** (al ejecutar la migración se marca a toda dirección). Se cambia en **Administración → Cuentas del equipo → editar cuenta**. Si un día no hay cumpleaños hoy ni en 3 días, no llega nada.
 
 ### 5. Conectar la página
 
@@ -217,12 +240,14 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |
 | `supabase/seed.sql` | Talleres iniciales |
 | `supabase/functions/gestionar-usuario` | Invitar y eliminar cuentas (solo dirección) |
+| `supabase/functions/recordatorio-cumpleanos` | Correo diario con los cumpleaños de hoy y de dentro de 3 días |
 
 ### Modelo de datos
 
 ```
-perfiles        (id = auth.users.id, email, nombre, rol, activo)
-talleres        (id, nombre, area, dias[], hora_inicio, hora_fin, encargado, color, activo, orden, modalidad, enlace)
+perfiles        (id = auth.users.id, email, nombre, rol, activo, fecha_nac, aviso_cumple)
+talleres        (id, nombre, area, dias[], hora_inicio, hora_fin, encargado, encargado_email, color, activo, orden, modalidad, enlace,
+                 programa_texto, programa_pdf, afiches[{ruta, nombre, tipo}])
 taller_equipo   (taller_id, perfil_id)          → quién pasa lista en cada taller
 alumnos         (id, datos personales, programa, estado, beca, familia, apoyos, alergias…)
 alumnos_privado (alumno_id, medicacion, observaciones)   → solo dirección y terapeutas
@@ -245,7 +270,7 @@ El porcentaje de asistencia cuenta Presente y Retraso como asistencia. Las ausen
 
 ## Pendiente
 
-- Notificaciones push (ausencias seguidas, cumpleaños).
+- Notificaciones push (ausencias seguidas). Los cumpleaños ya avisan por correo.
 - Calendario de feriados y sesiones canceladas.
 - Adjuntar documentos a la ficha (Supabase Storage).
 - Vista para familias.

@@ -744,6 +744,13 @@ function vistaCumpleanos(el) {
         <button type="button" data-tab-cumple="equipo" aria-pressed="${esEquipo}">Equipo <small>${S.cumpleEquipo.length}</small></button>
       </div>
     </header>
+    ${puede.admin() ? (() => {
+      const reciben = S.usuarios.filter(u => u.avisoCumple && u.activo && u.rol);
+      return `<section class="tarjeta mi-cumple aviso-correo">
+        <div class="txt"><b>Aviso por correo</b><br><small class="muted">${reciben.length ? `Cada mañana llega un correo con los cumpleaños de hoy y de dentro de 3 días a: ${esc(reciben.map(u => u.nombre || u.email).join(', '))}.` : 'Nadie recibe el aviso todavía. Actívalo en Administración → editar cuenta → «Recibir por correo el aviso de cumpleaños».'}</small></div>
+        <button type="button" class="btn btn-sec btn-peq" data-accion="probar-recordatorio">Enviarme una prueba</button>
+      </section>`;
+    })() : ''}
     ${esEquipo ? `<section class="tarjeta mi-cumple">
       <div class="txt"><b>Tu cumpleaños</b><br><small class="muted">${S.perfil.fechaNac ? esc(fechaLarga(proximoCumple(S.perfil.fechaNac, t).fecha).replace(/^\S+ /, '')) : 'Aún no has puesto tu fecha de nacimiento.'}</small></div>
       <button type="button" class="btn ${S.perfil.fechaNac ? 'btn-sec ' : ''}btn-peq" data-accion="mi-cumple">${S.perfil.fechaNac ? 'Cambiar' : 'Añadir mi fecha'}</button>
@@ -820,25 +827,64 @@ const vistaTalleres = el => vistaTemporada(el, 'semestral');
 const vistaVerano = el => vistaTemporada(el, 'verano');
 // «Talleres online» junta los talleres online de cualquier temporada; las otras dos secciones muestran solo los presenciales.
 const vistaOnline = el => vistaTemporada(el, 'online');
-function vistaTemporada(el, temporada) {
-  const txt = TEMPORADAS[temporada];
+// Talleres de una sección (semestral, verano u online) que ve la persona, ya ordenados:
+// por área (FormaPro arriba, Arte y Apoyo al final) y, dentro de cada área, por su orden
+// (los de verano, por su primera fecha).
+function talleresDeSeccion(temporada) {
   const eq = puede.esEquipo();
   const online = temporada === 'online';
   const lista = (puede.verTodo() ? S.talleres : eq ? S.talleres.filter(t => t.activo) : misTalleres())
     .filter(t => online ? esOnline(t) : !esOnline(t) && (t.temporada || 'semestral') === temporada);
-  if (temporada === 'verano') lista.sort((a, b) => (a.fechas[0] || '9').localeCompare(b.fechas[0] || '9') || a.orden - b.orden);
+  SPTalleres.ordenarTalleres(lista);
+  if (temporada === 'verano') lista.sort((a, b) => SPTalleres.rangoArea(a.area) - SPTalleres.rangoArea(b.area) || (a.fechas[0] || '9').localeCompare(b.fechas[0] || '9') || a.orden - b.orden);
+  return lista;
+}
+const nombreArea = area => String(area || '').trim() === 'Formación general' ? 'FormaPro · Formación general' : (String(area || '').trim() || 'Sin área');
+// Agrupa una lista ya ordenada en bloques consecutivos de la misma área.
+function porArea(lista) {
+  const grupos = [];
+  for (const t of lista) {
+    const k = nombreArea(t.area);
+    if (grupos.at(-1)?.area !== k) grupos.push({ area: k, talleres: [] });
+    grupos.at(-1).talleres.push(t);
+  }
+  return grupos;
+}
+const correos = txt => String(txt || '').split(/[,;]/).map(c => c.trim()).filter(Boolean);
+const correoValido = c => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(c);
+const enlacesCorreo = txt => correos(txt).map(c => `<a href="mailto:${esc(c)}">${esc(c)}</a>`).join('<br>');
+function vistaTemporada(el, temporada) {
+  const txt = TEMPORADAS[temporada];
+  const eq = puede.esEquipo();
+  const online = temporada === 'online';
+  const lista = talleresDeSeccion(temporada);
+  const grupos = porArea(lista);
+  const mover = puede.admin() && temporada !== 'verano';
   el.innerHTML = `
     <header class="cabecera">
       <div><p class="eyebrow">${lista.length} talleres</p><h1>${puede.verTodo() || eq ? txt.titulo : txt.tuyos}</h1><p>${txt.desc}: ${temporada === 'verano' ? 'fechas, horario' : online ? 'horario, enlace' : 'horario semanal'}${eq ? ' y quién está a cargo.' : ' y asistencia de los últimos 30 días.'}</p></div>
-      ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" ${online ? 'data-modalidad="online"' : `data-temporada="${temporada}"`}>+ Nuevo taller${temporada === 'verano' ? ' de verano' : online ? ' online' : ''}</button>` : ''}
+      <div class="controles">
+        ${lista.length ? `<button type="button" class="btn btn-sec" data-accion="horario" data-temporada="${temporada}">Horario para imprimir</button>` : ''}
+        ${puede.admin() ? `<button type="button" class="btn" data-accion="nuevo-taller" ${online ? 'data-modalidad="online"' : `data-temporada="${temporada}"`}>+ Nuevo taller${temporada === 'verano' ? ' de verano' : online ? ' online' : ''}</button>` : ''}
+      </div>
     </header>
+    ${mover && lista.length > 1 ? '<p class="nota-suave">Los talleres se muestran por área: FormaPro arriba, luego los talleres y al final Arte y Apoyo. Con las flechas ↑ ↓ cambias el orden dentro de cada área.</p>' : ''}
     ${lista.length > 3 ? `<div class="controles">${buscador('talleres-' + temporada, 'Buscar taller, área, día o persona a cargo', { clase: 'buscador-ancho' })}</div>` : ''}
-    ${lista.length ? `<div data-filtrable="talleres-${temporada}"><div class="talleres">${lista.map(t => {
+    ${lista.length ? `<div data-filtrable="talleres-${temporada}">${grupos.map(g => `<section class="grupo-area" data-grupo>
+      ${grupos.length > 1 ? `<h2 class="titulo-grupo">${esc(g.area)} <small>${g.talleres.length}</small></h2>` : ''}
+      <div class="talleres">${g.talleres.map((t, i) => {
       const ins = S.alumnos.filter(a => a.estado === 'activo' && a.talleres.includes(t.id));
       const r = resumen(registros({ taller: t.id, desde: hace30() }));
       const equipo = S.usuarios.filter(u => t.equipo.includes(u.id));
-      return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}" ${qAttr(t.nombre, t.area, t.encargado, t.objetivo, t.dias.map(d => DIAS[d]), t.fechas.length ? fechasTxt(t.fechas) : '', t.edad, equipo.map(u => u.nombre || u.email), t.activo ? '' : 'inactivo', online ? 'online' : '')}>
-        <h2>${esc(t.nombre)}${online && t.temporada === 'verano' ? ' <span class="chip chip-neutro">Verano</span>' : ''}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+      const tienePrograma = t.programaTexto || t.programaPdf;
+      return `<article class="taller ${t.activo ? '' : 'inactivo'}" style="--c:${color(t.color)}" ${qAttr(t.nombre, t.area, nombreArea(t.area), t.encargado, t.encargadoEmail, t.objetivo, t.dias.map(d => DIAS[d]), t.fechas.length ? fechasTxt(t.fechas) : '', t.edad, equipo.map(u => u.nombre || u.email), t.activo ? '' : 'inactivo', online ? 'online' : '')}>
+        <div class="taller-cab">
+          <h2><button type="button" class="enlace-titulo" data-ver-taller="${t.id}">${esc(t.nombre)}</button>${online && t.temporada === 'verano' ? ' <span class="chip chip-neutro">Verano</span>' : ''}${t.activo ? '' : ' <span class="chip chip-neutro">Inactivo</span>'}</h2>
+          ${mover && g.talleres.length > 1 ? `<span class="mover">
+            <button type="button" data-mover-taller="${t.id}" data-dir="-1" data-temporada="${temporada}" aria-label="Subir ${esc(t.nombre)}" title="Subir" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button type="button" data-mover-taller="${t.id}" data-dir="1" data-temporada="${temporada}" aria-label="Bajar ${esc(t.nombre)}" title="Bajar" ${i === g.talleres.length - 1 ? 'disabled' : ''}>↓</button>
+          </span>` : ''}
+        </div>
         ${t.objetivo ? `<p class="objetivo">${esc(t.objetivo)}</p>` : ''}
         <dl>
           <dt>Área</dt><dd>${esc(t.area) || '—'}</dd>
@@ -847,10 +893,12 @@ function vistaTemporada(el, temporada) {
           <dt>Horario</dt><dd class="num">${esc(horario(t))}${t.nota ? `<br><span class="muted">${esc(t.nota)}</span>` : ''}</dd>
           ${t.edad ? `<dt>Edad</dt><dd>${esc(t.edad)}</dd>` : ''}
           <dt>A cargo</dt><dd>${esc(t.encargado) || '—'}</dd>
+          ${t.encargadoEmail ? `<dt>Correo</dt><dd class="enlace">${enlacesCorreo(t.encargadoEmail)}</dd>` : puede.admin() ? `<dt>Correo</dt><dd><button type="button" class="enlace-texto" data-editar-taller="${t.id}" data-foco="t-encargado-email">+ Agregar correo</button></dd>` : ''}
           ${online ? `<dt>Enlace</dt><dd class="enlace">${enlaceValido(t.enlace) ? `<a href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">${esc(t.enlace.replace(/^https:\/\//i, ''))}</a>` : '<span class="muted">Sin enlace</span>'}</dd>` : ''}
           ${puede.admin() ? `<dt>Pasan lista</dt><dd>${equipo.length ? equipo.map(u => esc(u.nombre || u.email)).join(', ') : '<span class="muted">Solo dirección y terapeutas</span>'}</dd>` : ''}
           ${eq ? '' : `<dt>Inscritos</dt><dd class="num">${ins.length}</dd>`}
-          <dt>Programa</dt><dd>${t.programaPdf ? `<button type="button" class="btn btn-sec btn-peq" data-ver-programa="${t.id}">Ver PDF</button><span class="nombre-pdf">${esc(t.programaNombre)}</span>` : '<span class="muted">Sin programa</span>'}</dd>
+          <dt>Programa</dt><dd>${tienePrograma ? `<button type="button" class="btn btn-sec btn-peq" data-ver-taller="${t.id}" data-pestana="programa">Ver programa</button>` : '<span class="muted">Sin programa</span>'}</dd>
+          <dt>Afiches</dt><dd>${t.afiches.length ? `<button type="button" class="btn btn-sec btn-peq" data-ver-taller="${t.id}" data-pestana="afiches">Ver ${t.afiches.length === 1 ? 'afiche' : t.afiches.length + ' afiches'}</button>` : '<span class="muted">Sin material</span>'}</dd>
         </dl>
         <div class="acciones">${eq ? '' : chipPct(r.pct)}${botonUnirse(t)}
           ${puede.pasarLista(t.id) && t.activo ? `<button type="button" class="btn btn-sec btn-peq" data-ir-taller="${t.id}">Pasar lista</button>
@@ -858,7 +906,7 @@ function vistaTemporada(el, temporada) {
           ${puede.admin() ? `<button type="button" class="btn btn-sec btn-peq" data-editar-taller="${t.id}">Editar</button>` : ''}
         </div>
       </article>`;
-    }).join('')}</div>${sinResultados('Ningún taller coincide con la búsqueda.')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : online ? 'Aún no hay talleres online.' + (puede.admin() ? ' Crea el primero con «Nuevo taller online».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
+    }).join('')}</div></section>`).join('')}${sinResultados('Ningún taller coincide con la búsqueda.')}</div>` : `<div class="vacio-grande">${puede.verTodo() ? (temporada === 'verano' ? 'Aún no hay talleres de verano.' + (puede.admin() ? ' Crea el primero con «Nuevo taller de verano».' : '') : online ? 'Aún no hay talleres online.' + (puede.admin() ? ' Crea el primero con «Nuevo taller online».' : '') : 'Aún no hay talleres semestrales.') : `No tienes ${txt.titulo.toLowerCase()} asignados.`}</div>`}`;
 }
 
 /* ---------- Administración ---------- */
@@ -1488,6 +1536,168 @@ async function verPrograma(id) {
   }
 }
 
+/* ---------- detalle del taller: pestañas Información, Programa y Afiches ---------- */
+let urlsAfiches = [];
+const soltarUrlsAfiches = () => { urlsAfiches.forEach(u => u.startsWith('blob:') && URL.revokeObjectURL(u)); urlsAfiches = []; };
+$('#dlg-taller-ver').addEventListener('close', soltarUrlsAfiches);
+function abrirTallerVer(id, pestana = 'info') {
+  const t = taller(id); if (!t) return;
+  const dlg = $('#dlg-taller-ver');
+  soltarUrlsAfiches();
+  const fila = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
+  const pestanas = [['info', 'Información'], ['programa', 'Programa'], ['afiches', `Afiches${t.afiches.length ? ` <small>${t.afiches.length}</small>` : ''}`]];
+  let cuerpo = '';
+  if (pestana === 'info') {
+    cuerpo = `<dl class="dato">
+      ${fila('Área', esc(nombreArea(t.area)))}
+      ${t.fechas.length ? fila('Fechas', `${esc(fechasTxt(t.fechas))} <span class="muted">(${sesionesTxt(t.fechas.length)})</span>`) : fila('Días', t.dias.length ? t.dias.map(d => DIAS[d]).join(', ') : '—')}
+      ${fila('Horario', esc(horario(t)) + (t.nota ? `<br><span class="muted">${esc(t.nota)}</span>` : ''))}
+      ${fila('Edad', esc(t.edad))}
+      ${fila('A cargo', esc(t.encargado) || '—')}
+      ${fila('Correo', t.encargadoEmail ? `<span class="enlace">${enlacesCorreo(t.encargadoEmail)}</span>` : '<span class="muted">Sin correo</span>')}
+      ${esOnline(t) ? fila('Enlace', enlaceValido(t.enlace) ? `<a href="${esc(t.enlace)}" target="_blank" rel="noopener noreferrer">${esc(t.enlace.replace(/^https:\/\//i, ''))}</a>` : '<span class="muted">Sin enlace</span>') : ''}
+    </dl>
+    ${t.objetivo ? `<section><h3>Objetivo</h3><p class="texto-largo">${esc(t.objetivo)}</p></section>` : ''}`;
+  } else if (pestana === 'programa') {
+    cuerpo = `${t.programaTexto ? `<div class="texto-largo programa-escrito">${esc(t.programaTexto)}</div>` : `<p class="vacio">Este taller aún no tiene el programa escrito.${puede.admin() ? ' Agrégalo con «Editar taller».' : ''}</p>`}
+      ${t.programaPdf ? `<p class="no-imprimir"><button type="button" class="btn btn-sec btn-peq" data-ver-programa="${t.id}">Abrir programa en PDF</button> <span class="muted">${esc(t.programaNombre)}</span></p>` : ''}`;
+  } else {
+    cuerpo = t.afiches.length
+      ? `<div class="afiches">${t.afiches.map((a, i) => `<figure class="afiche">
+          <button type="button" class="afiche-vista" data-afiche-abrir="${i}" aria-label="Abrir ${esc(a.nombre)}">${a.tipo === 'application/pdf' ? '<span class="afiche-pdf">PDF</span>' : `<span class="giro giro-peq" aria-hidden="true"></span><img alt="" data-afiche-img="${i}" hidden>`}</button>
+          <figcaption><span title="${esc(a.nombre)}">${esc(a.nombre)}</span><button type="button" class="enlace-texto" data-afiche-bajar="${i}">Descargar</button></figcaption>
+        </figure>`).join('')}</div>`
+      : `<p class="vacio">Aún no hay afiches ni publicidad para este taller.${puede.admin() ? ' Súbelos con «Editar taller».' : ''}</p>`;
+  }
+  dlg.dataset.tallerId = t.id;
+  dlg.innerHTML = `
+    <div class="ficha-cab" style="border-top:5px solid ${color(t.color)}">
+      <div class="txt">
+        <p class="eyebrow">${esc(nombreArea(t.area))}</p>
+        <h2 id="taller-ver-titulo">${esc(t.nombre)}</h2>
+        <div class="pestanas no-imprimir" role="group" aria-label="Secciones del taller">${pestanas.map(([k, v]) => `<button type="button" data-pestana-taller="${k}" aria-pressed="${k === pestana}">${v}</button>`).join('')}</div>
+      </div>
+      <button type="button" class="cerrar no-imprimir" data-cerrar aria-label="Cerrar">×</button>
+    </div>
+    <div class="dlg-cuerpo">${cuerpo}</div>
+    <footer class="dlg-pie no-imprimir">
+      ${pestana === 'programa' && t.programaTexto ? '<button type="button" class="btn btn-sec" data-imprimir>Imprimir programa</button>' : ''}
+      ${puede.admin() ? `<button type="button" class="btn btn-sec" data-editar-taller="${t.id}">Editar taller</button>` : ''}
+      <button type="button" class="btn" data-cerrar>Cerrar</button>
+    </footer>`;
+  if (!dlg.open) dlg.showModal();
+  if (pestana === 'afiches') cargarMiniaturas(t);
+}
+async function cargarMiniaturas(t) {
+  for (const [i, a] of t.afiches.entries()) {
+    if (a.tipo === 'application/pdf') continue;
+    try {
+      const url = await D.urlAfiche(a.ruta);
+      urlsAfiches.push(url);
+      const img = $(`#dlg-taller-ver [data-afiche-img="${i}"]`);
+      if (!img || $('#dlg-taller-ver').dataset.tallerId !== t.id) { if (url.startsWith('blob:')) URL.revokeObjectURL(url); return; }
+      img.onload = () => { img.hidden = false; img.previousElementSibling?.remove(); };
+      img.src = url;
+    } catch { $(`#dlg-taller-ver [data-afiche-img="${i}"]`)?.previousElementSibling?.remove(); }
+  }
+}
+async function abrirAfiche(i, bajar) {
+  const t = taller($('#dlg-taller-ver').dataset.tallerId);
+  const a = t?.afiches[Number(i)]; if (!a) return;
+  const ventana = bajar ? null : window.open('', '_blank');
+  try {
+    const url = await conCarga(() => D.urlAfiche(a.ruta, bajar), bajar ? 'Preparando descarga…' : 'Abriendo…');
+    if (bajar) {
+      const enlace = Object.assign(document.createElement('a'), { href: url, download: a.nombre, rel: 'noopener' });
+      document.body.append(enlace); enlace.click(); enlace.remove();
+      if (url.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } else if (ventana) ventana.location.href = url; else location.href = url;
+  } catch (e) { ventana?.close(); toast(e.message, 'error'); }
+}
+// Imprime solo el diálogo abierto (el navegador ofrece «Guardar como PDF»).
+function imprimirDialogo(dlg) {
+  document.body.classList.add('imprimiendo-dialogo');
+  dlg.classList.add('a-imprimir');
+  const fin = () => { document.body.classList.remove('imprimiendo-dialogo'); dlg.classList.remove('a-imprimir'); };
+  window.addEventListener('afterprint', fin, { once: true });
+  window.print();
+  setTimeout(() => { if (!matchMedia('print').matches) fin(); }, 1500);
+}
+
+/* ---------- horario imprimible ---------- */
+const minutos = h => { const [a, b] = String(h || '').split(':').map(Number); return a * 60 + (b || 0); };
+function abrirHorario(temporada) {
+  ui.horarioTemporada = temporada;
+  const dlg = $('#dlg-horario');
+  const incluirInactivos = !!ui.horarioInactivos;
+  const lista = talleresDeSeccion(temporada).filter(t => incluirInactivos || t.activo);
+  const titulo = `Horario · ${TEMPORADAS[temporada].titulo}`;
+  const celda = t => `<div class="h-taller" style="--c:${color(t.color)}"><b>${esc(t.nombre)}</b>${t.encargado ? `<small>${esc(t.encargado)}</small>` : ''}${esOnline(t) && temporada !== 'online' ? '<small>Online</small>' : ''}</div>`;
+  const conHora = lista.filter(t => t.horaInicio), sinHora = lista.filter(t => !t.horaInicio);
+  let tabla = '';
+  if (temporada === 'verano') {
+    const fechas = [...new Set(conHora.concat(sinHora).flatMap(t => t.fechas))].sort();
+    tabla = fechas.length ? `<table class="horario horario-fechas">
+      <thead><tr><th>Fecha</th><th>Horario</th><th>Taller</th></tr></thead>
+      <tbody>${fechas.map(f => {
+        const del = lista.filter(t => t.fechas.includes(f)).sort((a, b) => minutos(a.horaInicio || '99') - minutos(b.horaInicio || '99'));
+        return del.map((t, k) => `<tr>${k === 0 ? `<th scope="row" rowspan="${del.length}">${esc(fechaLarga(deISO(f)))}</th>` : ''}<td class="num">${esc(horario(t))}</td><td>${celda(t)}</td></tr>`).join('');
+      }).join('')}</tbody></table>` : '<p class="vacio">Los talleres de verano aún no tienen fechas.</p>';
+  } else {
+    // Columnas: lunes a sábado (y domingo si algún taller lo usa). Filas: cada tramo de horario distinto.
+    const dias = [1, 2, 3, 4, 5, 6].concat(lista.some(t => t.dias.includes(0)) ? [0] : []);
+    const tramos = [...new Set(conHora.map(t => `${t.horaInicio}|${t.horaFin || ''}`))].sort((a, b) => minutos(a.split('|')[0]) - minutos(b.split('|')[0]) || minutos(a.split('|')[1] || '99') - minutos(b.split('|')[1] || '99'));
+    tabla = tramos.length ? `<table class="horario">
+      <thead><tr><th>Horario</th>${dias.map(d => `<th>${DIAS[d]}</th>`).join('')}</tr></thead>
+      <tbody>${tramos.map(tr => {
+        const [ini, fin] = tr.split('|');
+        return `<tr><th scope="row" class="num">${esc(ini)}${fin ? `<br>${esc(fin)}` : ''}</th>${dias.map(d => `<td>${conHora.filter(t => t.horaInicio === ini && (t.horaFin || '') === fin && t.dias.includes(d)).map(celda).join('')}</td>`).join('')}</tr>`;
+      }).join('')}</tbody></table>` : '<p class="vacio">Ningún taller tiene horario todavía.</p>';
+  }
+  dlg.innerHTML = `
+    <header class="dlg-cab">
+      <div><h2 id="horario-titulo">${esc(titulo)}</h2><p class="muted solo-imprimir">SpectrumPro · actualizado el ${esc(fechaLarga(hoy()))}</p></div>
+      <button type="button" class="cerrar no-imprimir" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+    <div class="dlg-cuerpo">
+      <p class="nota-suave no-imprimir">Se arma solo con los días y horas de cada taller: cuando cambias un horario en «Editar», este horario se actualiza. Para descargarlo, presiona «Imprimir o guardar PDF» y elige «Guardar como PDF».</p>
+      ${puede.verTodo() && talleresDeSeccion(temporada).some(t => !t.activo) ? `<label class="check-suelto no-imprimir"><input type="checkbox" id="horario-inactivos" ${incluirInactivos ? 'checked' : ''}> Incluir talleres inactivos</label>` : ''}
+      <div class="horario-caja">${tabla}</div>
+      ${sinHora.length && temporada !== 'verano' ? `<section><h3>Sin horario definido</h3><p>${sinHora.map(t => esc(t.nombre)).join(' · ')}</p></section>` : ''}
+    </div>
+    <footer class="dlg-pie no-imprimir">
+      <button type="button" class="btn btn-sec" data-accion="horario-csv">Descargar para Excel</button>
+      <button type="button" class="btn btn-sec" data-cerrar>Cerrar</button>
+      <button type="button" class="btn" data-imprimir>Imprimir o guardar PDF</button>
+    </footer>`;
+  if (!dlg.open) dlg.showModal();
+}
+function horarioCsv() {
+  const temporada = ui.horarioTemporada;
+  const lista = talleresDeSeccion(temporada).filter(t => ui.horarioInactivos || t.activo);
+  const filas = [['Área', 'Taller', temporada === 'verano' ? 'Fechas' : 'Días', 'Inicio', 'Término', 'A cargo', 'Correo', 'Modalidad']]
+    .concat(lista.map(t => [nombreArea(t.area), t.nombre, t.fechas.length ? t.fechas.join(' | ') : t.dias.map(d => DIAS[d]).join(', '), t.horaInicio, t.horaFin, t.encargado, t.encargadoEmail, esOnline(t) ? 'Online' : 'Presencial']));
+  descargar(`spectrumpro-horario-${temporada}-${iso(hoy())}.csv`, csv(filas), 'text/csv;charset=utf-8');
+}
+
+/* ---------- orden de los talleres (flechas, dentro de cada área) ---------- */
+async function moverTaller(id, dir, temporada) {
+  const lista = talleresDeSeccion(temporada);
+  const i = lista.findIndex(t => t.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= lista.length || nombreArea(lista[i].area) !== nombreArea(lista[j].area)) return;
+  // Se intercambian en la lista completa y se renumera todo; solo se guardan los que cambian.
+  const todos = SPTalleres.ordenarTalleres([...S.talleres]);
+  const a = todos.indexOf(lista[i]), b = todos.indexOf(lista[j]);
+  [todos[a], todos[b]] = [todos[b], todos[a]];
+  const antes = new Map(S.talleres.map(t => [t.id, t.orden]));
+  todos.forEach((t, k) => { t.orden = k + 1; });
+  S.talleres = todos;
+  render();
+  const cambios = todos.filter(t => antes.get(t.id) !== t.orden).map(t => ({ id: t.id, orden: t.orden }));
+  try { await D.ordenarTalleres(cambios); }
+  catch (e) { toast(e.message, 'error'); try { S.talleres = await D.talleres(); } catch { /* sin conexión */ } render(); }
+}
+
 /* ---------- formulario de taller ---------- */
 let editandoTaller = null;
 let fechasTaller = [];
@@ -1520,7 +1730,8 @@ $('#t-fechas').addEventListener('click', ev => {
   fechasTaller = fechasTaller.filter(f => f !== b.dataset.quitarFecha);
   pintarFechasTaller();
 });
-function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial') {
+function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial', foco = 't-nombre') {
+  $('#dlg-taller-ver').open && $('#dlg-taller-ver').close();
   editandoTaller = id;
   const t = id ? taller(id) : null;
   $('#form-taller').reset();
@@ -1536,6 +1747,11 @@ function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial
   $('#t-horaInicio').value = t?.horaInicio || '';
   $('#t-horaFin').value = t?.horaFin || '';
   $('#t-encargado').value = t?.encargado || '';
+  $('#t-encargado-email').value = t?.encargadoEmail || '';
+  $('#t-programa-texto').value = t?.programaTexto || '';
+  $('#t-afiches-actuales').innerHTML = t?.afiches.length
+    ? `<p class="nota-suave">Marca los que quieras quitar. Para agregar más, elígelos abajo (puedes elegir varios a la vez).</p>${t.afiches.map(a => `<label class="check-suelto"><input type="checkbox" name="quitarAfiche" value="${esc(a.ruta)}"> Quitar «${esc(a.nombre)}»</label>`).join('')}`
+    : '<p class="nota-suave">Aún no hay afiches. Elige uno o varios archivos.</p>';
   $('#t-activo').checked = t ? t.activo : true;
   $('#t-edad').value = t?.edad || '';
   $('#t-nota').value = t?.nota || '';
@@ -1552,7 +1768,7 @@ function abrirTaller(id = null, temporada = 'semestral', modalidad = 'presencial
   $('#t-programa-quitar-box').hidden = !t?.programaPdf;
   $('#t-eliminar').hidden = !t;
   $('#dlg-taller').showModal();
-  $('#t-nombre').focus();
+  ($(`#${foco}`) || $('#t-nombre')).focus();
 }
 $('#form-taller').addEventListener('submit', async ev => {
   ev.preventDefault();
@@ -1560,6 +1776,7 @@ $('#form-taller').addEventListener('submit', async ev => {
   const t = {
     id: editandoTaller, nombre: String(fd.get('nombre')).trim(), area: String(fd.get('area')).trim(), color: fd.get('color'),
     horaInicio: fd.get('horaInicio'), horaFin: fd.get('horaFin'), encargado: String(fd.get('encargado')).trim(),
+    encargadoEmail: correos(fd.get('encargadoEmail')).join(', '), programaTexto: String(fd.get('programaTexto') || '').trim(),
     activo: $('#t-activo').checked, dias: fd.getAll('dias').map(Number), equipo: fd.getAll('equipo'), temporada: fd.get('temporada'),
     orden: editandoTaller ? taller(editandoTaller).orden : S.talleres.length + 1,
     edad: String(fd.get('edad')).trim(), nota: String(fd.get('nota')).trim(), objetivo: String(fd.get('objetivo')).trim(),
@@ -1578,6 +1795,14 @@ $('#form-taller').addEventListener('submit', async ev => {
   const quitarPdf = !pdf && $('#t-programa-quitar').checked;
   if (pdf && pdf.type !== 'application/pdf' && !/\.pdf$/i.test(pdf.name)) return mostrar('El programa debe ser un archivo PDF.');
   if (pdf && pdf.size > 10 * 1024 * 1024) return mostrar('El PDF es demasiado grande (máximo 10 MB).');
+  const malo = correos(t.encargadoEmail).find(c => !correoValido(c));
+  if (malo) return mostrar(`Revisa el correo «${malo}». Si son varios, sepáralos con coma.`);
+  const afichesNuevos = [...$('#t-afiches').files];
+  const afichesQuitar = fd.getAll('quitarAfiche').map(String);
+  const afMalo = afichesNuevos.find(a => !/^image\/(jpeg|png|webp|gif)$|^application\/pdf$/.test(a.type));
+  if (afMalo) return mostrar(`«${afMalo.name}» no es una imagen (JPG, PNG, WebP, GIF) ni un PDF.`);
+  const afGrande = afichesNuevos.find(a => a.size > 10 * 1024 * 1024);
+  if (afGrande) return mostrar(`«${afGrande.name}» es demasiado grande (máximo 10 MB).`);
   if (t.modalidad !== 'online') t.enlace = '';
   else if (t.enlace && !enlaceValido(t.enlace)) return mostrar('El enlace debe ser una dirección completa que empiece con https://');
   const btn = ev.submitter;
@@ -1588,7 +1813,9 @@ $('#form-taller').addEventListener('submit', async ev => {
       editandoTaller = id;
       if (pdf) await D.subirPrograma(id, pdf);
       else if (quitarPdf) await D.quitarPrograma(id);
-    });
+      if (afichesQuitar.length) await D.quitarAfiches(id, afichesQuitar);
+      if (afichesNuevos.length) await D.subirAfiches(id, afichesNuevos);
+    }, afichesNuevos.length || pdf ? 'Subiendo archivos…' : 'Guardando…');
     S.talleres = await D.talleres();
     $('#dlg-taller').close();
     toast(t.id ? 'Taller actualizado' : 'Taller creado');
@@ -1596,7 +1823,8 @@ $('#form-taller').addEventListener('submit', async ev => {
   } catch (e) {
     mostrar(e.message);
     // Si el taller se creó pero falló el PDF, se recarga para que el reintento lo actualice en vez de duplicarlo.
-    if (editandoTaller && !taller(editandoTaller)) { try { S.talleres = await D.talleres(); render(); } catch { /* sin conexión */ } }
+    // Si el taller se guardó pero falló un archivo, se recarga para que el reintento lo actualice en vez de duplicarlo.
+    if (editandoTaller) { try { S.talleres = await D.talleres(); render(); } catch { /* sin conexión */ } }
   }
   finally { botonOcupado(btn, false); }
 });
@@ -1628,6 +1856,7 @@ function abrirUsuario(id = null) {
   $('#u-rol').value = u?.rol || 'tallerista';
   $('#u-fechaNac').value = u?.fechaNac || '';
   $('#u-fechaNac').max = iso(hoy());
+  $('#u-aviso-cumple').checked = u ? !!u.avisoCumple : false;
   $('#u-activo').checked = u ? (u.rol ? u.activo : true) : true;
   $('#u-activo-box').hidden = !u;
   $('#u-nota').hidden = !!u;
@@ -1644,7 +1873,7 @@ $('#u-rol').addEventListener('change', mostrarTalleresUsuario);
 $('#form-usuario').addEventListener('submit', async ev => {
   ev.preventDefault();
   const fd = new FormData(ev.target);
-  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres'), fechaNac: String(fd.get('fechaNac') || '') };
+  const datos = { nombre: String(fd.get('nombre')).trim(), email: $('#u-email').value.trim().toLowerCase(), rol: fd.get('rol'), activo: $('#u-activo').checked, talleres: fd.getAll('talleres'), fechaNac: String(fd.get('fechaNac') || ''), avisoCumple: $('#u-aviso-cumple').checked };
   if (datos.rol !== 'tallerista') datos.talleres = [];
   const err = $('#usuario-error');
   const mostrar = m => { err.textContent = m; err.hidden = false; };
@@ -1828,7 +2057,14 @@ document.addEventListener('click', async ev => {
     location.hash === '#asistencia' ? render() : (location.hash = 'asistencia');
     return;
   }
-  if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller); return; }
+  if ((x = el('[data-editar-taller]'))) { abrirTaller(x.dataset.editarTaller, undefined, undefined, x.dataset.foco); return; }
+  if ((x = el('[data-ver-taller]'))) { abrirTallerVer(x.dataset.verTaller, x.dataset.pestana); return; }
+  if ((x = el('[data-pestana-taller]'))) { abrirTallerVer($('#dlg-taller-ver').dataset.tallerId, x.dataset.pestanaTaller); return; }
+  if ((x = el('[data-afiche-abrir]'))) { abrirAfiche(x.dataset.aficheAbrir, false); return; }
+  if ((x = el('[data-afiche-bajar]'))) { abrirAfiche(x.dataset.aficheBajar, true); return; }
+  if ((x = el('[data-imprimir]'))) { imprimirDialogo(x.closest('dialog')); return; }
+  if ((x = el('[data-mover-taller]'))) { moverTaller(x.dataset.moverTaller, Number(x.dataset.dir), x.dataset.temporada); return; }
+  if (t.id === 'horario-inactivos') { ui.horarioInactivos = t.checked; abrirHorario(ui.horarioTemporada); return; }
   if ((x = el('[data-ver-programa]'))) { verPrograma(x.dataset.verPrograma); return; }
   if ((x = el('[data-mover-producto]'))) { moverProducto(x.dataset.moverProducto, Number(x.dataset.dir)); return; }
   if ((x = el('[data-producto]'))) { abrirProducto(x.dataset.producto); return; }
@@ -1862,6 +2098,14 @@ document.addEventListener('click', async ev => {
     if (acc === 'mi-cumple') abrirMiCumple();
     if (acc === 'nueva-ficha') abrirFormulario();
     if (acc === 'nuevo-taller') abrirTaller(null, x.dataset.temporada, x.dataset.modalidad);
+    if (acc === 'horario') abrirHorario(x.dataset.temporada);
+    if (acc === 'horario-csv') horarioCsv();
+    if (acc === 'probar-recordatorio') {
+      try {
+        const r = await conCarga(() => D.probarRecordatorio(), 'Enviando correo de prueba…');
+        toast(`Correo de prueba enviado a ${S.perfil.email || 'tu correo'}${r?.hoy || r?.pronto ? '' : ' (hoy no hay cumpleaños, así que llega sin nombres)'}`);
+      } catch (e) { toast(e.message, 'error'); }
+    }
     if (acc === 'invitar') abrirUsuario();
     if (acc === 'nuevo-producto') abrirProducto();
     if (acc === 'exportar-fichas') exportarFichas();

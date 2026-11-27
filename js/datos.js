@@ -14,6 +14,19 @@
   const tocaEl = (t, d) => (t.fechas?.length ? t.fechas.includes(iso(d)) : t.dias.includes(d.getDay()));
   window.SPFechas = { pad, iso, hoy, sumarDias, tocaEl };
 
+  /* ---------- orden de los talleres ----------
+     Primero por área (FormaPro arriba, Arte y Apoyo al final) y, dentro de cada área, por «orden». */
+  const AREAS_ORDEN = ['Formación general', 'Centro de Formación', 'Mentorías', 'SpectrumOnline', 'Terapia Ocupacional', 'Arte y Apoyo'];
+  const rangoArea = area => { const i = AREAS_ORDEN.indexOf(String(area || '').trim()); return i < 0 ? AREAS_ORDEN.length : i; };
+  const ordenarTalleres = lista => lista.sort((a, b) => rangoArea(a.area) - rangoArea(b.area) || (a.orden ?? 0) - (b.orden ?? 0) || String(a.nombre).localeCompare(String(b.nombre), 'es'));
+  window.SPTalleres = { AREAS_ORDEN, rangoArea, ordenarTalleres };
+  const TIPOS_AFICHE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+  const extAfiche = a => ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'application/pdf': 'pdf' }[a.type] || 'bin');
+  function validarAfiche(a, max) {
+    if (!TIPOS_AFICHE.includes(a.type)) throw new Error(`«${a.name}» no es una imagen (JPG, PNG, WebP, GIF) ni un PDF.`);
+    if (a.size > max) throw new Error(`«${a.name}» es demasiado grande (máximo ${Math.round(max / 1048576)} MB).`);
+  }
+
   const urlBase = () => location.origin + location.pathname;
 
   /* ---------- conversión fila (snake_case) ⇄ objeto (camelCase) ---------- */
@@ -45,6 +58,8 @@
     modalidad: f.modalidad || 'presencial', enlace: f.enlace || '',
     fechas: (f.fechas || []).slice().sort(), objetivo: f.objetivo || '', edad: f.edad || '', nota: f.nota || '',
     programaPdf: f.programa_pdf || null, programaNombre: f.programa_nombre || '',
+    encargadoEmail: f.encargado_email || '', programaTexto: f.programa_texto || '',
+    afiches: Array.isArray(f.afiches) ? f.afiches : [],
     equipo: equipo.filter(e => e.taller_id === f.id).map(e => e.perfil_id),
   });
   const tallerAFila = t => ({
@@ -53,6 +68,7 @@
     temporada: t.temporada === 'verano' ? 'verano' : 'semestral',
     modalidad: t.modalidad === 'online' ? 'online' : 'presencial', enlace: t.modalidad === 'online' ? t.enlace || '' : '',
     fechas: t.fechas || [], objetivo: t.objetivo || '', edad: t.edad || '', nota: t.nota || '',
+    encargado_email: t.encargadoEmail || '', programa_texto: t.programaTexto || '',
   });
 
   const CAMPOS_PRODUCTO = ['nombre', 'descripcion', 'categoria', 'precio', 'variantes', 'imagen', 'visible', 'agotado', 'orden'];
@@ -77,6 +93,8 @@
     if (/maximum allowed size|Payload too large|exceeded the maximum/i.test(m)) return new Error('El PDF es demasiado grande (máximo 10 MB).');
     if (/mime type|invalid_mime/i.test(m)) return new Error('El programa debe ser un archivo PDF.');
     if (/Bucket not found/i.test(m)) return new Error('Falta crear el espacio de archivos «programas» en Supabase (ver README).');
+    if (/talleres_encargado_email_formato/i.test(m)) return new Error('Revisa el correo de la persona a cargo (si son varios, sepáralos con coma).');
+    if (/encargado_email|programa_texto|afiches|aviso_cumple/i.test(m) && /schema cache|does not exist|column/i.test(m)) return new Error('Falta actualizar la base de datos: ejecuta las migraciones de noviembre 2026 (ver README).');
     if (/duplicate key/i.test(m)) return new Error('Ese registro ya existe.');
     if (/tienda_(productos|ajustes)|bucket not found/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error('Falta activar la tienda en Supabase: ejecuta supabase/migrations/20261124060000_tienda.sql en el SQL Editor.');
     if (/tienda_whatsapp_formato/i.test(m)) return new Error('El WhatsApp debe tener solo números, con el código de país (por ejemplo 56912345678).');
@@ -132,7 +150,11 @@
           todo(() => sb.from('talleres').select('*').order('orden').order('nombre')),
           todo(() => sb.from('taller_equipo').select('*').order('taller_id').order('perfil_id')),
         ]);
-        return t.map(f => filaATaller(f, e));
+        return ordenarTalleres(t.map(f => filaATaller(f, e)));
+      },
+      // Guarda solo el «orden» de los talleres que cambiaron: [{ id, orden }].
+      async ordenarTalleres(cambios) {
+        await Promise.all(cambios.map(c => sb.from('talleres').update({ orden: c.orden }).eq('id', c.id).then(ok)));
       },
       async guardarTaller(t) {
         let id = t.id;
@@ -142,9 +164,39 @@
         return id;
       },
       async eliminarTaller(id) {
-        const f = ok(await sb.from('talleres').select('programa_pdf').eq('id', id).maybeSingle());
+        const f = ok(await sb.from('talleres').select('programa_pdf, afiches').eq('id', id).maybeSingle());
         ok(await sb.from('talleres').delete().eq('id', id));
         if (f?.programa_pdf) await sb.storage.from('programas').remove([f.programa_pdf]);
+        const rutas = (f?.afiches || []).map(x => x.ruta).filter(Boolean);
+        if (rutas.length) await sb.storage.from('afiches').remove(rutas);
+      },
+      // Material promocional (afiches): imágenes o PDF en el bucket privado «afiches».
+      // En la tabla se guarda la lista [{ ruta, nombre, tipo }].
+      async subirAfiches(tallerId, archivos) {
+        archivos.forEach(a => validarAfiche(a, 10 * 1048576));
+        const subidos = [];
+        try {
+          for (const a of archivos) {
+            const ruta = `${tallerId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extAfiche(a)}`;
+            ok(await sb.storage.from('afiches').upload(ruta, a, { contentType: a.type, upsert: false }));
+            subidos.push({ ruta, nombre: a.name, tipo: a.type });
+          }
+          const actual = ok(await sb.from('talleres').select('afiches').eq('id', tallerId).single()).afiches || [];
+          ok(await sb.from('talleres').update({ afiches: [...actual, ...subidos] }).eq('id', tallerId));
+        } catch (e) {
+          if (subidos.length) await sb.storage.from('afiches').remove(subidos.map(x => x.ruta));
+          if (/Bucket not found/i.test(e.message)) throw new Error('Falta crear el espacio de archivos «afiches» en Supabase: ejecuta la migración 20261127000000 (ver README).');
+          throw e;
+        }
+      },
+      async quitarAfiches(tallerId, rutas) {
+        if (!rutas.length) return;
+        const actual = ok(await sb.from('talleres').select('afiches').eq('id', tallerId).single()).afiches || [];
+        ok(await sb.from('talleres').update({ afiches: actual.filter(x => !rutas.includes(x.ruta)) }).eq('id', tallerId));
+        await sb.storage.from('afiches').remove(rutas);
+      },
+      async urlAfiche(ruta, descargar = false) {
+        return ok(await sb.storage.from('afiches').createSignedUrl(ruta, 3600, descargar ? { download: true } : undefined)).signedUrl;
       },
       // Programa del taller (PDF en el bucket privado "programas").
       async subirPrograma(tallerId, archivo) {
@@ -234,7 +286,7 @@
           todo(() => sb.from('perfiles').select('*').order('nombre').order('id')),
           todo(() => sb.from('taller_equipo').select('*').order('taller_id').order('perfil_id')),
         ]);
-        return p.map(u => ({ ...u, fechaNac: u.fecha_nac || '', talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
+        return p.map(u => ({ ...u, fechaNac: u.fecha_nac || '', avisoCumple: !!u.aviso_cumple, talleres: e.filter(x => x.perfil_id === u.id).map(x => x.taller_id) }));
       },
       async invitar(datos) {
         // La función publicada puede ser anterior al rol «equipo»: se invita como tallerista sin
@@ -250,12 +302,24 @@
         const extra = {};
         if (datos.fechaNac) extra.fecha_nac = datos.fechaNac;
         if (datos.rol === 'equipo') extra.rol = 'equipo';
+        if (datos.avisoCumple) extra.aviso_cumple = true;
         if (Object.keys(extra).length && data?.id) ok(await sb.from('perfiles').update(extra).eq('id', data.id));
         return data;
       },
       async actualizarUsuario(id, u) {
-        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo, fecha_nac: u.fechaNac || null }).eq('id', id));
+        ok(await sb.from('perfiles').update({ nombre: u.nombre, rol: u.rol, activo: u.activo, fecha_nac: u.fechaNac || null, aviso_cumple: !!u.avisoCumple }).eq('id', id));
         await sincronizar('taller_equipo', 'perfil_id', id, 'taller_id', u.rol === 'tallerista' ? u.talleres : []);
+      },
+      // Envía ahora un correo de prueba del recordatorio de cumpleaños a quien lo pide.
+      async probarRecordatorio() {
+        const { data, error } = await sb.functions.invoke('recordatorio-cumpleanos', { body: {} });
+        if (error) {
+          let m = error.message;
+          try { m = (await error.context.json()).error || m; } catch { /* sin cuerpo */ }
+          if (/Failed to send a request|not found|404/i.test(m)) m = 'Falta publicar la función «recordatorio-cumpleanos» en Supabase (ver README).';
+          throw traducir(m);
+        }
+        return data;
       },
       async eliminarUsuario(id) {
         const { error } = await sb.functions.invoke('gestionar-usuario', { body: { accion: 'eliminar', id } });
@@ -333,6 +397,7 @@
   const CLAVE_DEMO = 'spectrumpro:demo:v10';
   const CLAVE_SESION = 'spectrumpro:demo:sesion';
   const CLAVE_PROGRAMA = id => `spectrumpro:demo:programa:${id}`;
+  const CLAVE_AFICHE = ruta => `spectrumpro:demo:afiche:${ruta}`;
   const LIMITE_DEMO = 3 * 1024 * 1024; // localStorage tiene poco espacio
   const leerArchivo = archivo => new Promise((ok, mal) => {
     const r = new FileReader();
@@ -522,7 +587,40 @@
         auditar('update', 'perfiles', { campos: ['fecha_nac'] });
         guardar();
       },
-      async talleres() { await espera(); return copia(db.talleres).map(t => ({ fechas: [], objetivo: '', edad: '', nota: '', ...t, temporada: t.temporada || 'semestral', modalidad: t.modalidad || 'presencial', enlace: t.enlace || '' })); },
+      async talleres() { await espera(); return ordenarTalleres(copia(db.talleres).map(t => ({ fechas: [], objetivo: '', edad: '', nota: '', encargadoEmail: '', programaTexto: '', afiches: [], ...t, temporada: t.temporada || 'semestral', modalidad: t.modalidad || 'presencial', enlace: t.enlace || '' }))); },
+      async ordenarTalleres(cambios) {
+        if (!esAdmin()) prohibido();
+        cambios.forEach(c => { const t = db.talleres.find(x => x.id === c.id); if (t) t.orden = c.orden; });
+        guardar();
+      },
+      async subirAfiches(tallerId, archivos) {
+        if (!esAdmin()) prohibido();
+        archivos.forEach(a => validarAfiche(a, LIMITE_DEMO));
+        const t = db.talleres.find(x => x.id === tallerId);
+        t.afiches = t.afiches || [];
+        for (const a of archivos) {
+          const ruta = `${tallerId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extAfiche(a)}`;
+          try { localStorage.setItem(CLAVE_AFICHE(ruta), await leerArchivo(a)); }
+          catch { guardar(); throw new Error('No queda espacio en este navegador para guardar más afiches de demostración.'); }
+          t.afiches.push({ ruta, nombre: a.name, tipo: a.type });
+        }
+        auditar('update', 'talleres', { taller: t.nombre, campos: ['afiches'] });
+        guardar();
+      },
+      async quitarAfiches(tallerId, rutas) {
+        if (!esAdmin()) prohibido();
+        const t = db.talleres.find(x => x.id === tallerId);
+        rutas.forEach(r => escribir(CLAVE_AFICHE(r), null));
+        t.afiches = (t.afiches || []).filter(x => !rutas.includes(x.ruta));
+        auditar('update', 'talleres', { taller: t.nombre, campos: ['afiches'] });
+        guardar();
+      },
+      async urlAfiche(ruta) {
+        const datos = leer(CLAVE_AFICHE(ruta));
+        if (!datos) throw new Error('No se encontró el archivo.');
+        return URL.createObjectURL(await (await fetch(datos)).blob());
+      },
+      async probarRecordatorio() { throw new Error('En modo demostración no se envían correos. Con Supabase conectado, este botón te envía un correo de prueba.'); },
 
       async guardarTaller(t) {
         if (!esAdmin()) prohibido();
@@ -541,6 +639,7 @@
         db.alumnos.forEach(a => { a.talleres = a.talleres.filter(x => x !== id); });
         db.asistencia = db.asistencia.filter(r => r.tallerId !== id);
         escribir(CLAVE_PROGRAMA(id), null);
+        (t?.afiches || []).forEach(x => escribir(CLAVE_AFICHE(x.ruta), null));
         auditar('delete', 'talleres', { taller: t?.nombre });
         guardar();
       },
@@ -619,14 +718,14 @@
       async usuarios() {
         if (!esAdmin()) prohibido();
         await espera();
-        return copia(db.perfiles.map(u => ({ ...u, talleres: db.talleres.filter(t => t.equipo.includes(u.id)).map(t => t.id) })));
+        return copia(db.perfiles.map(u => ({ ...u, avisoCumple: u.avisoCumple ?? u.rol === 'admin', talleres: db.talleres.filter(t => t.equipo.includes(u.id)).map(t => t.id) })));
       },
-      async invitar({ email, nombre, rol, talleres, fechaNac }) {
+      async invitar({ email, nombre, rol, talleres, fechaNac, avisoCumple }) {
         if (!esAdmin()) prohibido();
         await espera(400);
         if (db.perfiles.some(p => p.email.toLowerCase() === email.toLowerCase())) throw new Error('Ya existe una cuenta con ese correo.');
         const id = nuevoId();
-        db.perfiles.push({ id, email, nombre, rol, activo: true, fechaNac: fechaNac || '' });
+        db.perfiles.push({ id, email, nombre, rol, activo: true, fechaNac: fechaNac || '', avisoCumple: !!avisoCumple });
         db.talleres.forEach(t => { if (talleres.includes(t.id)) t.equipo.push(id); });
         auditar('insert', 'perfiles', { email, rol });
         guardar();
@@ -637,7 +736,7 @@
         const p = db.perfiles.find(x => x.id === id);
         const quedan = db.perfiles.filter(x => x.rol === 'admin' && x.activo && x.id !== id).length;
         if (p.rol === 'admin' && p.activo && (u.rol !== 'admin' || !u.activo) && !quedan) throw new Error('Debe quedar al menos una persona con rol admin activa.');
-        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo, fechaNac: u.fechaNac || '' });
+        Object.assign(p, { nombre: u.nombre, rol: u.rol, activo: u.activo, fechaNac: u.fechaNac || '', avisoCumple: !!u.avisoCumple });
         db.talleres.forEach(t => {
           t.equipo = t.equipo.filter(x => x !== id);
           if (u.rol === 'tallerista' && u.talleres.includes(t.id)) t.equipo.push(id);
@@ -693,7 +792,7 @@
       },
       async borrarFotoProducto() { },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
-      async restablecer() { db.talleres.forEach(t => escribir(CLAVE_PROGRAMA(t.id), null)); db = crearDemo(); guardar(); },
+      async restablecer() { db.talleres.forEach(t => { escribir(CLAVE_PROGRAMA(t.id), null); (t.afiches || []).forEach(x => escribir(CLAVE_AFICHE(x.ruta), null)); }); db = crearDemo(); guardar(); },
 
       /* Estudio de posts: en la demostración las fotos se guardan dentro del post como data URL. */
       async posts() {
