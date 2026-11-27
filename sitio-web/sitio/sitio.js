@@ -34,7 +34,7 @@
         ${hayMas ? `<details><summary>Objetivos y resultado</summary>
           ${lista.length ? `<ul>${lista.map(o => `<li>${esc(o)}</li>`).join('')}</ul>` : ''}
           ${x.nota ? `<p class="resultado"><b>Resultado</b>${esc(x.nota)}</p>` : ''}
-          ${x.enlace ? `<p class="resultado"><a class="enlace-flecha" href="${esc(x.enlace)}" target="_blank" rel="noopener">Ver video ↗</a></p>` : ''}
+          ${x.enlace ? `<p class="resultado"><a class="enlace-flecha" href="${esc(x.enlace)}" target="_blank" rel="noopener">Ver video ▶</a></p>` : ''}
         </details>` : ''}</div></article>`;
     },
     mentoria: (x, i) => `<article class="tarjeta revelar" style="--i:${i}"><h3>${esc(x.titulo)}</h3>${x.subtitulo ? `<span class="quien">Con ${esc(x.subtitulo)}</span>` : ''}${parrafos(x.texto)}</article>`,
@@ -45,7 +45,7 @@
     produccion: (x, i) => `<a class="video revelar" style="--i:${i % 3}" href="${esc(x.enlace)}" target="_blank" rel="noopener">
         <img src="${esc(x.imagen || ytMiniatura(x.enlace))}" alt="" loading="lazy">
         <span class="play">${ICONO_PLAY}</span>
-        <span class="pie"><b>${esc(x.titulo)}</b>${x.subtitulo ? `<span>${esc(x.subtitulo)} · YouTube</span>` : ''}</span></a>`,
+        <span class="pie"><b>${esc(x.titulo)}</b>${x.subtitulo ? `<span>${esc(x.subtitulo)}</span>` : ''}</span></a>`,
   };
 
   /* ---------- Pintar ---------- */
@@ -142,6 +142,34 @@
   // Enlace de la sección actual.
   const ruta = location.pathname.replace(/(index)?\.html$/, '').replace(/(.)\/$/, '$1');
   document.querySelectorAll('#menu a').forEach(a => { if (a.getAttribute('href') === ruta) a.setAttribute('aria-current', 'page'); });
+
+  /* ---------- Videos de YouTube dentro del sitio ---------- */
+  // Cualquier enlace a un video de YouTube se abre en una ventana sobre la página en vez de ir a YouTube.
+  // El enlace normal queda como respaldo (sin JavaScript, o con Ctrl/Cmd + clic para abrir en otra pestaña).
+  let visor = null;
+  function abrirVideo(id, titulo) {
+    if (!visor) {
+      visor = document.createElement('dialog');
+      visor.className = 'visor-video';
+      visor.innerHTML = '<div class="visor-caja"><button type="button" class="visor-cerrar" aria-label="Cerrar video">✕</button><div class="visor-marco"></div></div>';
+      visor.querySelector('.visor-cerrar').addEventListener('click', () => visor.close());
+      visor.addEventListener('click', e => { if (e.target === visor) visor.close(); });
+      visor.addEventListener('close', () => { visor.querySelector('.visor-marco').innerHTML = ''; document.documentElement.classList.remove('sin-scroll'); });
+      document.body.append(visor);
+    }
+    visor.querySelector('.visor-marco').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1" title="${esc(titulo || 'Video de SpectrumPro')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    document.documentElement.classList.add('sin-scroll');
+    visor.showModal();
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!/(^|\.)(youtube\.com|youtu\.be)$/.test(a.hostname)) return;
+    const id = ytId(a.href);
+    if (!id || typeof HTMLDialogElement !== 'function') return;
+    e.preventDefault();
+    abrirVideo(id, a.querySelector('.pie b')?.textContent || a.closest('article')?.querySelector('h3')?.textContent);
+  });
 
   /* ---------- Aparecer al hacer scroll ---------- */
   let io = null;

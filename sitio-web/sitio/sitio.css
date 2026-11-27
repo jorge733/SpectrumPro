@@ -370,6 +370,16 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
   .video .play { width: 66px; height: 66px; margin: -33px 0 0 -33px; }
 }
 
+/* Visor de videos (YouTube dentro del sitio) */
+.sin-scroll { overflow: hidden; }
+.visor-video { padding: 0; border: 0; background: transparent; width: min(1100px, calc(100vw - 32px)); max-width: none; max-height: none; overflow: visible; }
+.visor-video::backdrop { background: rgb(10 9 14 / .86); backdrop-filter: blur(4px); }
+.visor-caja { position: relative; }
+.visor-marco { aspect-ratio: 16 / 9; max-height: calc(100vh - 120px); margin-inline: auto; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 30px 80px rgb(0 0 0 / .5); }
+.visor-marco iframe { width: 100%; height: 100%; border: 0; display: block; }
+.visor-cerrar { position: absolute; top: -56px; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; color: #17151f; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.visor-cerrar:hover, .visor-cerrar:focus-visible { background: var(--c2); outline: none; }
+
 /* Movimiento */
 @keyframes subir { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
 @keyframes entrar { from { opacity: 0; transform: scale(.85) rotate(var(--r, 0deg)); } to { opacity: 1; } }
