@@ -23,7 +23,7 @@ window.SITIO_RESPALDO = {
   "enlace_suscripcion": "https://www.mercadopago.cl/subscriptions/checkout?preapproval_plan_id=2c93808481fd8f080181ff8571c80108",
   "direccion": "Doctor Roberto del Río 1137, Providencia, Santiago, Chile",
   "whatsapp": "56996389673",
-  "correo": "administracion@spectrumpro.cl",
+  "correo": "contacto@spectrumpro.cl",
   "instagram": "spectrumpro.cl",
   "youtube": "https://www.youtube.com/@spectrumpro1710",
   "patreon": "https://www.patreon.com/cw/spectrumpro"
