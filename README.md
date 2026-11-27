@@ -152,6 +152,14 @@ Son archivos estáticos y se publican en Vercel. El dominio oficial es **https:/
 
 `sitio-web/vercel.json` activa direcciones limpias (`/nosotros` en vez de `/nosotros.html`) y redirige las direcciones antiguas de WordPress (`/quienes-somos`, `/nuestros-talleres`, `/arte-terapia`, `/formapro`, `/tienda`…) a su página nueva, para no perder enlaces ni posicionamiento en Google.
 
+### Google (SEO)
+
+- `sitio-web/sitemap.xml` y `sitio-web/robots.txt` le indican a Google qué páginas indexar. Si se agrega una página, súmala al sitemap.
+- Cada página tiene un título con palabras de búsqueda, descripción, Open Graph y datos estructurados (`application/ld+json`): la organización con dirección, teléfono, correo, horario y redes en Inicio y Contacto, y migas de pan en el resto.
+- La plataforma (gestionspectrumpro.cl) lleva `noindex` para que no compita con el sitio en las búsquedas de «SpectrumPro»; solo la tienda queda en su sitemap.
+- Tras publicar en spectrumpro.cl: en [Google Search Console](https://search.google.com/search-console) agrega la propiedad de dominio `spectrumpro.cl` (se verifica con un registro `TXT` en el DNS), envía `https://spectrumpro.cl/sitemap.xml` y pide indexar la portada. Haz lo mismo con `https://gestionspectrumpro.cl/sitemap.xml`.
+- En [Google Business Profile](https://business.google.com) crea o reclama la ficha de SpectrumPro con la misma dirección, teléfono y sitio web: es lo que hace aparecer el negocio en Maps y en el recuadro de la derecha.
+
 Los textos, fotos, talleres y equipo están en `sitio-web/sitio/contenido.js` (y el resto del texto en cada `.html`). Los enlaces a la tienda y al acceso del equipo apuntan a gestionspectrumpro.cl.
 
 ## Encuesta de la Muestra Audiovisual
