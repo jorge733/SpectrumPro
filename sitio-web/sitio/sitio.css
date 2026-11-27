@@ -276,8 +276,9 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .servicio .n { font: 400 26px/1 var(--display); color: var(--c2); grid-row: span 2; font-variant-numeric: tabular-nums; }
 .servicio h3 { font-size: 26px; }
 .servicio p { color: var(--suave); font-size: 16px; }
-.clientes { border-radius: var(--radio); overflow: hidden; background: #f6f1e7; }
-.clientes img { width: 100%; height: auto; mix-blend-mode: multiply; }
+.clientes { list-style: none; margin: 0; padding: clamp(24px, 4vw, 48px); border-radius: var(--radio); background: #f6f1e7; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: clamp(28px, 4vw, 48px) 32px; align-items: center; }
+.clientes li { display: grid; place-items: center; min-height: 70px; }
+.clientes img { max-width: min(100%, 230px); max-height: clamp(54px, 9vw, 90px); width: auto; height: auto; object-fit: contain; }
 
 /* Colabora */
 .aportes { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
