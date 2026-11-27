@@ -967,19 +967,19 @@
         guardar();
       },
       async subirFotoSitio(blob) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async borrarFotoSitio() { },
       /* Comunidad: en la demostración hay suscriptores de ejemplo y los envíos no mandan correos. */
       async comunidad() {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         await espera();
         db.comunidad ??= crearComunidadDemo();
         return copia(db.comunidad);
       },
       async guardarBoletin(b) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         await espera();
         db.comunidad ??= crearComunidadDemo();
         const ahora = new Date().toISOString();
@@ -990,13 +990,13 @@
         guardar(); return b.id;
       },
       async eliminarBoletin(id) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         db.comunidad.boletines = db.comunidad.boletines.filter(x => x.id !== id);
         auditar('delete', 'boletines', {});
         guardar();
       },
       async enviarBoletin(id, accion) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         await espera(700);
         const b = db.comunidad.boletines.find(x => x.id === id);
         if (!b) throw new Error('Ese boletín ya no existe.');
@@ -1008,13 +1008,13 @@
         return { ok: true, enviados: n, restantes: 0, destinatarios: n };
       },
       async bajaSuscriptor(id) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         const s = db.comunidad.suscriptores.find(x => x.id === id);
         if (s) Object.assign(s, { estado: 'baja', baja_en: new Date().toISOString() });
         guardar();
       },
       async eliminarSuscriptor(id) {
-        if (!editaTienda()) prohibido();
+        if (!esAdmin()) prohibido();
         db.comunidad.suscriptores = db.comunidad.suscriptores.filter(x => x.id !== id);
         guardar();
       },

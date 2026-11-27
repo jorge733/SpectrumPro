@@ -1,5 +1,5 @@
 // Edge Function: enviar-boletin
-// Solo dirección y el rol Equipo (cuentas activas). La llama la plataforma, sección «Comunidad».
+// Solo dirección (cuentas activas). La llama la plataforma, sección «Comunidad».
 //   { accion: "prueba", id } → manda el boletín solo a quien llama, marcado como prueba.
 //   { accion: "enviar", id } → lo manda a todas las personas suscritas y confirmadas.
 //      Envía por tandas de 100 (un correo por persona, con su propio enlace de baja) y anota a quién
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
   const { data: quien } = await sb.auth.getUser(tokenSesion);
   if (!quien?.user) return json({ error: "Sesión no válida. Vuelve a entrar a la plataforma." }, 401);
   const { data: perfil } = await sb.from("perfiles").select("rol, activo, email").eq("id", quien.user.id).single();
-  if (!perfil?.activo || !["admin", "equipo"].includes(perfil.rol)) return json({ error: "Solo dirección y el equipo pueden enviar boletines." }, 403);
+  if (!perfil?.activo || perfil.rol !== "admin") return json({ error: "Solo dirección puede enviar boletines." }, 403);
 
   let cuerpo: Record<string, unknown>;
   try { cuerpo = await req.json(); } catch { return json({ error: "Cuerpo inválido." }, 400); }

@@ -100,8 +100,8 @@ const puede = {
   tienda: () => ['admin', 'equipo'].includes(rol()),
   // El sitio web público (spectrumpro.cl) lo edita solo dirección.
   sitio: () => rol() === 'admin',
-  // Comunidad (boletines y suscriptores): dirección y el rol Equipo.
-  comunidad: () => ['admin', 'equipo'].includes(rol()),
+  // Comunidad (boletines y suscriptores): también solo dirección.
+  comunidad: () => rol() === 'admin',
   // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
   esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),

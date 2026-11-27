@@ -33,7 +33,7 @@ async function vistaComunidad(el) {
   if (!puede.comunidad()) { location.hash = 'panel'; return; }
   const cab = `
     <header class="cabecera">
-      <div><p class="eyebrow">Dirección y equipo</p><h1>Comunidad</h1><p>Boletines por correo para quienes se suscriben en spectrumpro.cl/comunidad. Los textos, documentos y podcasts de esa página se editan en «Sitio web».</p></div>
+      <div><p class="eyebrow">Solo dirección</p><h1>Comunidad</h1><p>Boletines por correo para quienes se suscriben en spectrumpro.cl/comunidad. Los textos, documentos y podcasts de esa página se editan en «Sitio web».</p></div>
       <div class="controles">
         <a class="btn btn-sec" href="${SITIO_URL}/comunidad" target="_blank" rel="noopener">Ver la página ↗</a>
         ${S.comunidad ? '<button type="button" class="btn" data-boletin-nuevo>+ Nuevo boletín</button>' : ''}
