@@ -240,6 +240,8 @@ La plantilla del correo está en `supabase/functions/_compartido/correo-boletin.
    ```
 
    `comunidad` va **sin** verificación de JWT porque la usa el público (el formulario no inicia sesión). `enviar-boletin` sí la verifica y además comprueba que quien llama sea dirección o Equipo.
+
+   **Sin la CLI, desde el panel**: en **Edge Functions → Deploy a new function → Via Editor**, crea una función llamada exactamente `comunidad` y pega `supabase/funciones-panel/comunidad.ts`; luego otra llamada `enviar-boletin` con `supabase/funciones-panel/enviar-boletin.ts`. Esos archivos traen la plantilla del correo incluida (los genera `node herramientas/funciones-panel.mjs`; vuelve a ejecutarlo si cambias una función o la plantilla). En los ajustes de `comunidad` desactiva **Verify JWT with legacy secret** / **Enforce JWT verification**; en `enviar-boletin` déjalo activado.
 3. Los correos salen desde **comunidad@spectrumpro.cl** (dominio `spectrumpro.cl` ya verificado en Resend). Usan el secreto `RESEND_API_KEY` del recordatorio de cumpleaños. Si esa API key está limitada al dominio `gestionspectrumpro.cl`, crea en Resend una con permiso para `spectrumpro.cl` y guárdala aparte:
 
    ```bash
