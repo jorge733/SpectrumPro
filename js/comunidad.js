@@ -43,6 +43,19 @@ function interaccion(b) {
 /* =====================================================================
    Vista
    ===================================================================== */
+// Trae de nuevo boletines, suscriptores, comentarios y reacciones (lo que la gente hizo en la página).
+let actualizando = false;
+async function actualizar(avisar = false) {
+  actualizando = true;
+  try {
+    const d = await D.comunidad();
+    S.comunidad = { ...d, cargado: Date.now() };
+    if (vistaActual() === 'comunidad' && !$('#dlg-boletin').open) render();
+    if (avisar) toast('Datos actualizados');
+  } catch (e) { if (avisar) toast(e.message, 'error'); }
+  finally { actualizando = false; }
+}
+
 async function vistaComunidad(el) {
   if (!puede.sitio()) { location.hash = 'panel'; return; }
   const cab = `
@@ -50,13 +63,14 @@ async function vistaComunidad(el) {
       <div><p class="eyebrow">Dirección y equipo</p><h1>Comunidad</h1><p>Boletines por correo para quienes se suscriben en spectrumpro.cl/comunidad. Los textos, documentos y podcasts de esa página se editan en «Sitio web».</p></div>
       <div class="controles">
         <a class="btn btn-sec" href="${SITIO_URL}/comunidad" target="_blank" rel="noopener">Ver la página ↗</a>
+        ${S.comunidad ? '<button type="button" class="btn btn-sec" data-comunidad-actualizar title="Traer las reacciones, comentarios y suscripciones más recientes">↻ Actualizar</button>' : ''}
         ${S.comunidad ? '<button type="button" class="btn" data-boletin-nuevo>+ Nuevo boletín</button>' : ''}
       </div>
     </header>`;
   if (!S.comunidad) {
     el.innerHTML = cab + `<section class="tarjeta" aria-busy="true">
       <p class="nota-suave"><span class="giro giro-peq" aria-hidden="true"></span> Cargando boletines y suscriptores…</p>${esqueletoLineas(4)}</section>`;
-    try { S.comunidad = await D.comunidad(); }
+    try { S.comunidad = await D.comunidad(); S.comunidad.cargado = Date.now(); }
     catch (e) {
       if (vistaActual() !== 'comunidad') return;
       el.innerHTML = cab + `<section class="tarjeta"><p class="aviso-error">${esc(e.message)}</p></section>`;
@@ -65,6 +79,7 @@ async function vistaComunidad(el) {
     if (vistaActual() === 'comunidad') render();
     return;
   }
+  if (Date.now() - (S.comunidad.cargado || 0) > 60e3 && !actualizando) actualizar();
   const n = { activo: 0, pendiente: 0, baja: 0 };
   for (const s of S.comunidad.suscriptores) n[s.estado] = (n[s.estado] || 0) + 1;
   const tabs = { boletines: ['Boletines', S.comunidad.boletines.length], suscriptores: ['Suscriptores', n.activo] };
@@ -273,6 +288,7 @@ async function guardar(paraEnviar = false) {
 document.addEventListener('click', async ev => {
   const t = ev.target;
   let x;
+  if (t.closest('[data-comunidad-actualizar]')) { conCarga(() => actualizar(true), 'Actualizando…'); return; }
   if ((x = t.closest('[data-tab-comunidad]'))) { ui.tabComunidad = x.dataset.tabComunidad; render(); return; }
   if ((x = t.closest('[data-estado-com]'))) { ui.estadoCom = x.dataset.estadoCom; ui.respondiendo = null; render(); return; }
   if ((x = t.closest('[data-com-estado]'))) {
