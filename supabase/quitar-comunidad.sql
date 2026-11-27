@@ -1,9 +1,15 @@
--- Quita la Comunidad de Supabase (deshace supabase/migrations/20261129000000_comunidad.sql).
--- Úsalo solo si el equipo decide no seguir con la Comunidad: BORRA la lista de suscriptores y los
--- boletines. Antes, descarga la lista en la plataforma (Comunidad → Suscriptores → Descargar CSV).
+-- Quita la Comunidad de Supabase (deshace supabase/migrations/20261129000000_comunidad.sql y
+-- 20261130000000_comunidad_comentarios.sql).
+-- Úsalo solo si el equipo decide no seguir con la Comunidad: BORRA la lista de suscriptores, los
+-- boletines, sus comentarios y reacciones. Antes, descarga la lista en la plataforma (Comunidad → Suscriptores → Descargar CSV).
 -- El código se quita aparte, revirtiendo el commit «Comunidad…» (ver README, «Comunidad»).
 -- No es una migración: se ejecuta a mano en el SQL Editor.
 
+drop view if exists public.boletin_comentarios_publicos;
+drop view if exists public.boletin_reacciones_totales;
+drop table if exists public.boletin_comentarios;
+drop table if exists public.boletin_reacciones;
+drop function if exists public.revisar_comentario();
 drop table if exists public.boletin_envios;
 drop table if exists public.boletines;
 drop table if exists public.suscriptores;

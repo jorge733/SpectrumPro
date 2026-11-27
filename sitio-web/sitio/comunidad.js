@@ -3,7 +3,8 @@
    · Formulario de suscripción a las noticias: lo recibe la función «comunidad» de Supabase, que guarda
      a la persona como pendiente y le manda un correo para confirmar (doble confirmación).
    · ?confirmar=… y ?baja=… llegan desde esos correos: se confirma o se da de baja aquí mismo.
-   · Boletines anteriores: los que se enviaron con «Publicar en la página Comunidad» marcado.
+   · Boletines anteriores: los que se enviaron con «Publicar en la página Comunidad» marcado, con
+     reacciones (una por navegador) y comentarios de personas suscritas que el equipo aprueba.
    Se carga después de sitio.js. */
 (() => {
   const cfg = window.SPECTRUMPRO_CONFIG || {};
@@ -111,27 +112,123 @@
     }
   }
 
-  /* ---------- Boletines anteriores ---------- */
+  /* ---------- Boletines anteriores, con reacciones y comentarios ---------- */
+  const REACCIONES = [['gusta', '❤️', 'Me gustó'], ['aplauso', '👏', 'Aplausos'], ['aprendi', '💡', 'Aprendí algo'], ['identifica', '🤝', 'Me identifica']];
+  const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+  const leer = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  // Identificador al azar de este navegador, para que cada reacción cuente una sola vez.
+  let dispositivo = leer('spectrumpro:dispositivo', '');
+  if (!/^[0-9a-z-]{16,64}$/i.test(dispositivo)) { dispositivo = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); guardar('spectrumpro:dispositivo', dispositivo); }
+  const mias = leer('spectrumpro:reacciones', {});
+  const fechaCorta = s => new Date(s).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' });
+  const parrafos = s => String(s || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => `<p>${esc(x)}</p>`).join('');
+
+  function barraReacciones(id, tot) {
+    return REACCIONES.map(([k, ico, txt]) => {
+      const n = tot[k] || 0, on = (mias[id] || []).includes(k);
+      return `<button type="button" class="reaccion" data-reaccion="${k}" aria-pressed="${on}" aria-label="${txt}${n ? ': ' + n : ''}" title="${txt}"><span aria-hidden="true">${ico}</span><b>${n || ''}</b></button>`;
+    }).join('');
+  }
+  function listaComentarios(cs) {
+    if (!cs.length) return '<p class="sin-comentarios">Aún no hay comentarios. ¡Sé la primera persona en comentar!</p>';
+    return `<ol class="comentarios">${cs.map(c => `<li>
+      <p class="quien"><b>${esc(c.nombre)}</b> <time datetime="${esc(c.creado)}">${esc(fechaCorta(c.creado))}</time></p>${parrafos(c.texto)}
+      ${c.respuesta ? `<div class="respuesta"><p class="quien"><b>SpectrumPro</b> <span class="marca">Equipo</span></p>${parrafos(c.respuesta)}</div>` : ''}
+    </li>`).join('')}</ol>`;
+  }
+  const yo = leer('spectrumpro:comentarista', {});
+  const formComentario = id => `<form class="form-comentario" data-comentar="${esc(id)}" novalidate>
+    <h4>Deja un comentario</h4>
+    <div class="fila"><label><span>Tu nombre</span><input name="nombre" maxlength="60" autocomplete="name" value="${esc(yo.nombre || '')}" required></label>
+    <label><span>Tu correo <small>(no se publica)</small></span><input name="email" type="email" maxlength="160" autocomplete="email" value="${esc(yo.email || '')}" required></label></div>
+    <label>Comentario<textarea name="texto" rows="3" maxlength="2000" required></textarea></label>
+    <label class="trampa" aria-hidden="true">No completar<input name="web" tabindex="-1" autocomplete="off"></label>
+    <p class="nota">Pueden comentar las personas suscritas a las noticias, con el mismo correo. El equipo revisa cada comentario antes de publicarlo.</p>
+    <button type="submit" class="btn oscuro">Enviar comentario</button>
+    <p class="mensaje" role="status" aria-live="polite" hidden></p>
+  </form>`;
+
   async function boletines() {
     const caja = document.querySelector('[data-boletines]');
     const sec = caja?.closest('section');
     if (!caja || !base) return;
+    const h = { headers: { apikey: cfg.supabaseAnonKey } };
     try {
-      const r = await fetch(base + '/rest/v1/boletines?select=id,titulo,texto,imagen,boton_texto,boton_enlace,enviado_en&order=enviado_en.desc&limit=24', { headers: { apikey: cfg.supabaseAnonKey } });
+      const r = await fetch(base + '/rest/v1/boletines?select=id,titulo,texto,imagen,boton_texto,boton_enlace,enviado_en&order=enviado_en.desc&limit=24', h);
       if (!r.ok) return;
       const lista = await r.json();
       if (!lista.length) return;
-      caja.innerHTML = lista.map(b => `<details class="boletin" id="boletin-${esc(b.id)}">
-        <summary><time datetime="${esc(b.enviado_en)}">${esc(fecha(b.enviado_en))}</time><b>${esc(b.titulo)}</b></summary>
+      // Reacciones y comentarios son opcionales: si aún no existen en la base, el archivo se ve igual.
+      const pedir = u => fetch(base + '/rest/v1/' + u, h).then(async x => x.ok ? await x.json() : null).catch(() => null);
+      const [tot, coms] = await Promise.all([
+        pedir('boletin_reacciones_totales?select=boletin_id,tipo,total'),
+        pedir('boletin_comentarios_publicos?select=id,boletin_id,nombre,texto,creado,respuesta&order=creado.asc'),
+      ]);
+      const conInteraccion = !!(tot && coms);
+      const totales = {}, comentarios = {};
+      for (const x of tot || []) (totales[x.boletin_id] ??= {})[x.tipo] = x.total;
+      for (const c of coms || []) (comentarios[c.boletin_id] ??= []).push(c);
+      caja.innerHTML = lista.map(b => {
+        const cs = comentarios[b.id] || [];
+        return `<details class="boletin" id="boletin-${esc(b.id)}" data-boletin="${esc(b.id)}">
+        <summary><time datetime="${esc(b.enviado_en)}">${esc(fecha(b.enviado_en))}</time><b>${esc(b.titulo)}</b>${conInteraccion && cs.length ? `<small class="conteo">💬 ${cs.length}</small>` : ''}</summary>
         <div class="contenido">
           ${b.imagen ? `<img src="${esc(b.imagen)}" alt="" loading="lazy">` : ''}
           ${formato(b.texto)}
           ${b.boton_texto && /^https:\/\//.test(b.boton_enlace || '') ? `<a class="btn oscuro" href="${esc(b.boton_enlace)}" target="_blank" rel="noopener">${esc(b.boton_texto)}</a>` : ''}
-        </div></details>`).join('');
+          ${conInteraccion ? `<div class="interaccion">
+            <div class="reacciones" role="group" aria-label="Reacciones">${barraReacciones(b.id, totales[b.id] || {})}</div>
+            <h4 class="titulo-comentarios">Comentarios${cs.length ? ` (${cs.length})` : ''}</h4>
+            ${listaComentarios(cs)}
+            ${formComentario(b.id)}
+          </div>` : ''}
+        </div></details>`;
+      }).join('');
       if (!sec.hasAttribute('data-oculta')) sec.hidden = false;
       const abierto = location.hash.match(/^#boletin-([0-9a-f-]{36})$/i);
       if (abierto) { const d = document.getElementById('boletin-' + abierto[1]); if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); } }
     } catch { /* el archivo es opcional */ }
   }
+
+  document.addEventListener('click', async ev => {
+    const btn = ev.target.closest('[data-reaccion]');
+    if (!btn) return;
+    const id = btn.closest('[data-boletin]').dataset.boletin, tipo = btn.dataset.reaccion;
+    if (enVistaPrevia) return;
+    const barra = btn.parentElement;
+    barra.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    try {
+      const r = await llamar({ accion: 'reaccionar', boletin: id, tipo, dispositivo });
+      const set = new Set(mias[id] || []);
+      r.activa ? set.add(tipo) : set.delete(tipo);
+      mias[id] = [...set]; guardar('spectrumpro:reacciones', mias);
+      barra.innerHTML = barraReacciones(id, r.totales || {});
+    } catch (e) {
+      barra.querySelectorAll('button').forEach(b => { b.disabled = false; });
+      alert(e.message);
+    }
+  });
+
+  document.addEventListener('submit', async ev => {
+    const form = ev.target.closest('[data-comentar]');
+    if (!form) return;
+    ev.preventDefault();
+    const f = form.elements, msj = form.querySelector('.mensaje'), btn = form.querySelector('button[type="submit"]');
+    const decir = (txt, error = false) => { msj.textContent = txt; msj.classList.toggle('error', error); msj.hidden = !txt; };
+    const datos = { nombre: f.nombre.value.trim(), email: f.email.value.trim().toLowerCase(), texto: f.texto.value.trim() };
+    if (enVistaPrevia) return decir('Vista previa: el formulario no envía nada.');
+    if (!datos.nombre) { f.nombre.focus(); return decir('Escribe tu nombre.', true); }
+    if (!esCorreo(datos.email)) { f.email.focus(); return decir('Revisa tu correo: parece que le falta algo.', true); }
+    if (datos.texto.length < 2) { f.texto.focus(); return decir('Escribe tu comentario.', true); }
+    btn.disabled = true; decir('');
+    try {
+      await llamar({ accion: 'comentar', boletin: form.dataset.comentar, ...datos, web: f.web.value });
+      guardar('spectrumpro:comentarista', { nombre: datos.nombre, email: datos.email });
+      f.texto.value = '';
+      decir('¡Gracias! Tu comentario aparecerá cuando el equipo lo revise. Recuerda que solo publicamos comentarios de personas suscritas: si aún no te suscribes, hazlo más abajo con este mismo correo.');
+    } catch (e) { decir(e.message, true); }
+    finally { btn.disabled = false; }
+  });
+
   boletines();
 })();

@@ -4,12 +4,18 @@
 //      un correo para confirmar. Siempre responde lo mismo (no revela si el correo ya estaba suscrito).
 //   { accion: "confirmar", token } → la deja «activa» y le manda la bienvenida.
 //   { accion: "baja", token }      → deja de recibir correos.
+//   { accion: "reaccionar", boletin, tipo, dispositivo } → pone o quita una reacción (❤️ 👏 💡 🤝) de ese
+//      navegador en un boletín publicado; responde los totales del boletín.
+//   { accion: "comentar", boletin, nombre, email, texto, web? } → guarda el comentario como «pendiente»
+//      solo si el correo es de una persona suscrita y confirmada, y avisa al equipo por correo. Siempre
+//      responde lo mismo (no revela si un correo está suscrito).
 // Además acepta la baja «con un clic» de Gmail y Outlook (cabecera List-Unsubscribe-Post):
 //   POST /functions/v1/comunidad?baja=<token>
 //
 // Secretos: RESEND_API_KEY (el mismo del recordatorio de cumpleaños).
 // Opcionales: COMUNIDAD_REMITENTE (por defecto «SpectrumPro <comunidad@spectrumpro.cl>»),
-//             COMUNIDAD_RESPONDER_A (por defecto contacto@spectrumpro.cl).
+//             COMUNIDAD_RESPONDER_A (por defecto contacto@spectrumpro.cl),
+//             COMUNIDAD_AVISOS (a quién avisar de comentarios nuevos; por defecto COMUNIDAD_RESPONDER_A).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import "../_compartido/correo-boletin.js";
 
@@ -18,10 +24,15 @@ const C = (globalThis as any).SPCorreoBoletin;
 const SITIO = "https://spectrumpro.cl";
 const REMITENTE = Deno.env.get("COMUNIDAD_REMITENTE") ?? "SpectrumPro <comunidad@spectrumpro.cl>";
 const RESPONDER_A = Deno.env.get("COMUNIDAD_RESPONDER_A") ?? "contacto@spectrumpro.cl";
+const AVISOS = (Deno.env.get("COMUNIDAD_AVISOS") ?? RESPONDER_A).split(",").map((x) => x.trim()).filter(Boolean);
+const PLATAFORMA = "https://gestionspectrumpro.cl/#comunidad";
+const REACCIONES = ["gusta", "aplauso", "aprendi", "identifica"];
 const PERFILES = ["", "familia", "neurodivergente", "educacion", "salud", "politicas", "otro"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Límites contra abusos del formulario.
-const POR_IP = 5;            // intentos por IP cada 10 minutos
+const POR_IP = 5;            // suscripciones por IP cada 10 minutos
+const COMENTARIOS_IP = 5;    // comentarios por IP cada 10 minutos
+const REACCIONES_IP = 60;    // reacciones por IP cada 10 minutos
 const POR_HORA = 300;        // correos de confirmación por hora en total
 const REENVIO_MIN = 10;      // minutos antes de volver a mandar la confirmación al mismo correo
 
@@ -65,6 +76,31 @@ async function huella(ip: string) {
   return Array.from(new Uint8Array(h)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ¿Esta conexión ya hizo demasiados intentos de esta acción en 10 minutos? Si no, anota uno.
+// deno-lint-ignore no-explicit-any
+async function excede(sb: any, req: Request, accion: string, maximo: number) {
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "sin-ip";
+  const h = await huella(ip);
+  const hace10 = new Date(Date.now() - 10 * 60e3).toISOString();
+  const { count } = await sb.from("comunidad_intentos").select("id", { count: "exact", head: true }).eq("ip", h).eq("accion", accion).gte("creado", hace10);
+  if ((count ?? 0) >= maximo) return true;
+  await sb.from("comunidad_intentos").insert({ ip: h, accion });
+  return false;
+}
+
+// deno-lint-ignore no-explicit-any
+async function boletinPublico(sb: any, id: string) {
+  if (!UUID.test(id)) return null;
+  const { data } = await sb.from("boletines").select("id, titulo").eq("id", id).eq("publico", true).eq("estado", "enviado").maybeSingle();
+  return data;
+}
+
+// deno-lint-ignore no-explicit-any
+async function totales(sb: any, id: string) {
+  const { data } = await sb.from("boletin_reacciones_totales").select("tipo, total").eq("boletin_id", id);
+  return Object.fromEntries((data ?? []).map((x: { tipo: string; total: number }) => [x.tipo, x.total]));
+}
+
 // deno-lint-ignore no-explicit-any
 async function darDeBaja(sb: any, token: string) {
   const { error } = await sb.from("suscriptores").update({ estado: "baja", baja_en: new Date().toISOString() })
@@ -97,12 +133,7 @@ Deno.serve(async (req) => {
       // Campo trampa: las personas no lo ven; los robots lo llenan. Se responde como si nada.
       if (String(cuerpo.web ?? "").trim()) return json({ ok: true });
 
-      const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "sin-ip";
-      const h = await huella(ip);
-      const hace10 = new Date(Date.now() - 10 * 60e3).toISOString();
-      const { count: intentos } = await sb.from("comunidad_intentos").select("id", { count: "exact", head: true }).eq("ip", h).gte("creado", hace10);
-      if ((intentos ?? 0) >= POR_IP) return json({ error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." }, 429);
-      await sb.from("comunidad_intentos").insert({ ip: h });
+      if (await excede(sb, req, "suscribir", POR_IP)) return json({ error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." }, 429);
       // Limpieza: intentos de más de un día y suscripciones nunca confirmadas de más de 30 días.
       await sb.from("comunidad_intentos").delete().lt("creado", new Date(Date.now() - 864e5).toISOString());
       await sb.from("suscriptores").delete().eq("estado", "pendiente").lt("creado", new Date(Date.now() - 30 * 864e5).toISOString());
@@ -139,6 +170,49 @@ Deno.serve(async (req) => {
         html: C.confirmacion({ nombre, enlace }),
         text: `Hola${nombre ? " " + nombre : ""}:\n\nPara empezar a recibir las noticias de SpectrumPro, confirma tu correo abriendo este enlace:\n${enlace}\n\nSi no fuiste tú, ignora este mensaje.`,
       });
+      return json({ ok: true });
+    }
+
+    if (accion === "reaccionar") {
+      const tipo = String(cuerpo.tipo ?? "");
+      const dispositivo = String(cuerpo.dispositivo ?? "");
+      if (!REACCIONES.includes(tipo) || !/^[0-9a-z-]{16,64}$/i.test(dispositivo)) return json({ error: "Reacción inválida." }, 400);
+      const b = await boletinPublico(sb, String(cuerpo.boletin ?? ""));
+      if (!b) return json({ error: "Ese boletín no está publicado." }, 404);
+      if (await excede(sb, req, "reaccionar", REACCIONES_IP)) return json({ error: "Demasiadas reacciones seguidas. Espera un poco." }, 429);
+      const h = await huella("dispositivo:" + dispositivo);
+      const fila = { boletin_id: b.id, tipo, huella: h };
+      const { data: ya } = await sb.from("boletin_reacciones").select("tipo").match(fila).maybeSingle();
+      if (ya) await sb.from("boletin_reacciones").delete().match(fila);
+      else await sb.from("boletin_reacciones").upsert(fila, { onConflict: "boletin_id,tipo,huella", ignoreDuplicates: true });
+      return json({ ok: true, activa: !ya, totales: await totales(sb, b.id) });
+    }
+
+    if (accion === "comentar") {
+      const email = String(cuerpo.email ?? "").trim().toLowerCase();
+      const nombre = String(cuerpo.nombre ?? "").trim().replace(/\s+/g, " ");
+      const texto = String(cuerpo.texto ?? "").replace(/\r/g, "").trim();
+      if (!nombre || nombre.length > 60) return json({ error: "Escribe tu nombre (hasta 60 caracteres)." }, 400);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: "Revisa tu correo: parece que le falta algo." }, 400);
+      if (texto.length < 2 || texto.length > 2000) return json({ error: "El comentario debe tener entre 2 y 2000 caracteres." }, 400);
+      const b = await boletinPublico(sb, String(cuerpo.boletin ?? ""));
+      if (!b) return json({ error: "Ese boletín no está publicado." }, 404);
+      if (String(cuerpo.web ?? "").trim()) return json({ ok: true });   // campo trampa
+      if (await excede(sb, req, "comentar", COMENTARIOS_IP)) return json({ error: "Demasiados comentarios seguidos. Espera unos minutos." }, 429);
+
+      // Solo personas suscritas y confirmadas. Si no lo está, se responde igual y no se guarda nada.
+      const { data: s } = await sb.from("suscriptores").select("id").eq("email", email).eq("estado", "activo").maybeSingle();
+      if (!s) return json({ ok: true });
+      const { error } = await sb.from("boletin_comentarios").insert({ boletin_id: b.id, suscriptor_id: s.id, nombre, texto });
+      if (error) throw error;
+      if (AVISOS.length) {
+        await enviar({
+          to: AVISOS,
+          subject: `Comentario nuevo para revisar: «${b.titulo}»`,
+          html: `<p><b>${C.formato(nombre).replace(/<\/?p[^>]*>/g, "")}</b> comentó el boletín «${C.formato(b.titulo).replace(/<\/?p[^>]*>/g, "")}»:</p>${C.formato(texto)}<p><a href="${PLATAFORMA}">Revisarlo en la plataforma (Comunidad → Comentarios)</a></p><p style="color:#777;font-size:13px">No se publica hasta que alguien del equipo lo apruebe.</p>`,
+          text: `${nombre} comentó «${b.titulo}»:\n\n${texto}\n\nRevisarlo: ${PLATAFORMA}`,
+        }).catch((e) => console.error("aviso comentario:", e.message));
+      }
       return json({ ok: true });
     }
 
