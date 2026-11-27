@@ -1176,6 +1176,295 @@ window.SITIO_CAMPOS = {
    ]
   },
   {
+   "id": "comunidad",
+   "nombre": "Comunidad",
+   "ruta": "/comunidad",
+   "seo": {
+    "titulo": {
+     "clave": "seo_comunidad_titulo",
+     "defecto": "Comunidad: un espacio para conversar sobre neurodivergencia · SpectrumPro"
+    },
+    "descripcion": {
+     "clave": "seo_comunidad_descripcion",
+     "defecto": "Entrevistas, podcasts, columnas y recursos sobre neurodivergencia e inclusión en Chile. Suscríbete gratis y recibe las noticias de SpectrumPro en tu correo."
+    }
+   },
+   "secciones": [
+    {
+     "clave": "comunidad_cabeza",
+     "nombre": "Encabezado",
+     "campos": [
+      {
+       "clave": "comunidad_cabeza_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Comunidad"
+      },
+      {
+       "clave": "comunidad_cabeza_titulo",
+       "etiqueta": "Título de la página",
+       "tipo": "linea",
+       "defecto": "Un espacio para conversar sobre neurodivergencia"
+      },
+      {
+       "clave": "comunidad_cabeza_texto",
+       "etiqueta": "Texto",
+       "tipo": "linea",
+       "defecto": "Aquí la neurodivergencia se reconoce y se escucha. Entrevistas, podcasts, columnas y recursos, hechos en gran parte por jóvenes de SpectrumPro."
+      },
+      {
+       "clave": "comunidad_cabeza_boton",
+       "etiqueta": "Botón 1",
+       "tipo": "linea",
+       "defecto": "Suscríbete gratis"
+      },
+      {
+       "clave": "comunidad_cabeza_boton2",
+       "etiqueta": "Botón 2",
+       "tipo": "linea",
+       "defecto": "Ver recursos"
+      },
+      {
+       "clave": "comunidad_cabeza_imagen",
+       "etiqueta": "Imagen",
+       "tipo": "imagen",
+       "defecto": "/sitio/img/ta-dibujo.webp",
+       "alt": ""
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_bienvenida",
+     "nombre": "Bienvenida",
+     "campos": [
+      {
+       "clave": "comunidad_bienvenida_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Bienvenida"
+      },
+      {
+       "clave": "comunidad_bienvenida_frase",
+       "etiqueta": "Frase destacada",
+       "tipo": "resaltado",
+       "defecto": "La neurodivergencia no es un déficit que corregir, sino *una forma distinta* de estar en el mundo.",
+       "ayuda": "Encierra entre asteriscos lo que va resaltado: *así*."
+      },
+      {
+       "clave": "comunidad_bienvenida",
+       "etiqueta": "Texto de bienvenida",
+       "tipo": "parrafos",
+       "defecto": "Nace este espacio con una convicción simple pero profunda: la neurodivergencia no es un déficit que corregir, sino una forma distinta de estar en el mundo que merece ser reconocida, comprendida y celebrada.\nGran parte de lo que aquí encontrarás —podcasts, webinars, entrevistas, columnas— ha sido producido por jóvenes autistas que se han formado en SpectrumPro en el oficio de contar historias a través del lenguaje audiovisual.\nTambién encontrarás entrevistas a especialistas y protagonistas, columnas de opinión que interpelan, podcasts que profundizan y webinars que conectan. Queremos que sea una ventana a lo que ocurre en el mundo sobre neurodivergencia: investigaciones, políticas públicas, experiencias comunitarias y debates que enriquecen la conversación local. No buscamos entregar respuestas cerradas, sino abrir preguntas y sostener un diálogo honesto sobre la diferencia, el talento y los desafíos reales de la inclusión en Chile."
+      },
+      {
+       "clave": "comunidad_video",
+       "etiqueta": "Video (enlace de YouTube)",
+       "tipo": "enlace",
+       "defecto": "https://www.youtube.com/watch?v=Fx2-VHDLJT0"
+      },
+      {
+       "clave": "comunidad_bienvenida_texto",
+       "etiqueta": "Texto breve 1",
+       "tipo": "linea",
+       "defecto": "¿Por qué necesitamos neurodivergencia?"
+      },
+      {
+       "clave": "comunidad_bienvenida_texto2",
+       "etiqueta": "Texto breve 2",
+       "tipo": "linea",
+       "defecto": "Video"
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_invitacion",
+     "nombre": "Una invitación",
+     "campos": [
+      {
+       "clave": "comunidad_invitacion_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Una invitación"
+      },
+      {
+       "clave": "comunidad_invitacion_titulo",
+       "etiqueta": "Título",
+       "tipo": "linea",
+       "defecto": "Construyamos comunidad"
+      },
+      {
+       "clave": "comunidad_invitacion",
+       "etiqueta": "Texto de la invitación",
+       "tipo": "parrafos",
+       "defecto": "Esta es, ante todo, una invitación a construir comunidad. Esperamos que aquí se reúnan psicólogos, psiquiatras, terapeutas ocupacionales, kinesiólogos, fonoaudiólogos, educadores de distintos niveles, especialistas en políticas públicas, familias y, por supuesto, personas neurodivergentes que tienen mucho que decir sobre su propia experiencia.\nCreemos que solo desde ese cruce de miradas —clínicas, educativas, artísticas y vivenciales— es posible avanzar hacia una sociedad que reconozca la neurodivergencia como parte legítima de la diversidad humana.\nEste espacio seguirá creciendo con cada nueva producción y cada nueva voz que se suma desde SpectrumPro y desde afuera. Te invitamos a leer, escuchar, comentar y compartir: la inclusión también se construye conversando."
+      },
+      {
+       "clave": "comunidad_invitacion_elemento",
+       "etiqueta": "Elemento 1",
+       "tipo": "linea",
+       "defecto": "Psicología"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento2",
+       "etiqueta": "Elemento 2",
+       "tipo": "linea",
+       "defecto": "Psiquiatría"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento3",
+       "etiqueta": "Elemento 3",
+       "tipo": "linea",
+       "defecto": "Terapia ocupacional"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento4",
+       "etiqueta": "Elemento 4",
+       "tipo": "linea",
+       "defecto": "Kinesiología"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento5",
+       "etiqueta": "Elemento 5",
+       "tipo": "linea",
+       "defecto": "Fonoaudiología"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento6",
+       "etiqueta": "Elemento 6",
+       "tipo": "linea",
+       "defecto": "Educación"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento7",
+       "etiqueta": "Elemento 7",
+       "tipo": "linea",
+       "defecto": "Políticas públicas"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento8",
+       "etiqueta": "Elemento 8",
+       "tipo": "linea",
+       "defecto": "Familias"
+      },
+      {
+       "clave": "comunidad_invitacion_elemento9",
+       "etiqueta": "Elemento 9",
+       "tipo": "linea",
+       "defecto": "Personas neurodivergentes"
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_recursos",
+     "nombre": "Enfoque del mes",
+     "campos": [
+      {
+       "clave": "comunidad_recursos_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Enfoque del mes"
+      },
+      {
+       "clave": "comunidad_recursos_titulo",
+       "etiqueta": "Título",
+       "tipo": "linea",
+       "defecto": "Educación neurodivergente inclusiva"
+      },
+      {
+       "clave": "comunidad_recursos_texto",
+       "etiqueta": "Texto",
+       "tipo": "linea",
+       "defecto": "Investigaciones, guías y artículos para leer y compartir. Los documentos se descargan gratis."
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_escucha",
+     "nombre": "Escucha",
+     "campos": [
+      {
+       "clave": "comunidad_escucha_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Escucha"
+      },
+      {
+       "clave": "comunidad_escucha_titulo",
+       "etiqueta": "Título",
+       "tipo": "linea",
+       "defecto": "Podcasts que recomendamos"
+      },
+      {
+       "clave": "comunidad_escucha_texto",
+       "etiqueta": "Texto",
+       "tipo": "linea",
+       "defecto": "Conversaciones sobre autismo, educación e inclusión, con especialistas y protagonistas."
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_noticias",
+     "nombre": "Noticias",
+     "campos": [
+      {
+       "clave": "comunidad_noticias_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Noticias"
+      },
+      {
+       "clave": "comunidad_noticias_titulo",
+       "etiqueta": "Título",
+       "tipo": "linea",
+       "defecto": "Boletines anteriores"
+      },
+      {
+       "clave": "comunidad_noticias_texto",
+       "etiqueta": "Texto",
+       "tipo": "linea",
+       "defecto": "Lo que hemos enviado a la comunidad. Para recibir los próximos en tu correo, suscríbete."
+      }
+     ]
+    },
+    {
+     "clave": "comunidad_suscribirse",
+     "nombre": "Suscríbete gratis",
+     "campos": [
+      {
+       "clave": "comunidad_suscribirse_antetitulo",
+       "etiqueta": "Antetítulo",
+       "tipo": "linea",
+       "defecto": "Suscríbete gratis"
+      },
+      {
+       "clave": "comunidad_suscribirse_titulo",
+       "etiqueta": "Título",
+       "tipo": "linea",
+       "defecto": "Recibe las noticias en tu correo"
+      },
+      {
+       "clave": "comunidad_suscribirse_texto",
+       "etiqueta": "Texto",
+       "tipo": "linea",
+       "defecto": "Nuevas entrevistas, podcasts, recursos y lo que pasa en SpectrumPro. Sin spam: puedes darte de baja cuando quieras con un clic."
+      },
+      {
+       "clave": "comunidad_suscribirse_texto2",
+       "etiqueta": "Texto breve 1",
+       "tipo": "linea",
+       "defecto": "(opcional)"
+      },
+      {
+       "clave": "comunidad_suscribirse_texto3",
+       "etiqueta": "Texto breve 2",
+       "tipo": "linea",
+       "defecto": "Acepto recibir correos de SpectrumPro. Mis datos solo se usan para enviar estas noticias."
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "colabora",
    "nombre": "Colabora",
    "ruta": "/colabora",
@@ -1522,6 +1811,14 @@ window.SITIO_CAMPOS = {
   }
  ],
  "imagenes": [
+  "/sitio/img/co-apoyo-educadores.webp",
+  "/sitio/img/co-doc-educacion-sin-barreras-siried-2024.webp",
+  "/sitio/img/co-doc-educar-en-la-complejidad.webp",
+  "/sitio/img/co-doc-estrategias-ensenanza-aprendizaje-tea.webp",
+  "/sitio/img/co-doc-fomento-lector-estudiantes-neurodivergentes.webp",
+  "/sitio/img/co-doc-manual-de-diego.webp",
+  "/sitio/img/co-podcast-dale-la-vuelta.webp",
+  "/sitio/img/co-podcast-no-desistas.webp",
   "/sitio/img/eq-adan-rodriguez.webp",
   "/sitio/img/eq-alberto-merino.webp",
   "/sitio/img/eq-alexandra-torres.webp",

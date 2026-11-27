@@ -81,6 +81,7 @@ const S = {
   auditoria: null,
   tienda: null,       // { productos, ajustes } · se carga al abrir la sección Tienda
   sitio: null,        // { textos, elementos } · se carga al abrir la sección Sitio web (js/sitio.js)
+  comunidad: null,    // { boletines, suscriptores } · se carga al abrir la sección Comunidad (js/comunidad.js)
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
@@ -349,7 +350,7 @@ async function cargarTodo(texto = 'Cargando talleres, fichas y asistencia…') {
     throw e;
   }
   const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = datos;
-  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null, sitio: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null, sitio: null, comunidad: null });
   mostrarApp();
 }
 
@@ -454,7 +455,7 @@ function aplicarPlegado(valor) {
 }
 $('#plegar').addEventListener('click', () => { cerrarGrupos(); aplicarPlegado(!document.body.classList.contains('menu-plegado')); });
 
-/* ---------- submenús del menú lateral (Edición: Posts, Tienda y Sitio web) ----------
+/* ---------- submenús del menú lateral (Edición: Posts, Tienda, Sitio web y Comunidad) ----------
    En el menú abierto se despliegan hacia abajo y recuerdan si quedaron abiertos.
    Con el menú plegado y en la barra inferior del celular se abren como una ventanita flotante. */
 const CLAVE_GRUPOS = 'spectrumpro:menu-grupos';
@@ -1206,7 +1207,7 @@ document.addEventListener('submit', async ev => {
 });
 
 const ACCIONES = { insert: 'creó', update: 'editó', delete: 'eliminó', upsert: 'registró', login: 'entró' };
-const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda', sitio_textos: 'texto del sitio web', sitio_elementos: 'elemento del sitio web' };
+const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda', sitio_textos: 'texto del sitio web', sitio_elementos: 'elemento del sitio web', boletines: 'boletín de la comunidad' };
 function detalleAuditoria(r) {
   const d = r.detalle || {};
   const partes = [];
@@ -2018,13 +2019,14 @@ function exportarAsistencia() {
    Enrutado y eventos
    ===================================================================== */
 const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, online: vistaOnline, tienda: vistaTienda, administracion: vistaAdministracion };
-// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección) y js/sitio.js agrega VISTAS.sitio (Sitio web).
+// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección), js/sitio.js agrega VISTAS.sitio (Sitio web)
+// y js/comunidad.js agrega VISTAS.comunidad (boletines y suscriptores).
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if ((v === 'administracion' || v === 'posts') && !puede.admin()) return 'panel';
   if (v === 'tienda' && !puede.tienda()) return 'panel';
-  if (v === 'sitio' && !puede.sitio()) return 'panel';
+  if ((v === 'sitio' || v === 'comunidad') && !puede.sitio()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
@@ -2151,7 +2153,7 @@ document.addEventListener('click', async ev => {
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
       try { await conCarga(() => D.salir(), 'Cerrando sesión…'); } catch { /* se sale igual */ }
-      S.perfil = null; S.tienda = null; S.sitio = null;
+      S.perfil = null; S.tienda = null; S.sitio = null; S.comunidad = null;
       mostrarAcceso('entrar');
     }
     if (acc === 'mi-cumple') abrirMiCumple();

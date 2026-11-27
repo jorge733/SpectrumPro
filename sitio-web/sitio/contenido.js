@@ -27,7 +27,10 @@ window.SITIO_RESPALDO = {
   "instagram": "spectrumpro.cl",
   "youtube": "https://www.youtube.com/@spectrumpro1710",
   "linkedin": "https://www.linkedin.com/company/spectrum-pro/",
-  "patreon": "https://www.patreon.com/cw/spectrumpro"
+  "patreon": "https://www.patreon.com/cw/spectrumpro",
+  "comunidad_bienvenida": "Nace este espacio con una convicción simple pero profunda: la neurodivergencia no es un déficit que corregir, sino una forma distinta de estar en el mundo que merece ser reconocida, comprendida y celebrada.\nGran parte de lo que aquí encontrarás —podcasts, webinars, entrevistas, columnas— ha sido producido por jóvenes autistas que se han formado en SpectrumPro en el oficio de contar historias a través del lenguaje audiovisual.\nTambién encontrarás entrevistas a especialistas y protagonistas, columnas de opinión que interpelan, podcasts que profundizan y webinars que conectan. Queremos que sea una ventana a lo que ocurre en el mundo sobre neurodivergencia: investigaciones, políticas públicas, experiencias comunitarias y debates que enriquecen la conversación local. No buscamos entregar respuestas cerradas, sino abrir preguntas y sostener un diálogo honesto sobre la diferencia, el talento y los desafíos reales de la inclusión en Chile.",
+  "comunidad_invitacion": "Esta es, ante todo, una invitación a construir comunidad. Esperamos que aquí se reúnan psicólogos, psiquiatras, terapeutas ocupacionales, kinesiólogos, fonoaudiólogos, educadores de distintos niveles, especialistas en políticas públicas, familias y, por supuesto, personas neurodivergentes que tienen mucho que decir sobre su propia experiencia.\nCreemos que solo desde ese cruce de miradas —clínicas, educativas, artísticas y vivenciales— es posible avanzar hacia una sociedad que reconozca la neurodivergencia como parte legítima de la diversidad humana.\nEste espacio seguirá creciendo con cada nueva producción y cada nueva voz que se suma desde SpectrumPro y desde afuera. Te invitamos a leer, escuchar, comentar y compartir: la inclusión también se construye conversando.",
+  "comunidad_video": "https://www.youtube.com/watch?v=Fx2-VHDLJT0"
  },
  "elementos": [
   {
@@ -931,6 +934,116 @@ window.SITIO_RESPALDO = {
    "imagen": "/sitio/img/logos/lotus.webp",
    "enlace": "",
    "orden": 14
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "Estrategias de fomento lector para estudiantes neurodivergentes en Chile",
+   "subtitulo": "PDF · 295 KB",
+   "texto": "Entre la creatividad docente y las barreras sistémicas.",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-doc-fomento-lector-estudiantes-neurodivergentes.webp",
+   "enlace": "/sitio/docs/fomento-lector-estudiantes-neurodivergentes.pdf",
+   "orden": 1
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "Estrategias de enseñanza y aprendizaje para el trastorno del espectro autista",
+   "subtitulo": "PDF · 4,9 MB",
+   "texto": "Publicación con estrategias para el aula.",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-doc-estrategias-ensenanza-aprendizaje-tea.webp",
+   "enlace": "/sitio/docs/estrategias-ensenanza-aprendizaje-tea.pdf",
+   "orden": 2
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "Educar en la complejidad: condiciones neurodivergentes y entornos familiares",
+   "subtitulo": "PDF · 116 KB",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-doc-educar-en-la-complejidad.webp",
+   "enlace": "/sitio/docs/educar-en-la-complejidad.pdf",
+   "orden": 3
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "Hacia una educación sin barreras",
+   "subtitulo": "PDF · 16,8 MB",
+   "texto": "Avances y desafíos en la educación inclusiva que evidencian los resultados del SIRIED 2024 (UNESCO).",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-doc-educacion-sin-barreras-siried-2024.webp",
+   "enlace": "/sitio/docs/educacion-sin-barreras-siried-2024.pdf",
+   "orden": 4
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "Manual de neurodivergencias y adaptaciones razonables",
+   "subtitulo": "PDF · 868 KB · Diego Vega",
+   "texto": "Una guía para la educación inclusiva, con enfoque en autismo y déficit atencional e hiperactividad.",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-doc-manual-de-diego.webp",
+   "enlace": "/sitio/docs/manual-de-diego.pdf",
+   "orden": 5
+  },
+  {
+   "tipo": "recurso",
+   "titulo": "¿Cómo pueden las escuelas apoyar a estudiantes neurodivergentes?",
+   "subtitulo": "Artículo · Child Mind Institute",
+   "texto": "Herramientas que les permitan prosperar académica y socialmente.",
+   "lista": "",
+   "nota": "Leer el artículo",
+   "imagen": "/sitio/img/co-apoyo-educadores.webp",
+   "enlace": "https://childmind.org/es/articulo/como-pueden-las-escuelas-apoyar-a-estudiantes-neurodiversos/",
+   "orden": 6
+  },
+  {
+   "tipo": "episodio",
+   "titulo": "Ley de Autismo: el desafío de la educación inclusiva",
+   "subtitulo": "No desistas · Episodio 1",
+   "texto": "Un podcast sobre autismo y educación para docentes, directivos y equipos de apoyo: información basada en la normativa vigente, la investigación y la práctica, con recomendaciones concretas para el aula.",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-podcast-no-desistas.webp",
+   "enlace": "https://open.spotify.com/episode/5svYlebiN8fhUpFRNwd5up",
+   "orden": 1
+  },
+  {
+   "tipo": "episodio",
+   "titulo": "Educación superior inclusiva: admisión especial en las universidades chilenas",
+   "subtitulo": "No desistas · Episodio 6",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-podcast-no-desistas.webp",
+   "enlace": "https://open.spotify.com/episode/5qofHlGccui29l3zUZ05X6",
+   "orden": 2
+  },
+  {
+   "tipo": "episodio",
+   "titulo": "Familia y escuela, una alianza estratégica",
+   "subtitulo": "No desistas · Episodio 4",
+   "texto": "",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-podcast-no-desistas.webp",
+   "enlace": "https://open.spotify.com/episode/7gCL9QRUenGTLk8FJVJ383",
+   "orden": 3
+  },
+  {
+   "tipo": "episodio",
+   "titulo": "Alejandra Flores: una mirada neuroafirmativa del autismo",
+   "subtitulo": "Dale la vuelta al Autismo, con Paula Blanco",
+   "texto": "Psicóloga y magíster en Psicología Educacional, especializada en altas capacidades y espectro autista. Propone entender el autismo no solo desde el déficit, sino como parte de la variabilidad humana.",
+   "lista": "",
+   "nota": "",
+   "imagen": "/sitio/img/co-podcast-dale-la-vuelta.webp",
+   "enlace": "https://open.spotify.com/episode/6JPgPpsNeLEncmHVOfNXi6",
+   "orden": 4
   }
  ]
 };
