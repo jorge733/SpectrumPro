@@ -484,9 +484,9 @@ window.SITIO_RESPALDO = {
    "tipo": "apoyo",
    "titulo": "Cuentos con Vellón",
    "subtitulo": "Terapia Ocupacional",
-   "texto": "",
+   "texto": "Espacio creativo y terapéutico donde se combina el oficio artesanal del vellón con la narración audiovisual, trabajando materiales nobles y en equipo para dar vida a historias originales.",
    "lista": "",
-   "nota": "",
+   "nota": "Laura Quintana, Terapeuta Ocupacional",
    "imagen": "",
    "enlace": "",
    "orden": 3

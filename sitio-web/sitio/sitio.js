@@ -39,7 +39,7 @@
     },
     mentoria: (x, i) => `<article class="tarjeta revelar" style="--i:${i}"><h3>${esc(x.titulo)}</h3>${x.subtitulo ? `<span class="quien">Con ${esc(x.subtitulo)}</span>` : ''}${parrafos(x.texto)}</article>`,
     modulo: (x, i) => `<article class="tarjeta revelar" style="--i:${i}"><h3>${esc(x.titulo)}</h3>${x.subtitulo ? `<span class="quien">Con ${esc(x.subtitulo)}</span>` : ''}${parrafos(x.texto)}</article>`,
-    apoyo: (x, i) => `<article class="tarjeta revelar" style="--i:${i}">${x.subtitulo ? `<span class="quien">${esc(x.subtitulo)}</span>` : ''}<h3>${esc(x.titulo)}</h3>${parrafos(x.texto)}</article>`,
+    apoyo: (x, i) => `<article class="tarjeta revelar" style="--i:${i}">${x.subtitulo ? `<span class="quien">${esc(x.subtitulo)}</span>` : ''}<h3>${esc(x.titulo)}</h3>${x.nota ? `<span class="encargada">Con ${esc(x.nota)}</span>` : ''}${parrafos(x.texto)}</article>`,
     actividad: (x, i) => `<span class="chip revelar" style="--k:${SUAVES[i % SUAVES.length]};--i:${i}">${esc(x.titulo)}</span>`,
     servicio: (x, i) => `<article class="servicio revelar" style="--i:${i % 2}"><span class="n">${String(i + 1).padStart(2, '0')}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></article>`,
     produccion: (x, i) => `<a class="video revelar" style="--i:${i % 3}" href="${esc(x.enlace)}" target="_blank" rel="noopener">
