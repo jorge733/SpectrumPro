@@ -1,5 +1,5 @@
 /* Sitio público de SpectrumPro · versión 2.
-   Papel claro, tipografía Montserrat bold en todo el sitio.
+   Papel claro, tipografía Montserrat en todo el sitio (bold en títulos, menú y botones).
    Cada sección del sitio toma uno de los seis colores del logo (variable --k). */
 :root {
   --papel: #fbf7ef; --papel-2: #f3ecdf; --blanco: #ffffff;
@@ -26,7 +26,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 100px; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 a, button, summary, label { -webkit-tap-highlight-color: transparent; }
-body { margin: 0; background: var(--papel); color: var(--tinta); font: 700 18px/1.6 var(--texto); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 18px/1.6 var(--texto); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 p { margin: 0; }
@@ -238,7 +238,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .persona .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .persona:hover .foto img { transform: scale(1.06); }
 .persona h3 { font-size: 22px; }
-.persona .cargo { font-weight: 700; color: var(--suave); font-size: 15px; }
+.persona .cargo { font-weight: 600; color: var(--suave); font-size: 15px; }
 .persona details { font-size: 15.5px; color: var(--suave); margin-top: 4px; }
 .persona summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--tinta); list-style: none; display: inline-flex; align-items: center; gap: 8px; }
 .persona summary::-webkit-details-marker { display: none; }
