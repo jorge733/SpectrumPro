@@ -90,7 +90,7 @@ function panelBoletines() {
   return `<section class="tarjeta">
     <h2><span>Boletines</span><small>${activos()} ${activos() === 1 ? 'persona recibe' : 'personas reciben'} los boletines</small></h2>
     <p class="nota-suave">Escribe el boletín, mándate una prueba y, cuando esté listo, envíalo a todas las personas suscritas. Cada correo lleva su enlace para darse de baja.</p>
-    ${lista.length ? `<ul class="lista">${lista.map(b => `
+    ${lista.length ? `<ul class="lista boletines">${lista.map(b => `
       <li class="fila-click" data-boletin="${b.id}">
         ${b.imagen ? `<img class="miniatura" src="${esc(urlImagen(b.imagen))}" alt="" loading="lazy">` : '<span class="miniatura vacia">✉</span>'}
         <div class="txt"><b>${esc(b.titulo)}</b><small>${b.estado === 'enviado' ? `Enviado el ${esc(fechaDe(b.enviado_en))} a ${b.destinatarios} ${b.destinatarios === 1 ? 'persona' : 'personas'}` : `Editado el ${esc(fechaDe(b.actualizado))}`}${b.estado === 'enviado' ? (b.publico ? ' · en la página' : ' · no se publica') : ''}${interaccion(b) ? ' · ' + esc(interaccion(b)) : ''}</small></div>

@@ -729,9 +729,9 @@ label.btn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; 
 .foto-marco { flex: none; width: 112px; height: 112px; border-radius: 12px; border: 1px solid var(--line); background: #ffffff; overflow: hidden; display: grid; place-items: center; color: #615d78; font-size: .8rem; }
 .foto-marco img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 52%; }
 .foto-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.productos > li { align-items: center; }
-.productos .miniatura { flex: none; width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; object-fit: cover; object-position: 50% 52%; }
-.productos .miniatura.vacia { display: grid; place-items: center; color: #615d78; font-size: .7rem; }
+.productos > li, .boletines > li { align-items: center; }
+.productos .miniatura, .boletines .miniatura { flex: none; width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; object-fit: cover; object-position: 50% 52%; }
+.productos .miniatura.vacia, .boletines .miniatura.vacia { display: grid; place-items: center; color: #615d78; font-size: .7rem; }
 .productos li.oculto .txt, .productos li.oculto .miniatura { opacity: .55; }
 .productos .mover { display: flex; gap: 4px; flex: none; }
 .productos .mover button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: .9rem; line-height: 1; }

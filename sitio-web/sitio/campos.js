@@ -1228,7 +1228,7 @@ window.SITIO_CAMPOS = {
        "clave": "comunidad_cabeza_imagen",
        "etiqueta": "Imagen",
        "tipo": "imagen",
-       "defecto": "/sitio/img/ta-dibujo.webp",
+       "defecto": "/assets/logo.svg",
        "alt": ""
       }
      ]
