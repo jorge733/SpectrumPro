@@ -194,6 +194,9 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .cabeza .eyebrow { color: var(--sobre); }
 .pipiripiolo { display: block; width: clamp(180px, 20vw, 260px); height: auto; margin-top: 36px; background: var(--c2); border-radius: 26px; padding: 18px; border: 3px solid #fff; box-shadow: 8px 8px 0 #fff; transform: rotate(-4deg); }
 .cabeza .ave { width: clamp(180px, 22vw, 300px); height: auto; aspect-ratio: 1; object-fit: contain; background: #fff; border-radius: 50%; padding: 22px; border: 3px solid var(--sobre); box-shadow: 8px 8px 0 var(--sobre); transform: rotate(-5deg); }
+/* El logo va dentro de un círculo (span): así el borde redondo no lo recorta; con un 16 % de margen entra entero. */
+.cabeza .ave.logo { display: grid; place-items: center; padding: clamp(29px, 3.5vw, 48px); transform: none; }
+.cabeza .ave.logo img { width: 100%; height: 100%; object-fit: contain; }
 .cabeza .indice { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
 .cabeza .indice a { text-decoration: none; font-weight: 700; font-size: 15px; padding: 9px 16px; border-radius: 999px; border: 2px solid var(--sobre); transition: background .2s, color .2s; }
 .cabeza .indice a:hover { background: var(--sobre); color: #fff; }
@@ -415,6 +418,7 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
   .cabeza .caja, .llamado-caja { grid-template-columns: 1fr; }
   .recurso { grid-template-columns: 88px 1fr; gap: 16px; padding: 18px; }
   .cabeza .ave { width: 150px; padding: 14px; position: absolute; top: 22px; right: 18px; box-shadow: 5px 5px 0 var(--sobre); }
+  .cabeza .ave.logo { padding: 24px; }
   .cabeza .caja > div { padding-top: 150px; }
   .collage .foto { inset: 2% 0 4% 2%; }
   .llamado-caja .circulo.a { width: 200px; height: 200px; right: -90px; top: -110px; }
@@ -424,6 +428,7 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
 @media (max-width: 560px) {
   body { font-size: 17px; }
   .cabeza .ave { width: 120px; }
+  .cabeza .ave.logo { padding: 19px; }
   .cabeza .caja > div { padding-top: 120px; }
   .valores { grid-template-columns: 1fr; }
   .valor, .valor + .valor, .valor:nth-child(even) { padding: 20px 0; border-left: 0; flex-direction: row; align-items: flex-start; gap: 16px; }
@@ -468,6 +473,7 @@ a.contacto-item:hover { translate: 0 -5px; rotate: -.5deg; box-shadow: 0 20px 40
   .cabeza h1, .cabeza .eyebrow { animation: subir .8s var(--ease) .1s both; }
   .cabeza .intro, .cabeza .indice { animation: subir .8s var(--ease) .3s both; }
   .cabeza .ave { --r: -5deg; animation: entrar .9s var(--ease) .25s both; }
+  .cabeza .ave.logo { --r: 0deg; }
   .js .revelar.visto { animation: subir .75s var(--ease) both; animation-delay: calc(var(--i, 0) * 80ms); }
 }
 @media (prefers-reduced-motion: reduce) {
