@@ -113,14 +113,15 @@
   /* ---------- Vitrina de la tienda (portada) ---------- */
   async function vitrina() {
     const el = document.querySelector('[data-vitrina]');
-    const cfg = window.SPECTRUMPRO_CONFIG || {};
+    // Usa la conexión de la tienda (/tienda/supabase.js), no la del resto del sitio.
+    const cfg = window.TIENDA_SUPABASE || window.SPECTRUMPRO_CONFIG || {};
     if (!el || !cfg.supabaseUrl) return;
     try {
       const r = await fetch(cfg.supabaseUrl.replace(/\/$/, '') + '/rest/v1/tienda_productos?select=nombre,precio,imagen&visible=eq.true&agotado=eq.false&order=orden.asc&limit=4', { headers: { apikey: cfg.supabaseAnonKey } });
       if (!r.ok) return;
       const ps = await r.json();
       if (!ps.length) return;
-      el.innerHTML = ps.map((p, i) => `<a class="revelar" style="--i:${i}" href="/tienda#productos"><img src="${esc(p.imagen)}" alt="" loading="lazy"><span>${esc(p.nombre)}${p.precio != null ? `<b>$${Number(p.precio).toLocaleString('es-CL')}</b>` : ''}</span></a>`).join('');
+      el.innerHTML = ps.map((p, i) => `<a class="revelar" style="--i:${i}" href="/tienda#productos"><img src="${esc(/^tienda\//.test(p.imagen || '') ? '/' + p.imagen : p.imagen)}" alt="" loading="lazy"><span>${esc(p.nombre)}${p.precio != null ? `<b>$${Number(p.precio).toLocaleString('es-CL')}</b>` : ''}</span></a>`).join('');
       observarRevelado();
     } catch { /* la vitrina es opcional */ }
   }
