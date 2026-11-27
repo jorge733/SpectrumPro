@@ -703,6 +703,13 @@ label.btn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; 
 .productos .mover button:not(:disabled):hover { background: var(--surface-2); }
 .productos .chips { display: flex; gap: 6px; flex-wrap: wrap; flex: none; }
 .form-tienda .dlg-pie { padding: 14px 0 0; border: 0; }
+/* ---------- sitio web ---------- */
+.pestanas-sitio { margin-bottom: 16px; }
+.form-sitio .dlg-pie { padding: 14px 0 0; border: 0; }
+.form-sitio textarea { resize: vertical; }
+.controles-lista { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.controles-lista .nota-suave { margin: 0; }
+.tarjeta > h2 small a.enlace-texto { padding: 0; }
 @media (max-width: 600px) {
   .productos .chips { display: none; }
   .foto-producto { align-items: flex-start; }

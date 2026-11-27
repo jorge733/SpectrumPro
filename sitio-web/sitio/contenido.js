@@ -1,5 +1,5 @@
 // Generado por sitio/contenido-inicial.py. Respaldo del contenido para cuando Supabase no responde.
-// El contenido real se edita en la plataforma, sección «Sitio web».
+// El contenido real se edita en la plataforma, sección «Sitio web» (tablas sitio_textos y sitio_elementos).
 window.SITIO_RESPALDO = {
  "textos": {
   "inicio_titulo": "Transformando la perspectiva del mundo",

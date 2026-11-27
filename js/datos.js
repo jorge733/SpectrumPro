@@ -80,6 +80,14 @@
   };
   const AJUSTES_TIENDA = ['whatsapp', 'instagram', 'pago', 'entrega'];
 
+  const CAMPOS_ELEMENTO = ['tipo', 'titulo', 'subtitulo', 'texto', 'lista', 'nota', 'imagen', 'enlace', 'orden', 'visible'];
+  const elementoAFila = e => {
+    const f = {};
+    for (const c of CAMPOS_ELEMENTO) f[c] = c === 'orden' ? Number(e.orden) || 0 : c === 'visible' ? e.visible !== false : String(e[c] ?? '');
+    return f;
+  };
+  const ERROR_SITIO = 'Falta activar el sitio web en Supabase: ejecuta supabase/migrations/20261127020000_sitio_web.sql en el SQL Editor.';
+
   /* ---------- errores legibles ---------- */
   function traducir(e) {
     const m = String(e?.message || e || '');
@@ -92,6 +100,9 @@
     if (/talleres_nombre_unico/i.test(m)) return new Error('Ya existe un taller con ese nombre.');
     if (/maximum allowed size|Payload too large|exceeded the maximum/i.test(m)) return new Error('El PDF es demasiado grande (máximo 10 MB).');
     if (/mime type|invalid_mime/i.test(m)) return new Error('El programa debe ser un archivo PDF.');
+    if (/sitio_(textos|elementos)/i.test(m) && /schema cache|does not exist|not found/i.test(m)) return new Error(ERROR_SITIO);
+    if (/sitio_tipo_valido|sitio_titulo_largo/i.test(m)) return new Error('Revisa el título: es obligatorio y puede tener hasta 120 caracteres.');
+    if (/sitio_\w+_largo/i.test(m)) return new Error('Uno de los textos es demasiado largo. Acórtalo e inténtalo de nuevo.');
     if (/Bucket not found/i.test(m)) return new Error('Falta crear el espacio de archivos «programas» en Supabase (ver README).');
     if (/talleres_encargado_email_formato/i.test(m)) return new Error('Revisa el correo de la persona a cargo (si son varios, sepáralos con coma).');
     if (/encargado_email|programa_texto|afiches|aviso_cumple/i.test(m) && /schema cache|does not exist|column/i.test(m)) return new Error('Falta actualizar la base de datos: ejecuta las migraciones de noviembre 2026 (ver README).');
@@ -359,6 +370,37 @@
         // Solo se borran fotos subidas al bucket; las de /tienda/img/ son parte del sitio.
         const m = String(url || '').match(/\/storage\/v1\/object\/public\/tienda\/(.+)$/);
         if (m) await sb.storage.from('tienda').remove([decodeURIComponent(m[1])]);
+      },
+      /* ----- sitio web (spectrumpro.cl) ----- */
+      async sitio() {
+        const [textos, elementos] = await Promise.all([
+          sb.from('sitio_textos').select('clave,valor').then(ok),
+          todo(() => sb.from('sitio_elementos').select('*').order('tipo').order('orden').order('id')),
+        ]);
+        return { textos: Object.fromEntries(textos.map(t => [t.clave, t.valor])), elementos };
+      },
+      async guardarTextosSitio(cambios) {
+        const filas = Object.entries(cambios).map(([clave, valor]) => ({ clave, valor: String(valor ?? '') }));
+        if (filas.length) ok(await sb.from('sitio_textos').upsert(filas, { onConflict: 'clave' }));
+      },
+      async guardarElementoSitio(e) {
+        if (e.id) { ok(await sb.from('sitio_elementos').update(elementoAFila(e)).eq('id', e.id)); return e.id; }
+        return ok(await sb.from('sitio_elementos').insert(elementoAFila(e)).select('id').single()).id;
+      },
+      async eliminarElementoSitio(id) { ok(await sb.from('sitio_elementos').delete().eq('id', id)); },
+      async ordenarElementosSitio(ids) {
+        await Promise.all(ids.map((id, i) => sb.from('sitio_elementos').update({ orden: i + 1 }).eq('id', id).then(ok)));
+      },
+      async subirFotoSitio(blob) {
+        const ruta = `fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error } = await sb.storage.from('sitio').upload(ruta, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+        if (error) throw /bucket not found/i.test(error.message) ? new Error(ERROR_SITIO) : traducir(error);
+        return sb.storage.from('sitio').getPublicUrl(ruta).data.publicUrl;
+      },
+      async borrarFotoSitio(url) {
+        // Solo se borran fotos subidas al bucket; las de /sitio/img/ son parte del sitio.
+        const m = String(url || '').match(/\/storage\/v1\/object\/public\/sitio\/(.+)$/);
+        if (m) await sb.storage.from('sitio').remove([decodeURIComponent(m[1])]);
       },
       async auditoria(limite = 200) {
         return ok(await sb.from('auditoria').select('*').order('creado', { ascending: false }).limit(limite));
@@ -791,6 +833,55 @@
         return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
       },
       async borrarFotoProducto() { },
+      /* Sitio web: en la demostración parte del respaldo del sitio (sitio-web/sitio/contenido.js). */
+      async sitio() {
+        if (!editaTienda()) prohibido();
+        if (!db.sitio) {
+          let base = { textos: {}, elementos: [] };
+          try {
+            const txt = await (await fetch('sitio-web/sitio/contenido.js')).text();
+            base = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+          } catch { /* sin respaldo: se parte vacío */ }
+          db.sitio = { textos: base.textos || {}, elementos: (base.elementos || []).map(e => ({ ...elementoAFila(e), id: nuevoId() })) };
+          guardar();
+        }
+        await espera();
+        return copia(db.sitio);
+      },
+      async guardarTextosSitio(cambios) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        Object.assign(db.sitio.textos, cambios);
+        auditar('update', 'sitio_textos', {});
+        guardar();
+      },
+      async guardarElementoSitio(e) {
+        if (!editaTienda()) prohibido();
+        await espera();
+        const id = e.id || nuevoId();
+        const i = db.sitio.elementos.findIndex(x => x.id === id);
+        const fila = { ...elementoAFila(e), id };
+        if (i >= 0) db.sitio.elementos[i] = fila; else db.sitio.elementos.push(fila);
+        auditar(i >= 0 ? 'update' : 'insert', 'sitio_elementos', { elemento: e.titulo });
+        guardar(); return id;
+      },
+      async eliminarElementoSitio(id) {
+        if (!editaTienda()) prohibido();
+        const e = db.sitio.elementos.find(x => x.id === id);
+        db.sitio.elementos = db.sitio.elementos.filter(x => x.id !== id);
+        auditar('delete', 'sitio_elementos', { elemento: e?.titulo });
+        guardar();
+      },
+      async ordenarElementosSitio(ids) {
+        if (!editaTienda()) prohibido();
+        ids.forEach((id, i) => { const e = db.sitio.elementos.find(x => x.id === id); if (e) e.orden = i + 1; });
+        guardar();
+      },
+      async subirFotoSitio(blob) {
+        if (!editaTienda()) prohibido();
+        return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+      },
+      async borrarFotoSitio() { },
       async auditoria(limite = 200) { if (!esAdmin()) prohibido(); await espera(); return copia(db.auditoria.slice(0, limite)); },
       async restablecer() { db.talleres.forEach(t => { escribir(CLAVE_PROGRAMA(t.id), null); (t.afiches || []).forEach(x => escribir(CLAVE_AFICHE(x.ruta), null)); }); db = crearDemo(); guardar(); },
 

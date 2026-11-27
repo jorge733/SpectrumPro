@@ -15,6 +15,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Talleres semestrales** | Talleres del semestre agrupados por área (FormaPro arriba, luego Centro de Formación, Mentorías, SpectrumOnline, Terapia Ocupacional y al final Arte y Apoyo). Cada taller tiene horario, quién está a cargo y su correo, inscritos, y una ficha con pestañas **Información**, **Programa** (texto y PDF opcional) y **Afiches** (material promocional). Botón **Horario para imprimir**: grilla semanal que se arma sola y se imprime o guarda en PDF (o se descarga para Excel). Dirección crea y edita talleres, sube programa y afiches, y cambia el orden con flechas ↑ ↓ dentro de cada área |
 | **Talleres de verano** | Lo mismo para los talleres de la temporada de verano; su horario imprimible va por fechas |
 | **Talleres online** | Talleres por videollamada de cualquier temporada, con su enlace y un botón «Unirse». Se pasa lista igual que en los presenciales, que quedan en las dos secciones anteriores |
+| **Sitio web** | Dirección y rol Equipo. Edita los textos, el contacto y las listas de https://spectrumpro.cl (equipo, valores, talleres, módulos, mentorías, actividades, Arte y Apoyo, servicios y producciones). Ver «Editar el sitio desde la plataforma» más abajo |
 | **Posts** | Solo dirección. Estudio para crear posts de Instagram con la gráfica de la marca (reemplaza a Canva). Ver «Estudio de posts» más abajo |
 | **Administración** | Invitar cuentas y asignar roles, auditoría de cambios y exportación a CSV |
 
@@ -25,7 +26,7 @@ Sigue la estructura de la Plataforma II° Medio del Colegio Michelangelo: pantal
 | **Dirección** (`admin`) | Todo. Gestiona cuentas, talleres y fichas, y ve la auditoría |
 | **Terapeuta** (`terapeuta`) | Todo el alumnado, incluidos los datos privados (medicación y observaciones). Crea y edita fichas. Pasa lista en cualquier taller |
 | **Tallerista** (`tallerista`) | Solo a quienes están inscritos en sus talleres: datos de contacto, apoyos y alergias. Pasa lista solo en sus talleres. Ve los cumpleaños de todo el alumnado y del equipo (nombre y fecha) |
-| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo y editan la tienda |
+| **Equipo** (`equipo`) | Personas que no pasan lista ni ven fichas (gestión, asistentes, productora). Ven los talleres (horario y quién está a cargo) y los cumpleaños de jóvenes y equipo, ponen el suyo y editan la tienda y el sitio web |
 
 Los permisos se aplican **en la base de datos** con políticas RLS. Aunque alguien modifique la página en su navegador, Supabase no le entrega datos que su rol no puede ver.
 
@@ -66,6 +67,7 @@ Si `config.js` no tiene datos de Supabase, la plataforma entra en **modo demostr
    | `20261126030000_talleres_online.sql` | Modalidad (presencial u online) y enlace de la videollamada; los talleres de SpectrumOnline pasan a online |
    | `20261127000000_talleres_afiches_programa_correo.sql` | Correo de quien está a cargo, programa escrito, afiches (bucket privado `afiches`) y orden inicial por área |
    | `20261127010000_recordatorio_cumpleanos.sql` | Aviso de cumpleaños por correo: quién lo recibe y el reloj diario (pg_cron) |
+   | `20261127020000_sitio_web.sql` | Contenido del sitio público editable desde la plataforma (tablas `sitio_textos` y `sitio_elementos`, bucket público `sitio`) con el contenido actual ya cargado |
 
 3. En el mismo editor, ejecuta `supabase/seed.sql` para cargar los talleres iniciales. Los horarios son de ejemplo; después se ajustan desde la plataforma.
 4. Ejecuta también, en orden, las demás migraciones de `supabase/migrations/`. La de `…_programa_taller.sql` crea el espacio de archivos privado `programas` (Storage) donde se guarda el PDF con el programa de cada taller: todo el equipo activo lo puede abrir y solo dirección lo sube o lo quita. Acepta solo PDF de hasta 10 MB.
@@ -183,7 +185,19 @@ Son archivos estáticos y se publican en Vercel. El dominio oficial es **https:/
 - Tras publicar en spectrumpro.cl: en [Google Search Console](https://search.google.com/search-console) agrega la propiedad de dominio `spectrumpro.cl` (se verifica con un registro `TXT` en el DNS), envía `https://spectrumpro.cl/sitemap.xml` y pide indexar la portada.
 - En [Google Business Profile](https://business.google.com) crea o reclama la ficha de SpectrumPro con la misma dirección, teléfono y sitio web: es lo que hace aparecer el negocio en Maps y en el recuadro de la derecha.
 
-Los textos, fotos, talleres y equipo están en `sitio-web/sitio/contenido.js` (y el resto del texto en cada `.html`). El enlace de acceso del equipo apunta a gestionspectrumpro.cl.
+### Editar el sitio desde la plataforma
+
+Los textos, fotos, talleres y equipo del sitio se editan en https://gestionspectrumpro.cl, sección **Sitio web** (dirección y rol Equipo):
+
+- **Textos**: los párrafos de cada página (Inicio, Nosotros, Formación, Arte y Apoyo, Productora y Colabora), el video principal y los enlaces para donar y suscribirse. En los cuadros grandes, cada salto de línea es un párrafo.
+- **Contacto y redes**: dirección, WhatsApp, correo, Instagram, YouTube, LinkedIn y Patreon (un enlace vacío oculta su ícono).
+- **Listas**: Equipo, Valores, Talleres, Módulos FormaPro, Mentorías, Actividades, Arte y Apoyo, Servicios y Producciones. Cada elemento se crea, edita, oculta («Mostrar en el sitio»), elimina y ordena con flechas ↑ ↓; el equipo, los talleres y las producciones llevan foto (se reduce en el navegador antes de subirla al bucket `sitio`).
+
+Para activarlo, ejecuta en **SQL Editor** `supabase/migrations/20261127020000_sitio_web.sql`: crea las tablas, los permisos y el bucket, y carga el contenido que hoy tiene el sitio. Se puede volver a ejecutar: no duplica nada ni pisa lo ya editado.
+
+El sitio lee Supabase con `sitio-web/config.js` (la clave pública). Al abrir una página muestra al instante la última copia guardada en ese navegador (o el respaldo `sitio-web/sitio/contenido.js`) y la reemplaza con lo de Supabase apenas responde; por eso un cambio se ve al recargar. Mientras la migración no se ejecute, el sitio sigue mostrando el respaldo. El público solo puede **leer** los textos y los elementos visibles; cada cambio queda en la auditoría.
+
+Los títulos grandes de cada página, la estructura y el diseño siguen en cada `.html`. El enlace de acceso del equipo apunta a gestionspectrumpro.cl.
 
 ## Encuesta de la Muestra Audiovisual
 
@@ -235,6 +249,7 @@ Para activarla, ejecuta en **SQL Editor** `supabase/migrations/20261125000000_fi
 | `config.js` | URL y clave pública de Supabase |
 | `js/datos.js` | Capa de datos: Supabase o demostración, con la misma interfaz |
 | `js/app.js` | Vistas, roles, formularios y lógica de asistencia y cumpleaños |
+| `js/sitio.js` | Sección Sitio web: editor de los textos y listas de spectrumpro.cl |
 | `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión. Al publicar cambios, sube `VERSION` en `sw.js` |
 | `assets/` | Logo, íconos de la app e imágenes de la Muestra (las de vista previa están en `assets/og/`) |
 | `supabase/migrations/…sql` | Tablas, RLS, auditoría, cumpleaños, rol Equipo y encuesta (ver la tabla de arriba) |

@@ -80,6 +80,7 @@ const S = {
   usuarios: [],
   auditoria: null,
   tienda: null,       // { productos, ajustes } · se carga al abrir la sección Tienda
+  sitio: null,        // { textos, elementos } · se carga al abrir la sección Sitio web (js/sitio.js)
 };
 const ui = {
   fecha: iso(hoy()), taller: null, modoAsis: 'lista', mes: iso(hoy()).slice(0, 7), tallerMes: null,
@@ -96,6 +97,8 @@ const puede = {
   admin: () => rol() === 'admin',
   // La tienda la editan dirección y el rol Equipo.
   tienda: () => ['admin', 'equipo'].includes(rol()),
+  // El sitio web público (spectrumpro.cl) también lo editan dirección y el rol Equipo.
+  sitio: () => ['admin', 'equipo'].includes(rol()),
   // Rol «equipo»: no ve fichas ni asistencia; solo cumpleaños y talleres.
   esEquipo: () => rol() === 'equipo',
   pasarLista: tid => puede.verTodo() || !!taller(tid)?.equipo.includes(S.perfil.id),
@@ -346,7 +349,7 @@ async function cargarTodo(texto = 'Cargando talleres, fichas y asistencia…') {
     throw e;
   }
   const [talleres, alumnos, asistencia, cumple, cumpleEquipo, usuarios] = datos;
-  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null });
+  Object.assign(S, { talleres, alumnos, cumple, cumpleEquipo, usuarios, asistencia: indexarAsistencia(asistencia), auditoria: null, tienda: null, sitio: null });
   mostrarApp();
 }
 
@@ -364,6 +367,7 @@ function mostrarApp() {
   $('#usuario-rol').textContent = ROLES[p.rol];
   $$('[data-solo="admin"]').forEach(el => { el.hidden = !puede.admin(); });
   $$('[data-solo="tienda"]').forEach(el => { el.hidden = !puede.tienda(); });
+  $$('[data-solo="sitio"]').forEach(el => { el.hidden = !puede.sitio(); });
   $$('[data-no-equipo]').forEach(el => { el.hidden = puede.esEquipo(); });
   render();
 }
@@ -1150,13 +1154,14 @@ document.addEventListener('submit', async ev => {
 });
 
 const ACCIONES = { insert: 'creó', update: 'editó', delete: 'eliminó', upsert: 'registró', login: 'entró' };
-const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda' };
+const TABLAS = { alumnos: 'ficha', alumnos_privado: 'datos privados de una ficha', inscripciones: 'inscripción', talleres: 'taller', taller_equipo: 'equipo de un taller', perfiles: 'cuenta', asistencia: 'asistencia', sesion: 'a la plataforma', tienda_productos: 'producto de la tienda', tienda_ajustes: 'contacto de la tienda', sitio_textos: 'texto del sitio web', sitio_elementos: 'elemento del sitio web' };
 function detalleAuditoria(r) {
   const d = r.detalle || {};
   const partes = [];
   if (d.alumno) partes.push(d.alumno);
   if (d.taller) partes.push(d.taller);
   if (d.producto) partes.push(d.producto);
+  if (d.elemento) partes.push(d.elemento);
   if (d.email) partes.push(d.email);
   if (d.fecha) partes.push(`${fechaCorta(d.fecha)} · ${d.estado}${d.registros > 1 ? ` · ${d.registros} jóvenes` : ''}`);
   if (d.rol && r.tabla !== 'sesion') partes.push(ROLES[d.rol] || d.rol);
@@ -1961,12 +1966,13 @@ function exportarAsistencia() {
    Enrutado y eventos
    ===================================================================== */
 const VISTAS = { panel: vistaPanel, asistencia: vistaAsistencia, cumpleanos: vistaCumpleanos, alumnos: vistaAlumnos, talleres: vistaTalleres, verano: vistaVerano, online: vistaOnline, tienda: vistaTienda, administracion: vistaAdministracion };
-// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección).
+// js/posts.js agrega VISTAS.posts (Estudio de posts, solo dirección) y js/sitio.js agrega VISTAS.sitio (Sitio web).
 function vistaActual() {
   const v = location.hash.slice(1);
   if (!VISTAS[v]) return 'panel';
   if ((v === 'administracion' || v === 'posts') && !puede.admin()) return 'panel';
   if (v === 'tienda' && !puede.tienda()) return 'panel';
+  if (v === 'sitio' && !puede.sitio()) return 'panel';
   if (puede.esEquipo() && (v === 'asistencia' || v === 'alumnos')) return 'panel';
   return v;
 }
@@ -2092,7 +2098,7 @@ document.addEventListener('click', async ev => {
     if (acc === 'volver-entrar') mostrarAcceso('entrar');
     if (acc === 'salir') {
       try { await conCarga(() => D.salir(), 'Cerrando sesión…'); } catch { /* se sale igual */ }
-      S.perfil = null; S.tienda = null;
+      S.perfil = null; S.tienda = null; S.sitio = null;
       mostrarAcceso('entrar');
     }
     if (acc === 'mi-cumple') abrirMiCumple();
