@@ -234,7 +234,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 /* Equipo */
 .equipo { display: grid; gap: 34px 22px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
 .persona { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.persona .foto { aspect-ratio: 1; border-radius: 50% 50% 28px 28px; overflow: hidden; background: var(--kc, var(--c5)); margin-bottom: 12px; }
+.persona .foto { aspect-ratio: 1; border-radius: 22px; overflow: hidden; background: var(--kc, var(--c5)); margin-bottom: 12px; }
 .persona .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .persona:hover .foto img { transform: scale(1.06); }
 .persona h3 { font-size: 22px; }
