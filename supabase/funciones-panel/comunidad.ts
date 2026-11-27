@@ -212,8 +212,12 @@ async function boletinPublico(sb: any, id: string) {
 
 // deno-lint-ignore no-explicit-any
 async function totales(sb: any, id: string) {
-  const { data } = await sb.from("boletin_reacciones_totales").select("tipo, total").eq("boletin_id", id);
-  return Object.fromEntries((data ?? []).map((x: { tipo: string; total: number }) => [x.tipo, x.total]));
+  // Se cuentan desde la tabla (la clave de servicio no lee la vista pública de totales).
+  const { data, error } = await sb.from("boletin_reacciones").select("tipo").eq("boletin_id", id);
+  if (error) console.error("totales:", error.message);
+  const t: Record<string, number> = {};
+  for (const x of data ?? []) t[x.tipo] = (t[x.tipo] ?? 0) + 1;
+  return t;
 }
 
 // deno-lint-ignore no-explicit-any

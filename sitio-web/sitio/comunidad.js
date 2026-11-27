@@ -196,6 +196,12 @@
     } catch { /* el archivo es opcional */ }
   }
 
+  async function totalesDe(id) {
+    const r = await fetch(`${base}/rest/v1/boletin_reacciones_totales?select=tipo,total&boletin_id=eq.${encodeURIComponent(id)}`, { headers: { apikey: cfg.supabaseAnonKey }, cache: 'no-store' });
+    if (!r.ok) return null;
+    return Object.fromEntries((await r.json()).map(x => [x.tipo, x.total]));
+  }
+
   document.addEventListener('click', async ev => {
     const btn = ev.target.closest('[data-reaccion]');
     if (!btn) return;
@@ -208,9 +214,11 @@
       const set = new Set(mias[id] || []);
       r.activa ? set.add(tipo) : set.delete(tipo);
       mias[id] = [...set]; guardar('spectrumpro:reacciones', mias);
-      barra.innerHTML = barraReacciones(id, r.totales || {});
+      // Los totales se piden a la misma vista pública que usa la página al cargar (la fuente de verdad).
+      const tot = await totalesDe(id).catch(() => null) ?? r.totales ?? {};
+      barra.innerHTML = barraReacciones(id, tot);
       const det = barra.closest('details'), sum = det?.querySelector('summary');
-      if (sum) { sum.querySelector('.conteo')?.remove(); sum.insertAdjacentHTML('beforeend', resumenInteraccion(r.totales || {}, det.querySelectorAll('.comentarios > li').length)); }
+      if (sum) { sum.querySelector('.conteo')?.remove(); sum.insertAdjacentHTML('beforeend', resumenInteraccion(tot, det.querySelectorAll('.comentarios > li').length)); }
     } catch (e) {
       barra.querySelectorAll('button').forEach(b => { b.disabled = false; });
       alert(e.message);
