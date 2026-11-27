@@ -229,17 +229,6 @@ window.SITIO_RESPALDO = {
   },
   {
    "tipo": "equipo",
-   "titulo": "Roberto González",
-   "subtitulo": "Ilustrador y animador",
-   "texto": "Artista gráfico y animador que traduce ideas, textos y conceptos en imágenes.",
-   "lista": "",
-   "nota": "",
-   "imagen": "/sitio/img/eq-roberto-gonzalez.webp",
-   "enlace": "",
-   "orden": 14
-  },
-  {
-   "tipo": "equipo",
    "titulo": "Sebastián Ramírez",
    "subtitulo": "Asistente audiovisual",
    "texto": "Apoya el desarrollo técnico y logístico de las producciones: equipos, cámaras e iluminación listos para operar. Capacitado por SpectrumPro.",

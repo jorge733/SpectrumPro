@@ -1,5 +1,5 @@
 /* Sitio público de SpectrumPro · versión 2.
-   Papel claro, tipografía Bricolage Grotesque para títulos y Figtree para el texto.
+   Papel claro, tipografía Montserrat bold en todo el sitio.
    Cada sección del sitio toma uno de los seis colores del logo (variable --k). */
 :root {
   --papel: #fbf7ef; --papel-2: #f3ecdf; --blanco: #ffffff;
@@ -9,8 +9,8 @@
   --c1: #f8384b; --c2: #fadd41; --c3: #00bc70; --c4: #31b4e7; --c5: #635cc7; --c6: #e65ebe;
   --p1: #fde0e2; --p2: #fdf3c4; --p3: #d5f4e6; --p4: #dbf1fb; --p5: #e7e4fd; --p6: #fbe2f4;
   --acento: #4f48b5; --wa: #0f8a4a;
-  --display: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --texto: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Montserrat", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --texto: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
   --radio: 28px; --sombra: 23 21 31;
   --ease: cubic-bezier(.2, .8, .2, 1);
   --k: var(--p5); --kk: var(--c5);
@@ -26,11 +26,11 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 100px; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 a, button, summary, label { -webkit-tap-highlight-color: transparent; }
-body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 18px/1.6 var(--texto); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font: 700 18px/1.6 var(--texto); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 p { margin: 0; }
-h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: .98; margin: 0; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: break-word; font-variation-settings: "wdth" 100; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: .98; margin: 0; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: break-word; }
 h3 { line-height: 1.1; letter-spacing: -.015em; }
 :focus-visible { outline: 3px solid var(--c4); outline-offset: 3px; border-radius: 8px; }
 [hidden] { display: none !important; }
@@ -76,7 +76,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .marca svg { width: 40px; height: auto; }
 .marca span { font: 800 18px/1 var(--display); letter-spacing: -.03em; }
 .menu { display: flex; align-items: center; gap: 2px; }
-.menu a { text-decoration: none; font-weight: 600; font-size: 16px; padding: 11px 15px; border-radius: 999px; color: var(--suave); transition: background .2s, color .2s; }
+.menu a { text-decoration: none; font-weight: 700; font-size: 16px; padding: 11px 15px; border-radius: 999px; color: var(--suave); transition: background .2s, color .2s; }
 .menu a:hover { color: var(--tinta); background: var(--papel-2); }
 .menu a[aria-current="page"] { color: var(--tinta); background: var(--papel-2); box-shadow: inset 0 -3px 0 var(--kk); }
 .menu a.colabora { background: var(--tinta); color: var(--papel); margin-left: 8px; padding-inline: 20px; }
@@ -238,7 +238,7 @@ h3 { line-height: 1.1; letter-spacing: -.015em; }
 .persona .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .persona:hover .foto img { transform: scale(1.06); }
 .persona h3 { font-size: 22px; }
-.persona .cargo { font-weight: 600; color: var(--suave); font-size: 15px; }
+.persona .cargo { font-weight: 700; color: var(--suave); font-size: 15px; }
 .persona details { font-size: 15.5px; color: var(--suave); margin-top: 4px; }
 .persona summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--tinta); list-style: none; display: inline-flex; align-items: center; gap: 8px; }
 .persona summary::-webkit-details-marker { display: none; }
