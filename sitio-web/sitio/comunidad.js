@@ -126,8 +126,14 @@
   function barraReacciones(id, tot) {
     return REACCIONES.map(([k, ico, txt]) => {
       const n = tot[k] || 0, on = (mias[id] || []).includes(k);
-      return `<button type="button" class="reaccion" data-reaccion="${k}" aria-pressed="${on}" aria-label="${txt}${n ? ': ' + n : ''}" title="${txt}"><span aria-hidden="true">${ico}</span><b>${n || ''}</b></button>`;
+      return `<button type="button" class="reaccion" data-reaccion="${k}" aria-pressed="${on}" aria-label="${txt}: ${n}" title="${txt}"><span aria-hidden="true">${ico}</span><b>${n}</b></button>`;
     }).join('');
+  }
+  // Con el boletín cerrado: «❤️ 3 · 💡 1 · 💬 2» (solo lo que tiene al menos uno).
+  function resumenInteraccion(tot, nComentarios) {
+    const partes = REACCIONES.filter(([k]) => tot[k]).map(([k, ico]) => `${ico} ${tot[k]}`);
+    if (nComentarios) partes.push(`💬 ${nComentarios}`);
+    return partes.length ? `<small class="conteo">${partes.join(' · ')}</small>` : '';
   }
   function listaComentarios(cs) {
     if (!cs.length) return '<p class="sin-comentarios">Aún no hay comentarios. ¡Sé la primera persona en comentar!</p>';
@@ -171,7 +177,7 @@
       caja.innerHTML = lista.map(b => {
         const cs = comentarios[b.id] || [];
         return `<details class="boletin" id="boletin-${esc(b.id)}" data-boletin="${esc(b.id)}">
-        <summary><time datetime="${esc(b.enviado_en)}">${esc(fecha(b.enviado_en))}</time><b>${esc(b.titulo)}</b>${conInteraccion && cs.length ? `<small class="conteo">💬 ${cs.length}</small>` : ''}</summary>
+        <summary><time datetime="${esc(b.enviado_en)}">${esc(fecha(b.enviado_en))}</time><b>${esc(b.titulo)}</b>${conInteraccion ? resumenInteraccion(totales[b.id] || {}, cs.length) : ''}</summary>
         <div class="contenido">
           ${b.imagen ? `<img src="${esc(b.imagen)}" alt="" loading="lazy">` : ''}
           ${formato(b.texto)}
@@ -203,6 +209,8 @@
       r.activa ? set.add(tipo) : set.delete(tipo);
       mias[id] = [...set]; guardar('spectrumpro:reacciones', mias);
       barra.innerHTML = barraReacciones(id, r.totales || {});
+      const det = barra.closest('details'), sum = det?.querySelector('summary');
+      if (sum) { sum.querySelector('.conteo')?.remove(); sum.insertAdjacentHTML('beforeend', resumenInteraccion(r.totales || {}, det.querySelectorAll('.comentarios > li').length)); }
     } catch (e) {
       barra.querySelectorAll('button').forEach(b => { b.disabled = false; });
       alert(e.message);
